@@ -54,7 +54,9 @@
     <tspan x="503.119" y="398.806">Target</tspan>
   </text>
   <g>
-    <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="-8.998" y1="393" x2="399.237" y2="391.391"/>
+    <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="0.737992" y1="392.962" x2="399.237" y2="391.391"/>
+    <polygon style="fill: #000000" points="-6.76195,392.991 3.21826,387.952 0.737992,392.962 3.25769,397.952 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-6.76195,392.991 3.21826,387.952 0.737992,392.962 3.25769,397.952 "/>
     <polygon style="fill: #000000" points="406.737,391.361 396.757,396.4 399.237,391.391 396.717,386.4 "/>
     <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="406.737,391.361 396.757,396.4 399.237,391.391 396.717,386.4 "/>
   </g>
