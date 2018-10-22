@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="45cm" height="23cm" viewBox="-285 15 882 457" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g>
+    <rect style="fill: #ffffff" x="84" y="17" width="146" height="87"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="84" y="17" width="146" height="87"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="157" y="64.4">
+      <tspan x="157" y="64.4"></tspan>
+    </text>
+  </g>
+  <text font-size="22.5778" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="157" y="68.325">
+    <tspan x="157" y="68.325">CLI</tspan>
+  </text>
+  <g>
+    <ellipse style="fill: #ffffff" cx="153.933" cy="216.466" rx="110.067" ry="66.5336"/>
+    <ellipse style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" cx="153.933" cy="216.466" rx="110.067" ry="66.5336"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="153.933" y="220.366">
+      <tspan x="153.933" y="220.366"></tspan>
+    </text>
+  </g>
+  <text font-size="22.5778" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="153.933" y="223.962">
+    <tspan x="153.933" y="223.962">Manager</tspan>
+  </text>
+  <g>
+    <path style="fill: #ffffff" d="M -237.333 341 L -54.665,341 C -29.4438,341 -8.998,364.281 -8.998,393 C -8.998,421.719 -29.4438,445 -54.665,445 L -237.333,445 C -262.554,445 -283,421.719 -283,393 C -283,364.281 -262.554,341 -237.333,341z"/>
+    <path style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" d="M -237.333 341 L -54.665,341 C -29.4438,341 -8.998,364.281 -8.998,393 C -8.998,421.719 -29.4438,445 -54.665,445 L -237.333,445 C -262.554,445 -283,421.719 -283,393 C -283,364.281 -262.554,341 -237.333,341"/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="-145.999" y="397">
+      <tspan x="-145.999" y="397"></tspan>
+    </text>
+  </g>
+  <text font-size="22.5778" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="-145.999" y="400.496">
+    <tspan x="-145.999" y="400.496">Workers</tspan>
+  </text>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="-137.007" y1="337.267" x2="53.29" y2="258.254"/>
+    <polygon style="fill: #000000" points="-143.934,340.143 -136.616,331.69 -137.007,337.267 -132.781,340.926 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="-143.934,340.143 -136.616,331.69 -137.007,337.267 -132.781,340.926 "/>
+    <polygon style="fill: #000000" points="60.2167,255.378 52.8985,263.83 53.29,258.254 49.0638,254.595 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="60.2167,255.378 52.8985,263.83 53.29,258.254 49.0638,254.595 "/>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="156.125" y1="104.994" x2="155.452" y2="139.211"/>
+    <polygon style="fill: #000000" points="155.305,146.709 150.502,136.613 155.452,139.211 160.5,136.81 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="155.305,146.709 150.502,136.613 155.452,139.211 160.5,136.81 "/>
+  </g>
+  <g>
+    <polygon style="fill: #ffffff" points="503.119,310.683 596.65,390.981 503.119,471.279 409.589,390.981 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="503.119,310.683 596.65,390.981 503.119,471.279 409.589,390.981 "/>
+    <text font-size="12.7998" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="503.119" y="394.881">
+      <tspan x="503.119" y="394.881"></tspan>
+    </text>
+  </g>
+  <text font-size="22.5778" style="fill: #000000;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="503.119" y="398.806">
+    <tspan x="503.119" y="398.806">Target</tspan>
+  </text>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="-8.998" y1="393" x2="399.237" y2="391.391"/>
+    <polygon style="fill: #000000" points="406.737,391.361 396.757,396.4 399.237,391.391 396.717,386.4 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="406.737,391.361 396.757,396.4 399.237,391.391 396.717,386.4 "/>
+  </g>
+  <g>
+    <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="248.372" y1="263.665" x2="434.554" y2="356.714"/>
+    <polygon style="fill: #000000" points="241.663,260.312 252.843,260.31 248.372,263.665 248.373,269.255 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="241.663,260.312 252.843,260.31 248.372,263.665 248.373,269.255 "/>
+    <polygon style="fill: #000000" points="441.263,360.067 430.082,360.069 434.554,356.714 434.553,351.123 "/>
+    <polygon style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="441.263,360.067 430.082,360.069 434.554,356.714 434.553,351.123 "/>
+  </g>
+</svg>
