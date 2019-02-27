@@ -1,0 +1,39 @@
+\documentclass{article}
+\usepackage{noweb}
+\usepackage{graphicx}
+\usepackage{float}
+
+\pagestyle{noweb}
+\noweboptions{}
+
+\begin{document}
+
+@ \section{Overview}
+
+@ \paragraph{Purpose of TestLab}
+The purpose of TestLab is to provide an easy way to testing a device.
+It should provide some tools to let us conveniently doing test job.
+
+@ \paragraph{Architecture} 
+The Structure of testing network is look like
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{figures/testNetwork.png}
+    \caption{test network}
+    \label{figure}
+\end{figure}
+
+Logically, the system can be divided into three parts:
+\begin{itemize}
+\item Dispatcher
+\item Tester
+\item Status notifier
+\end{itemize}
+
+
+
+\end{document}
+
+
+
