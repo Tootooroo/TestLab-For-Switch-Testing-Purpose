@@ -3,12 +3,16 @@ project(testLab)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(ROOT .)
-set(SRC_DIR ${HOME_DIR/Src})
+set(SRC_DIR ${ROOT}/src)
 set(CMAKE_C_STANDARD 11)
 
+set(SRCS ${SRC_DIR}/instType.c ${SRC_DIR}/queue.c)
+set(HEADERS ${ROOT}/include)
+include_directories(${HEADERS})
+add_executable(testLab ${SRCS})
 
-add_custom_target(testLab_doc ALL DEPENDS)
-add_custom_command(TARGET testLab_doc PRE_BUILD
-    COMMAND noweave -n -delay testLab.nw > testLab.tex
-    COMMAND pdflatex testLab.tex)
+project(unitTest)
+link_libraries(cmocka)
+add_executable(unitTest ${SRCS} ${ROOT}/src/unitTest.c)
+target_compile_definitions(unitTest PUBLIC _TEST_LAB_UNIT_TESTING_)
 

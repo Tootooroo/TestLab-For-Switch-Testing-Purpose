@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage{noweb}
 \usepackage{graphicx}
+\usepackage{listing}
 \usepackage{float}
 
 \pagestyle{noweb}
@@ -8,13 +9,13 @@
 
 \begin{document}
 
-@ \section{Overview}
+\section{Overview}
 
-@ \paragraph{Purpose of TestLab}
+\paragraph{Purpose of TestLab}
 The purpose of TestLab is to provide an easy way to testing a device.
 It should provide some tools to let us conveniently doing test job.
 
-@ \paragraph{Architecture} 
+\paragraph{Architecture} 
 The Structure of testing network is look like
 
 \begin{figure}[H]
@@ -26,11 +27,172 @@ The Structure of testing network is look like
 
 Logically, the system can be divided into three parts:
 \begin{itemize}
-\item Dispatcher
-\item Tester
-\item Status notifier
+\item Dispatcher ::= Transfer request into ton of instructions will be executed by Tester and Monitor
+                     then transfer these instructions to correspond role of system.
+\item Monitor ::= Monitoring the status of Testers and DUTS.
+\item Tester ::= A role that will communicate with DUTS. It will give answer after the communication.
+\item DUT(Device under testing) ::= Device that will be tested by Tester.
 \end{itemize}
 
+\section{Implementation of TestLab}
+
+\paragraph{Software Architecture} Now let us define software architecture.
+\begin{figure}[H]
+% TestLab.dia
+\end{figure}
+
+First, define infrastructures that we will use in this program.
+@ \paragraph{Infrastructures}
+<<type.h>>=
+/* type.h */
+#ifndef _TEST_LAB_TYPE_
+#define _TEST_LAB_TYPE_
+
+#include <stdio.h>
+#include <stdbool.h>
+#include <unistd.h>
+
+#ifndef null
+#define null
+#endif
+
+typedef int _Status_t;
+typedef unsigned int _Index_t;
+
+#define containerOf(addr, contType, member) \
+    do {\
+        typeof( ((contType)0)->member) *__ptr = addr;\
+        (contType *)((char *)__ptr - offsetof(contType, member));\
+    } while(0);
+#define isNull(obj) (obj == null)
+
+#endif /* _TEST_LAB_TYPE_ */
+
+<<queue.h>>=
+/* queue.h */
+#ifndef _TEST_LAB_QUEUE_
+#define _TEST_LAB_QUEUE_
+
+typedef struct queue {
+    size_t size;
+    _Index_t head;
+    _Index_t tail;
+    char *space;
+} queue;
+
+#endif /* _TEST_LAB_QUEUE_ */
+
+<<queue.c>>=
+/* queue.c */
+
+
+@
+
+@ \paragraph{Dispatcher}
+After infrastructure defined we implement Dispatcher component
+let's look at the structure of Dispatcher:
+\begin{figure}[H]
+% Dispatcher structure png
+\end{figure}
+
+We focus on the entrance of Dispatcher which named by Request handler
+it retrive request from Request Queue and hand the Request identity to
+Script Connector.
+
+let us define Inst before shirk into Dispatcher.
+
+define a Inst formally:
+\begin{lstlisting}
+    Property(R: Inst)
+        Regular: R
+        Class: R
+            dataMember:
+                Script identity 
+            funcMember:
+                isExists: Inst -> bool
+                encode:   Inst -> String
+                decode:   String -> Inst
+\end{lstlisting}
+
+@ 
+<<Inst.h>>=
+#ifndef _INST_H_
+#define _INST_H_
+
+#define MAX_LENGTH_OF_SCRIPT_IDENT 32
+
+/* Inst basis */
+typedef _Bool (*isIdentExistsFunc)(void *request);
+/* Apply a transformation to a Inst, a frame will be generated. */
+typedef char * (*encodeFunc)(void *request);
+/* Apply a transformation to a frame and the content of frame will
+ * be copy into the Inst.
+ */
+typedef _Status_t (*decodeFunc)(void *request, char *frame);
+/* Encapsulate basis of Inst into a struct
+ * and different kind of inst can have different
+ * basis.
+ */
+typedef struct InstType {
+    isIdentExistsFunc isExists;
+    encodeFunc        encode;
+    decodeFunc        decode;
+} InstType;
+
+typedef struct Inst {
+    InstType type;
+    char *scriptIdentity; 
+} Inst;
+
+#endif /* _INST_H_ */
+
+<<instType.h>>=
+#ifndef _INST_TYPE_
+#define _INST_TYPE_
+
+#include "type.h"
+#include "inst.h"
+
+<<dispatcher inst declarations>>
+
+#endif /* _INST_TYPE_ */
+
+<<dispatcher inst declarations>>=
+extern InstType dispatcherInst;
+
+@ Instructions that executed by Dispatcher component.
+
+<<dispatcher inst defined>>=
+/* Query database with the inst given by the instruction */
+_Bool isIdentExists_dispatcher(void *inst) {
+    Inst *pInst = inst;
+    InstType = inst->type; 
+}
+
+char * encode_dispatcher(void *request) {
+ 
+}
+
+_Status_t decode_dispatcher(void *request, char *frame) {
+     
+}
+
+InstType dispatcherInst = {
+    isIdentExists_dispatcher,
+    encode_dispatcher,
+    decode_dispatcher
+};
+
+#ifdef _TEST_LAB_UNIT_TESTING_
+
+#endif 
+
+@
+
+Ok, we can now look into dispatcher.
+
+
+@
 
 
 \end{document}
