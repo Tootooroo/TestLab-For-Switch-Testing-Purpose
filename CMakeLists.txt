@@ -8,11 +8,11 @@ set(CMAKE_C_STANDARD 11)
 
 set(SRCS ${SRC_DIR}/instType.c ${SRC_DIR}/queue.c)
 set(HEADERS ${ROOT}/include)
-include_directories(${HEADERS})
 add_executable(testLab ${SRCS})
 
 project(unitTest)
 link_libraries(cmocka)
-add_executable(unitTest ${SRCS} ${ROOT}/src/unitTest.c)
+add_executable(unitTest ${ROOT}/src/unitTest.c ${SRCS})
 target_compile_definitions(unitTest PUBLIC _TEST_LAB_UNIT_TESTING_)
 
+include_directories(${HEADERS})

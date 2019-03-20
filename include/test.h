@@ -1,12 +1,13 @@
 /* test.h */
 
-#ifndef _TEST_LAB_UNIT_TESTING_
-#define _TEST_LAB_UNIT_TESTING_
+#ifndef _TEST_H_
+#define _TEST_H_
 
 #include <stdarg.h>
 #include <stddef.h>
 #include <setjmp.h>
+#include <stdint.h>
 #include <cmocka.h>
 
-#endif /* _TEST_LAB_UNIT_TESTING_ */
+#endif /* _TEST_H_ */
 

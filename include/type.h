@@ -8,15 +8,19 @@
 #include <unistd.h>
 
 #ifndef null
-#define null 0
+#define null NULL
 #endif
 
 #ifndef ok
-#define ok 0
+#define OK (0)
 #endif
 
-#ifndef error
-#define error 1
+#ifndef ERROR
+#define ERROR (1)
+#endif
+
+#ifndef private
+#define private static
 #endif
 
 typedef int _Status_t;

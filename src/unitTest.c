@@ -2,7 +2,13 @@
 
 #include "test.h"
 
-int main() {
+// Queue testing
+#include "queue.h"
 
-    return 0;
+
+int main(void) {
+    const struct CMUnitTest tests[] = {
+        cmocka_unit_test(queue_Basic) 
+    }; 
+    return cmocka_run_group_tests(tests, NULL, NULL);
 }
