@@ -26,12 +26,8 @@
 typedef int _Status_t;
 typedef unsigned int _Index_t;
 
-#define containerOf(addr, contType, member) \
-    do {\
-        typeof( ((contType)0)->member) *__ptr = addr;\
-        (contType *)((char *)__ptr - offsetof(contType, member));\
-    } while(0);
-#define isNull(obj) (obj == null)
+#define isNull(v) ((v) == null)
+#define isNonNull(v) ((v) != null)
 
 #endif /* _TEST_LAB_TYPE_ */
 
