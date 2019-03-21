@@ -31,14 +31,18 @@ _Status_t listRelease(list *l) {
 }
 
 _Status_t listAddNode(list *l, listNode *node) {
+    _Status_t status = OK;
+
     if (isNull(l) || isNull(node))
         return ERROR;
 
     if (listGetNode(l) == null) {
         listSetNode(l, node);
     } else {
-         
+        status = listNodeAppend(listGetNode(l), node);
     }
+
+    return status;
 }
 
 list * listDup(list *l) {
@@ -47,7 +51,18 @@ list * listDup(list *l) {
 
     list *l_copy = (list *)calloc(sizeof(list), 1);
     
+    listSetReleaseMethod(l_copy, l->release);
+    listSetMatchMethod(l_copy, l->match);
+    listSetDupMethod(l_copy, l->dup);
 
+    listNode *current;
+    for (current = listGetNode(l); isNonNull(current); current = listNodeNext(current)) {
+        if (listAddNode(l_copy, l->dup(current)) == ERROR) {
+            listRelease(l_copy);
+            return NULL;
+        }
+    }
+    return l_copy;
 }
 
 listNode * listSearch(list *l, void *key) {
