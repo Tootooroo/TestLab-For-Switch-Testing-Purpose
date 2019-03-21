@@ -23,6 +23,10 @@
 #define private static
 #endif
 
+enum {
+    Done = 2
+};
+
 typedef int _Status_t;
 typedef unsigned int _Index_t;
 

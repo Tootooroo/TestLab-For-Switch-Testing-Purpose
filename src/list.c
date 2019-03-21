@@ -5,8 +5,33 @@
 #include "list.h"
 
 /* Private prototype */
-private _Status_t __listShallowRelease(list *l);
-private _Status_t __listDeepRelease(list *l);
+typedef void (*valueOp)(void *);
+typedef _Status_t (*listNodeOp)(listNode *);
+typedef _Status_t (*listNodeOpWithArgs)(listNode *, void *args);
+typedef _Status_t (*OpSelector)(listNode *, listNodeOp, void *);
+
+#define listNodeGetValue(ln) ((ln)->value)
+#define listNodeGetPrev(ln) ((ln)->prev)
+#define listNodeSetPrev(ln, p) ((ln)->prev = p)
+#define listNodeGetNext(ln) ((ln)->next)
+#define listNodeSetNext(ln, n) ((ln)->next = n)
+#define listNodeIsFirst(ln) ((ln)->prev == null)
+#define listNodeIsLast(ln) ((ln)->next == null)
+
+private void valueRelease(listNode *, valueOp);
+private _Status_t __listOperateWithArgs(listNode *, listNodeOp, void *);
+private _Status_t __listOperateWithOutArgs(listNode *, listNodeOp, void *);
+private _Status_t __listShallowRelease(list *);
+private _Status_t __listDeepRelease(list *);
+private listNode * __listOperate(list *, listNodeOp, void *, _Status_t);
+
+private _Status_t listNodeAppend(listNode *, listNode *);
+private _Status_t listNodeDel(listNode *);
+private listNode * listNodePrev(listNode *);
+private listNode * listNodeNext(listNode *);
+private listNode * listNodeHead(listNode *);
+private listNode * listNodeTail(listNode *);
+private _Status_t listNodeCancate(listNode *, listNode *);
 
 
 /* Public functions */
@@ -38,11 +63,24 @@ _Status_t listAddNode(list *l, listNode *node) {
 
     if (listGetNode(l) == null) {
         listSetNode(l, node);
+        listSetTail(l, node); 
     } else {
-        status = listNodeAppend(listGetNode(l), node);
+        status = listNodeCancate(listGetTail(l), node);
+        listSetTail(l, node);
     }
 
     return status;
+}
+
+_Status_t listDelNode(list *l, void *key) {
+    if (isNull(l) || isNull(key))
+        return ERROR;
+    
+    listNode *node = listSearch(l, key);
+    if (listNodeIsFirst(node))
+        l->node = listNodeNext(node);     
+    
+    return listNodeDel(node);
 }
 
 list * listDup(list *l) {
@@ -55,21 +93,56 @@ list * listDup(list *l) {
     listSetMatchMethod(l_copy, l->match);
     listSetDupMethod(l_copy, l->dup);
 
-    listNode *current;
-    for (current = listGetNode(l); isNonNull(current); current = listNodeNext(current)) {
+    listNode *current = listGetNode(l);
+    while (isNonNull(current)) {
         if (listAddNode(l_copy, l->dup(current)) == ERROR) {
             listRelease(l_copy);
-            return NULL;
-        }
+            return NULL; 
+        } 
+        current = listNodeNext(current);
     }
+
     return l_copy;
 }
 
 listNode * listSearch(list *l, void *key) {
-
+    if (isNull(l) || isNull(key))
+        return null;
+    
+    return __listOperate(l, (listNodeOp)l->match, key, OK);
 }
 
-_Status_t listNodeAppend(listNode *nl, listNode *nr) {
+listNode * listNext(listIter *iter) {
+    if (isNull(iter))
+       return null;
+
+    listNode *node = iter->node;
+
+    if (iter->dir == LITER_FORWARD)
+        node = listNodeNext(node);
+    else
+        node = listNodePrev(node);
+
+    iter->node = node;
+
+    return iter->node;
+}
+
+_Status_t listRewind(list *l, listIter *iter) {
+    if (isNull(iter))
+        return ERROR;
+    
+    if (iter->dir == LITER_FORWARD)
+        iter->node = listGetNode(l);
+    else 
+        iter->node = listGetTail(l);
+
+    return OK;
+}
+
+/* Private functions */
+
+private _Status_t listNodeAppend(listNode *nl, listNode *nr) {
     if (isNull(nl) || isNull(nr))
         return ERROR;
     
@@ -77,19 +150,44 @@ _Status_t listNodeAppend(listNode *nl, listNode *nr) {
     return listNodeCancate(tail, nr);
 }
 
-listNode * listNodePrev(listNode *node) {
+private _Status_t listNodeDel(listNode *n) {
+    if (isNull(n))
+        return ERROR; 
+
+    /* Situations: (1) Single seperated node.
+     *             (2) First node.
+     *             (3) Last node.
+     *             (4) Between first and last. */
+    if (n->prev == null && null == n->next) {
+        return OK;      
+    } else if (n->prev == null) {
+        n->next->prev = null;
+        n->next = null;
+    } else if (n->next == null) {
+        n->prev->next = null;
+        n->prev = null; 
+    } else {
+        n->prev->next = n->next;
+        n->next->prev = n->prev;     
+        n->prev = n->next = null;
+    } 
+
+    return OK;
+}
+
+private listNode * listNodePrev(listNode *node) {
     if (isNull(node) || listNodeIsFirst(node)) 
         return null;
     return node->prev; 
 }
 
-listNode * listNodeNext(listNode *node) {
+private listNode * listNodeNext(listNode *node) {
     if (isNull(node) || listNodeIsLast(node))
         return null;
     return node->next;
 }
 
-listNode * listNodeHead(listNode *node) {
+private listNode * listNodeHead(listNode *node) {
     if (isNull(node))
        return null;
 
@@ -99,7 +197,7 @@ listNode * listNodeHead(listNode *node) {
     return node;
 }
 
-listNode * listNodeTail(listNode *node) {
+private listNode * listNodeTail(listNode *node) {
     if (isNull(node))
         return null;
 
@@ -109,7 +207,7 @@ listNode * listNodeTail(listNode *node) {
     return node;
 }
 
-_Status_t listNodeCancate(listNode *nl, listNode *nr) {
+private _Status_t listNodeCancate(listNode *nl, listNode *nr) {
     if (isNull(nl) || isNull(nr))
         return ERROR;
 
@@ -119,40 +217,62 @@ _Status_t listNodeCancate(listNode *nl, listNode *nr) {
     return OK;
 }
 
-/* Private functions */
-private _Status_t __listShallowRelease(list *l) {
-    listNode *current, *next;
+private void valueRelease(listNode *n, valueOp op) { op(n->value); free(n); }
 
-    current = listGetNode(l);
-    next = listNodeNext(current);
+private _Status_t __listOperateWithOutArgs(listNode *n, listNodeOp op, void *args) { 
+    return op(n); 
+}
+
+private _Status_t __listOperateWithArgs(listNode *n, listNodeOp op, void *args) { 
+    return ((listNodeOpWithArgs)op)(n, args); 
+}
+
+private listNode * __listOperate(list *l, listNodeOp op, void *args, _Status_t exitCond) {
+    if (isNull(l) || isNull(op))
+        return NULL;
+    
+    OpSelector selectedOp; 
+    if (args) selectedOp = __listOperateWithArgs;
+    else      selectedOp = __listOperateWithOutArgs;
+
+    listNode *current = listGetNode(l), 
+             *next = listNodeNext(current); 
 
     while (isNonNull(current)) {
-        // ShallowRelease 
-        free(current); 
+        if (selectedOp(current, op, args) == exitCond)
+            break;
 
-        // listNode update
         current = next;
-        next = listNodeNext(next);     
-    }
-    return OK;
+        next = listNodeNext(next); 
+    } 
+    return current;;
+}
+
+private _Status_t __listShallowRelease(list *l) {
+    if (__listOperate(l, (listNodeOp)free, NULL, ERROR) == NULL)
+        return OK;
+    return ERROR;
 }
 
 private _Status_t __listDeepRelease(list *l) {
-    listNode *current, *next;
-
-    current = listGetNode(l);
-    next = listNodeNext(current);
-
-    while (isNonNull(current)) {
-        // DeepRelease
-        if (l->release(current->value) == ERROR)
-            return ERROR;
-        
-        // listNode update
-        current = next;
-        next = listNodeNext(next);
-    }
-    return OK;
+    if (__listOperate(l, (listNodeOp)valueRelease, l->release, ERROR) == NULL)
+        return OK;
+    return ERROR;
 }
 
+#ifdef _TEST_LAB_UNIT_TESTING_
+
+void list_Basic(void **state) {
+    /* Test Subjects: 
+     * (1) listCreate
+     * (2) Insert 1000 Elements
+     * (3) Delete all of them
+     * (4) Iterate over all elements 
+     * (5) Duplication of list */     
+    
+    /* (1) listCreate */
+    
+}
+
+#endif
 

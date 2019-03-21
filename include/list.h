@@ -13,42 +13,44 @@ typedef struct listNode {
 
 typedef struct list {
     listNode *node;
+    listNode *tail;
     _Status_t (*release)(void *);
     _Status_t (*match)(void *, void *);
     void * (*dup)(void *);
 } list;
 
+typedef enum {
+    LITER_FORWARD,
+    LITER_BACKWARD
+} LITER_DIR;
+
+typedef struct listIter {
+    listNode *node;
+    LITER_DIR dir;
+} listIter;
+
 /* Member function implemented as macros */
 #define listGetNode(l) ((l)->node)
 #define listSetNode(l, n) ((l)->node = n)
+#define listGetTail(l) ((l)->tail)
+#define listSetTail(l, t) ((l)->tail = t)
 #define listSetReleaseMethod(l, m) ((l)->release = m)
 #define listSetMatchMethod(l, m) ((l)->match = m)
 #define listSetDupMethod(l, m) ((l)->dup = m)
-
-#define listNodeGetValue(ln) ((ln)->value)
-#define listNodeGetPrev(ln) ((ln)->prev)
-#define listNodeSetPrev(ln, p) ((ln)->prev = p)
-#define listNodeGetNext(ln) ((ln)->next)
-#define listNodeSetNext(ln, n) ((ln)->next = n)
-#define listNodeIsFirst(ln) ((ln)->prev == null)
-#define listNodeIsLast(ln) ((ln)->next == null)
 
 /* list Prototypes */
 list * listCreate(void);
 _Status_t listRelease(list *l);
 _Status_t listAddNode(list *l, listNode *node);
+_Status_t listDelNode(list *l, void *key);
 list * listDup(list *l);
 listNode * listSearch(list *, void *key);
-
-/* listNode Prototypes */
-_Status_t listNodeAppend(listNode *, listNode *);
-listNode * listNodePrev(listNode *);
-listNode * listNodeNext(listNode *);
-listNode * listNodeHead(listNode *);
-listNode * listNodeTail(listNode *);
-_Status_t listNodeCancate(listNode *, listNode *);
+listNode * listNext(listIter *);
+_Status_t listRewind(list *, listIter *);
 
 #ifdef _TEST_LAB_UNIT_TESTING_
+
+void list_Basic(void **state);
 
 #endif /* _TEST_LAB_UNIT_TESTING_ */
 

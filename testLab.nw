@@ -64,6 +64,7 @@ typedef unsigned int _Index_t;
         typeof( ((contType)0)->member) *__ptr = addr;\
         (contType *)((char *)__ptr - offsetof(contType, member));\
     } while(0);
+
 #define isNull(obj) (obj == null)
 
 #endif /* _TEST_LAB_TYPE_ */
