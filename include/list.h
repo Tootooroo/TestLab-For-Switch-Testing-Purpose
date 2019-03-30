@@ -14,8 +14,11 @@ typedef struct listNode {
 typedef struct list {
     listNode *node;
     listNode *tail;
+    /* Action(release, _Status_t, OK, ERROR) */
     _Status_t (*release)(void *);
-    _Status_t (*match)(void *, void *);
+    /* Predicate(match) */
+    _Bool (*match)(void *, void *);
+    /* Action(dup, void *, NON_NULL, NULL) */
     void * (*dup)(void *);
 } list;
 
@@ -39,14 +42,14 @@ typedef struct listIter {
 #define listSetDupMethod(l, m) ((l)->dup = m)
 
 /* list Prototypes */
-list * listCreate(void);
-_Status_t listRelease(list *l);
-_Status_t listAddNode(list *l, listNode *node);
-_Status_t listDelNode(list *l, void *key);
-list * listDup(list *l);
-listNode * listSearch(list *, void *key);
-listNode * listNext(listIter *);
-_Status_t listRewind(list *, listIter *);
+list *      listCreate(void);
+_Status_t   listRelease(list *l);
+_Status_t   listAddNode(list *l, void *value);
+_Status_t   listDelNode(list *l, void *key);
+list *      listDup(list *l);
+listNode *  listSearch(list *, void *key);
+listNode *  listNext(listIter *);
+_Status_t   listRewind(list *, listIter *);
 
 #ifdef _TEST_LAB_UNIT_TESTING_
 

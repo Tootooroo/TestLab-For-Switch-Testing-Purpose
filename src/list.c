@@ -1,7 +1,9 @@
 /* list.c */
 
 #include <malloc.h>
+
 #include "type.h"
+#include "wrapper.h"
 #include "list.h"
 
 /* Private prototype */
@@ -55,11 +57,14 @@ _Status_t listRelease(list *l) {
     return status;
 }
 
-_Status_t listAddNode(list *l, listNode *node) {
+_Status_t listAddNode(list *l, void *value) {
     _Status_t status = OK;
-
-    if (isNull(l) || isNull(node))
+    
+    if (isNull(l) || isNull(value))
         return ERROR;
+    
+    listNode *node = (listNode *)zMalloc(sizeof(listNode));
+    node->value = value;
 
     if (listGetNode(l) == null) {
         listSetNode(l, node);
@@ -92,10 +97,11 @@ list * listDup(list *l) {
     listSetReleaseMethod(l_copy, l->release);
     listSetMatchMethod(l_copy, l->match);
     listSetDupMethod(l_copy, l->dup);
-
+    
     listNode *current = listGetNode(l);
-    while (isNonNull(current)) {
-        if (listAddNode(l_copy, l->dup(current)) == ERROR) {
+
+    while (isNonNull(current)) { 
+        if (listAddNode(l_copy, l->dup(current->value)) == ERROR) {
             listRelease(l_copy);
             return NULL; 
         } 
@@ -109,7 +115,7 @@ listNode * listSearch(list *l, void *key) {
     if (isNull(l) || isNull(key))
         return null;
     
-    return __listOperate(l, (listNodeOp)l->match, key, OK);
+    return __listOperate(l, (listNodeOp)l->match, key, true);
 }
 
 listNode * listNext(listIter *iter) {
@@ -220,11 +226,11 @@ private _Status_t listNodeCancate(listNode *nl, listNode *nr) {
 private void valueRelease(listNode *n, valueOp op) { op(n->value); free(n); }
 
 private _Status_t __listOperateWithOutArgs(listNode *n, listNodeOp op, void *args) { 
-    return op(n); 
+    return op(n->value); 
 }
 
 private _Status_t __listOperateWithArgs(listNode *n, listNodeOp op, void *args) { 
-    return ((listNodeOpWithArgs)op)(n, args); 
+    return ((listNodeOpWithArgs)op)(n->next, args); 
 }
 
 private listNode * __listOperate(list *l, listNodeOp op, void *args, _Status_t exitCond) {
@@ -262,6 +268,13 @@ private _Status_t __listDeepRelease(list *l) {
 
 #ifdef _TEST_LAB_UNIT_TESTING_
 
+#include "test.h"
+
+/* Predicate(match) */
+_Bool match_int(int *left, int *right) {
+    return *left == *right;  
+}
+
 void list_Basic(void **state) {
     /* Test Subjects: 
      * (1) listCreate
@@ -271,7 +284,28 @@ void list_Basic(void **state) {
      * (5) Duplication of list */     
     
     /* (1) listCreate */
+    list *l = listCreate();    
     
+    /* Insert 1000 elements */
+    int i = 0, *value_int, bound = 1000;
+    
+    int valueArray[bound];
+
+    while (i < bound) { valueArray[i] = i; ++i; printf("%d\n", i);}
+
+    while (i < bound) {
+        listAddNode(l, (void *)(value_int + i));
+        ++i;
+    }
+    
+    listSetMatchMethod(l, match_int);
+
+    listNode *found;
+    for (i = 0; i < bound; i++) {
+        found = listSearch(l, (void *)(value_int + i));
+        assert_non_null(found);
+        printf("%d\n", found->value);
+    }
 }
 
 #endif
