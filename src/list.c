@@ -20,13 +20,6 @@ typedef _Status_t (*OpSelector)(listNode *, listNodeOp, void *);
 #define listNodeIsFirst(ln) ((ln)->prev == null)
 #define listNodeIsLast(ln) ((ln)->next == null)
 
-private void valueRelease(listNode *, valueOp);
-private _Status_t __listOperateWithArgs(listNode *, listNodeOp, void *);
-private _Status_t __listOperateWithOutArgs(listNode *, listNodeOp, void *);
-private _Status_t __listShallowRelease(list *);
-private _Status_t __listDeepRelease(list *);
-private listNode * __listOperate(list *, listNodeOp, void *, _Status_t);
-
 private _Status_t listNodeAppend(listNode *, listNode *);
 private _Status_t listNodeDel(listNode *);
 private listNode * listNodePrev(listNode *);
@@ -44,20 +37,28 @@ list * listCreate(void) {
 }
 
 _Status_t listRelease(list *l) {
-    _Status_t status;
-
-    if (isNull(l)) 
-        return ERROR;
+    if (isNull(l)) return ERROR;
     
-    if (l->release) {
-        status = __listDeepRelease(l);
-    } else {
-        status =  __listShallowRelease(l);
+    listIter iter;
+    if (listIterInit(l, &iter, LITER_FORWARD) == NULL)
+        return ERROR;
+
+    listNode *node, *next;
+    
+    node = listNext(&iter);
+    next = listNext(&iter);
+
+    while (node != null) {
+        if (l->release) l->release(node->value);
+        free(node);
+
+        node = next;
+        next = listNext(&iter);
     }
-    return status;
+    return OK;
 }
 
-_Status_t listAddNode(list *l, void *value) {
+_Status_t listAppend(list *l, void *value) {
     _Status_t status = OK;
     
     if (isNull(l) || isNull(value))
@@ -77,6 +78,34 @@ _Status_t listAddNode(list *l, void *value) {
     return status;
 }
 
+_Status_t listPush(list *l, void *value) {
+    if (isNull(l) || isNull(value))
+        return ERROR;
+
+    listNode *node = (listNode *)zMalloc(sizeof(listNode));
+    node->value = value;
+    
+    listNodeCancate(node, l->node);
+    l->node = node; 
+
+    return OK;
+}
+
+_Status_t listJoin(list *l, list *r) {
+    if (isNull(l) || isNull(r)) 
+        return ERROR;
+    
+    _Status_t status;
+    status = listNodeCancate(listNodeTail(l->node), r->node);
+    if (status == ERROR)
+        return ERROR;
+    status = listRelease(r);
+    if (status == ERROR)
+        return ERROR;
+
+    return OK;
+}
+
 _Status_t listDelNode(list *l, void *key) {
     if (isNull(l) || isNull(key))
         return ERROR;
@@ -88,7 +117,7 @@ _Status_t listDelNode(list *l, void *key) {
     return listNodeDel(node);
 }
 
-list * listDup(list *l) {
+list * listDup(const list *l) {
     if (isNull(l) || isNull(l->dup)) 
         return null;
 
@@ -101,7 +130,7 @@ list * listDup(list *l) {
     listNode *current = listGetNode(l);
 
     while (isNonNull(current)) { 
-        if (listAddNode(l_copy, l->dup(current->value)) == ERROR) {
+        if (listAppend(l_copy, l->dup(current->value)) == ERROR) {
             listRelease(l_copy);
             return NULL; 
         } 
@@ -111,18 +140,54 @@ list * listDup(list *l) {
     return l_copy;
 }
 
-listNode * listSearch(list *l, void *key) {
+listNode * listSearch(const list *l, const void *key) {
     if (isNull(l) || isNull(key))
         return null;
     
-    return __listOperate(l, (listNodeOp)l->match, key, true);
+    listIter iter;
+    listNode *node;
+
+    if (listIterInit(l, &iter, LITER_FORWARD) == null)
+        return null;
+   
+    while (node = listNext(&iter)) {
+        if (l->match(node->value, key))
+            break;
+    }
+    return node;
+}
+
+listIter *listGetIter(list *l, LITER_DIR dir) {
+    listIter *iter = (listIter *)zMalloc(sizeof(listIter));
+    if (listIterInit(l, iter, dir) == null)
+        free(iter);
+
+    return iter;
+}
+
+listIter *listIterInit(const list *l, listIter *iter, const LITER_DIR dir) {
+    if (isNull(l) || isNull(iter)) return NULL;
+    if (dir != LITER_FORWARD && dir != LITER_BACKWARD) 
+        return NULL;
+
+    iter->dir = dir;
+    iter->node = l->node;
+    iter->l = (list *)l;
+
+    return iter;
+}
+
+_Status_t listIterRelease(listIter *iter) {
+    if (isNull(iter)) return ERROR;
+    free(iter);
 }
 
 listNode * listNext(listIter *iter) {
     if (isNull(iter))
        return null;
-
-    listNode *node = iter->node;
+    
+    listNode *current = iter->node;
+    listNode *node = current;
 
     if (iter->dir == LITER_FORWARD)
         node = listNodeNext(node);
@@ -131,23 +196,22 @@ listNode * listNext(listIter *iter) {
 
     iter->node = node;
 
-    return iter->node;
+    return current;
 }
 
-_Status_t listRewind(list *l, listIter *iter) {
+_Status_t listRewind(listIter *iter) {
     if (isNull(iter))
         return ERROR;
     
     if (iter->dir == LITER_FORWARD)
-        iter->node = listGetNode(l);
+        iter->node = listGetNode(iter->l);
     else 
-        iter->node = listGetTail(l);
+        iter->node = listGetTail(iter->l);
 
     return OK;
 }
 
 /* Private functions */
-
 private _Status_t listNodeAppend(listNode *nl, listNode *nr) {
     if (isNull(nl) || isNull(nr))
         return ERROR;
@@ -223,56 +287,23 @@ private _Status_t listNodeCancate(listNode *nl, listNode *nr) {
     return OK;
 }
 
-private void valueRelease(listNode *n, valueOp op) { op(n->value); free(n); }
-
-private _Status_t __listOperateWithOutArgs(listNode *n, listNodeOp op, void *args) { 
-    return op(n->value); 
-}
-
-private _Status_t __listOperateWithArgs(listNode *n, listNodeOp op, void *args) { 
-    return ((listNodeOpWithArgs)op)(n->next, args); 
-}
-
-private listNode * __listOperate(list *l, listNodeOp op, void *args, _Status_t exitCond) {
-    if (isNull(l) || isNull(op))
-        return NULL;
-    
-    OpSelector selectedOp; 
-    if (args) selectedOp = __listOperateWithArgs;
-    else      selectedOp = __listOperateWithOutArgs;
-
-    listNode *current = listGetNode(l), 
-             *next = listNodeNext(current); 
-
-    while (isNonNull(current)) {
-        if (selectedOp(current, op, args) == exitCond)
-            break;
-
-        current = next;
-        next = listNodeNext(next); 
-    } 
-    return current;;
-}
-
-private _Status_t __listShallowRelease(list *l) {
-    if (__listOperate(l, (listNodeOp)free, NULL, ERROR) == NULL)
-        return OK;
-    return ERROR;
-}
-
-private _Status_t __listDeepRelease(list *l) {
-    if (__listOperate(l, (listNodeOp)valueRelease, l->release, ERROR) == NULL)
-        return OK;
-    return ERROR;
-}
-
 #ifdef _TEST_LAB_UNIT_TESTING_
 
 #include "test.h"
 
 /* Predicate(match) */
 _Bool match_int(int *left, int *right) {
-    return *left == *right;  
+    return *left == *right;
+}
+
+int * int_dup(int *number) {
+    if (isNull(number)) return NULL;
+
+    int *copy = (int *)zMalloc(sizeof(int));
+
+    *copy = *number;
+
+    return copy;
 }
 
 void list_Basic(void **state) {
@@ -291,21 +322,81 @@ void list_Basic(void **state) {
     
     int valueArray[bound];
 
-    while (i < bound) { valueArray[i] = i; ++i; printf("%d\n", i);}
-
+    while (i < bound) { valueArray[i] = i; ++i; }
+    
+    i = 0;
     while (i < bound) {
-        listAddNode(l, (void *)(value_int + i));
+        listAppend(l, (void *)(valueArray + i));
+        ++i;
+    }
+    
+    listSetMatchMethod(l, match_int);
+    
+    assert_non_null(listSearch(l, (void *)(valueArray + 256)));
+
+    listNode *found;
+    for (i = 0; i < bound; i++) {
+        found = listSearch(l, (void *)(valueArray + i));
+        assert_non_null(found);
+    }
+
+    /* Iterate overAll elements */
+    listNode *node;
+    listIter *iter = listGetIter(l, LITER_FORWARD); 
+    
+    i = 0;
+    while (node = listNext(iter)) {
+        value_int = node->value;
+        assert_int_equal(i++, *value_int);
+    }
+    
+    listIterRelease(iter);
+
+    /* Duplication */
+    list *y;
+     
+    listSetDupMethod(l, int_dup); 
+
+    y = listDup(l);
+    
+    iter = listGetIter(y, LITER_FORWARD);
+    i = 0;
+    while (node = listNext(iter)) {
+        value_int = node->value;
+        assert_int_equal(i++, *value_int);
+    }
+    
+    /* Release list */
+    listRelease(l);
+    
+    /* list joing testing */ 
+    int numbers[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    list *r = listCreate();
+    l = listCreate(); 
+
+    i = 0;
+    while (i < 5) {
+        listAppend(l, numbers + i); 
+        ++i;
+    }
+    
+    i = 5;
+    while (i < 10) {
+        listAppend(l, numbers + i);
         ++i;
     }
     
     listSetMatchMethod(l, match_int);
 
-    listNode *found;
-    for (i = 0; i < bound; i++) {
-        found = listSearch(l, (void *)(value_int + i));
-        assert_non_null(found);
-        printf("%d\n", found->value);
+    listJoin(l, r);
+    i = 0;
+    while (i < 10) {
+        node = listSearch(l, numbers+i); 
+        value_int = node->value;
+        assert_int_equal(i, *value_int);
+        ++i;
     }
+
 }
 
 #endif
