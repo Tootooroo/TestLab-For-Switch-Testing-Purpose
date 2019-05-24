@@ -38,13 +38,11 @@ list * listCreate(void) {
 
 _Status_t listRelease(list *l) {
     if (isNull(l)) return ERROR;
-    
-    listIter iter;
-    if (listIterInit(l, &iter, LITER_FORWARD) == NULL)
-        return ERROR;
+
+    listIter iter = listGetIter(l, LITER_FORWARD);
 
     listNode *node, *next;
-    
+
     node = listNext(&iter);
     next = listNext(&iter);
 
@@ -60,16 +58,16 @@ _Status_t listRelease(list *l) {
 
 _Status_t listAppend(list *l, void *value) {
     _Status_t status = OK;
-    
+
     if (isNull(l) || isNull(value))
         return ERROR;
-    
+
     listNode *node = (listNode *)zMalloc(sizeof(listNode));
     node->value = value;
 
     if (listGetNode(l) == null) {
         listSetNode(l, node);
-        listSetTail(l, node); 
+        listSetTail(l, node);
     } else {
         status = listNodeCancate(listGetTail(l), node);
         listSetTail(l, node);
@@ -84,17 +82,17 @@ _Status_t listPush(list *l, void *value) {
 
     listNode *node = (listNode *)zMalloc(sizeof(listNode));
     node->value = value;
-    
+
     listNodeCancate(node, l->node);
-    l->node = node; 
+    l->node = node;
 
     return OK;
 }
 
 _Status_t listJoin(list *l, list *r) {
-    if (isNull(l) || isNull(r)) 
+    if (isNull(l) || isNull(r))
         return ERROR;
-    
+
     _Status_t status;
     status = listNodeCancate(listNodeTail(l->node), r->node);
     if (status == ERROR)
@@ -109,31 +107,39 @@ _Status_t listJoin(list *l, list *r) {
 _Status_t listDelNode(list *l, void *key) {
     if (isNull(l) || isNull(key))
         return ERROR;
-    
+
     listNode *node = listSearch(l, key);
     if (listNodeIsFirst(node))
-        l->node = listNodeNext(node);     
-    
+        l->node = listNodeNext(node);
+
     return listNodeDel(node);
 }
 
+_Status_t listSort_step(list *l) {
+    return OK;
+}
+
+_Status_t listSort(list *l) {
+    return OK;
+}
+
 list * listDup(const list *l) {
-    if (isNull(l) || isNull(l->dup)) 
+    if (isNull(l) || isNull(l->dup))
         return null;
 
     list *l_copy = (list *)calloc(sizeof(list), 1);
-    
+
     listSetReleaseMethod(l_copy, l->release);
     listSetMatchMethod(l_copy, l->match);
     listSetDupMethod(l_copy, l->dup);
-    
+
     listNode *current = listGetNode(l);
 
-    while (isNonNull(current)) { 
+    while (isNonNull(current)) {
         if (listAppend(l_copy, l->dup(current->value)) == ERROR) {
             listRelease(l_copy);
-            return NULL; 
-        } 
+            return NULL;
+        }
         current = listNodeNext(current);
     }
 
@@ -143,13 +149,10 @@ list * listDup(const list *l) {
 listNode * listSearch(const list *l, const void *key) {
     if (isNull(l) || isNull(key))
         return null;
-    
-    listIter iter;
+
+    listIter iter = listGetIter(l, LITER_FORWARD);
     listNode *node;
 
-    if (listIterInit(l, &iter, LITER_FORWARD) == null)
-        return null;
-   
     while (node = listNext(&iter)) {
         if (l->match(node->value, key))
             break;
@@ -157,35 +160,63 @@ listNode * listSearch(const list *l, const void *key) {
     return node;
 }
 
-listIter *listGetIter(list *l, LITER_DIR dir) {
-    listIter *iter = (listIter *)zMalloc(sizeof(listIter));
-    if (listIterInit(l, iter, dir) == null)
-        free(iter);
+/* Invalid iterator(Checkable):
+ * (1) Uninitialized iterator.
+ * (2) Iterator is out of range. In other word, Iterator is not belong to
+ *     definition space of successor. */
+_Bool listIsIterValid(listIter i) {
+    if (isNull(i.l) ||
+        isNull(i.node) ||
+        !isListDirValid(i.dir)) {
+
+        return false;
+    } else {
+        return true;
+    }
+}
+
+listIter listGetIter(list *l, LITER_DIR dir) {
+    listIter iter = { 0 };
+
+    if (isNull(l) || !isListDirValid(dir)) {
+        /* Return a invalid iterator */
+        return iter;
+    }
+
+    iter.dir=dir;
+    iter.node = l->node;
+    iter.l = l;
 
     return iter;
 }
 
-listIter *listIterInit(const list *l, listIter *iter, const LITER_DIR dir) {
-    if (isNull(l) || isNull(iter)) return NULL;
-    if (dir != LITER_FORWARD && dir != LITER_BACKWARD) 
-        return NULL;
+listIter listISuccessor(listIter i) {
+    if (!listIsIterValid(i)) {
+        /* Iterator is invalid. In this case
+         * return iterator immediatly. Validity
+         * of iterator should check by caller */
+        return i;
+    }
 
-    iter->dir = dir;
-    iter->node = l->node;
-    iter->l = (list *)l;
+    i.node = listNodeNext(i.node);
 
-    return iter;
+    return i;
 }
 
-_Status_t listIterRelease(listIter *iter) {
-    if (isNull(iter)) return ERROR;
-    free(iter);
+listIter listIPredecessor(listIter i) {
+    if (!listIsIterValid(i)) {
+        return i;
+    }
+
+    i.node = listNodePrev(i.node);
+
+    return i;
 }
 
 listNode * listNext(listIter *iter) {
     if (isNull(iter))
        return null;
-    
+
     listNode *current = iter->node;
     listNode *node = current;
 
@@ -202,10 +233,10 @@ listNode * listNext(listIter *iter) {
 _Status_t listRewind(listIter *iter) {
     if (isNull(iter))
         return ERROR;
-    
+
     if (iter->dir == LITER_FORWARD)
         iter->node = listGetNode(iter->l);
-    else 
+    else
         iter->node = listGetTail(iter->l);
 
     return OK;
@@ -215,40 +246,40 @@ _Status_t listRewind(listIter *iter) {
 private _Status_t listNodeAppend(listNode *nl, listNode *nr) {
     if (isNull(nl) || isNull(nr))
         return ERROR;
-    
+
     listNode *tail = listNodeTail(nl);
     return listNodeCancate(tail, nr);
 }
 
 private _Status_t listNodeDel(listNode *n) {
     if (isNull(n))
-        return ERROR; 
+        return ERROR;
 
-    /* Situations: (1) Single seperated node.
+    /* Situations: (1) A seperated node.
      *             (2) First node.
      *             (3) Last node.
      *             (4) Between first and last. */
     if (n->prev == null && null == n->next) {
-        return OK;      
+        return OK;
     } else if (n->prev == null) {
         n->next->prev = null;
         n->next = null;
     } else if (n->next == null) {
         n->prev->next = null;
-        n->prev = null; 
+        n->prev = null;
     } else {
         n->prev->next = n->next;
-        n->next->prev = n->prev;     
+        n->next->prev = n->prev;
         n->prev = n->next = null;
-    } 
+    }
 
     return OK;
 }
 
 private listNode * listNodePrev(listNode *node) {
-    if (isNull(node) || listNodeIsFirst(node)) 
+    if (isNull(node) || listNodeIsFirst(node))
         return null;
-    return node->prev; 
+    return node->prev;
 }
 
 private listNode * listNodeNext(listNode *node) {
@@ -262,7 +293,7 @@ private listNode * listNodeHead(listNode *node) {
        return null;
 
     while (listNodeIsFirst(node)) {
-        node = listNodePrev(node);     
+        node = listNodePrev(node);
     }
     return node;
 }
@@ -272,7 +303,7 @@ private listNode * listNodeTail(listNode *node) {
         return null;
 
     while (listNodeIsLast(node)) {
-        node = listNodeNext(node); 
+        node = listNodeNext(node);
     }
     return node;
 }
@@ -307,31 +338,31 @@ int * int_dup(int *number) {
 }
 
 void list_Basic(void **state) {
-    /* Test Subjects: 
+    /* Test Subjects:
      * (1) listCreate
      * (2) Insert 1000 Elements
      * (3) Delete all of them
-     * (4) Iterate over all elements 
-     * (5) Duplication of list */     
-    
+     * (4) Iterate over all elements
+     * (5) Duplication of list */
+
     /* (1) listCreate */
-    list *l = listCreate();    
-    
+    list *l = listCreate();
+
     /* Insert 1000 elements */
     int i = 0, *value_int, bound = 1000;
-    
+
     int valueArray[bound];
 
     while (i < bound) { valueArray[i] = i; ++i; }
-    
+
     i = 0;
     while (i < bound) {
         listAppend(l, (void *)(valueArray + i));
         ++i;
     }
-    
+
     listSetMatchMethod(l, match_int);
-    
+
     assert_non_null(listSearch(l, (void *)(valueArray + 256)));
 
     listNode *found;
@@ -342,56 +373,54 @@ void list_Basic(void **state) {
 
     /* Iterate overAll elements */
     listNode *node;
-    listIter *iter = listGetIter(l, LITER_FORWARD); 
-    
+    listIter iter = listGetIter(l, LITER_FORWARD);
+
     i = 0;
-    while (node = listNext(iter)) {
+    while (node = listNext(&iter)) {
         value_int = node->value;
         assert_int_equal(i++, *value_int);
     }
-    
-    listIterRelease(iter);
 
     /* Duplication */
     list *y;
-     
-    listSetDupMethod(l, int_dup); 
+
+    listSetDupMethod(l, int_dup);
 
     y = listDup(l);
-    
+
     iter = listGetIter(y, LITER_FORWARD);
     i = 0;
-    while (node = listNext(iter)) {
+    while (node = listNext(&iter)) {
         value_int = node->value;
         assert_int_equal(i++, *value_int);
     }
-    
+
     /* Release list */
     listRelease(l);
-    
-    /* list joing testing */ 
+
+    /* list joing testing */
     int numbers[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     list *r = listCreate();
-    l = listCreate(); 
+    l = listCreate();
 
     i = 0;
     while (i < 5) {
-        listAppend(l, numbers + i); 
+        listAppend(l, numbers + i);
         ++i;
     }
-    
+
     i = 5;
     while (i < 10) {
         listAppend(l, numbers + i);
         ++i;
     }
-    
+
     listSetMatchMethod(l, match_int);
 
     listJoin(l, r);
     i = 0;
     while (i < 10) {
-        node = listSearch(l, numbers+i); 
+        node = listSearch(l, numbers+i);
         value_int = node->value;
         assert_int_equal(i, *value_int);
         ++i;
@@ -400,4 +429,3 @@ void list_Basic(void **state) {
 }
 
 #endif
-

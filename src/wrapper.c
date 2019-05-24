@@ -6,7 +6,7 @@
 
 void * zMalloc(size_t size) {
     if (size <= 0) return null;
-    
+
     void *mem = malloc(size);
     if (isNull(mem)) exit(1);
     memset(mem, 0, size);

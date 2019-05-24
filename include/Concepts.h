@@ -14,7 +14,7 @@
  *   Procedure(P) &&
  *   Domain(P) == Codomain(P)
  * }
- *   
+ *
  * Action(A, R, S, F) ::= {
  *   Procedure(P) &&
  *   Codomain(P) == R

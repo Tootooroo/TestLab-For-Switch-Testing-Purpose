@@ -20,6 +20,8 @@ typedef struct list {
     _Bool (*match)(const void *, const void *);
     /* Action(dup, void *, NON_NULL, NULL) */
     void * (*dup)(void *);
+    /* Predicate(relation) */
+    _Bool (*relation)(const void *, const void *);
 } list;
 
 typedef enum {
@@ -34,6 +36,7 @@ typedef struct listIter {
 } listIter;
 
 /* Member function implemented as macros */
+#define isListDirValid(dir) ((dir) == LITER_FORWARD || (dir) == LITER_BACKWARD)
 #define listGetNode(l) ((l)->node)
 #define listSetNode(l, n) ((l)->node = n)
 #define listGetTail(l) ((l)->tail)
@@ -49,13 +52,18 @@ _Status_t   listPush(list *l, void *value);
 _Status_t   listAppend(list *l, void *value);
 _Status_t   listJoin(list *l, list *r);
 _Status_t   listDelNode(list *l, void *key);
+_Status_t   listSort_step(list *l);
+_Status_t   listSort(list *l);
 list *      listDup(const list *l);
 listNode *  listSearch(const list *, const void *key);
+listNode *  listPrev(listIter *);
 listNode *  listNext(listIter *);
 _Status_t   listRewind(listIter *);
 
-listIter * listGetIter(list *l, LITER_DIR dir);
-listIter * listIterInit(const list *l, listIter *iter, const LITER_DIR dir);
+_Bool    listIsIterValid(listIter i);
+listIter listGetIter(list *l, LITER_DIR dir);
+listIter listSuccessor(listIter i);
+listIter listPredecessor(listIter i);
 
 #ifdef _TEST_LAB_UNIT_TESTING_
 
