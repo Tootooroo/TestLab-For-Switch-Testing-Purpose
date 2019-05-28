@@ -17,11 +17,9 @@ private int hashMap_init_size = 256;
 
 /* Private prototypes */
 typedef _Bool (*keyCmp)(const void *key);
-private hashMapEntry * __hashMapEntryPrev(hashMapEntry *entry);
 private hashMapEntry * __hashMapEntryNext(hashMapEntry *entry);
 private hashMapEntry * __hashMapEntryTail(hashMapEntry *entry);
 private hashMapEntry * __hashMapEntrySearch(hashMapEntry *entry, void *key, keyCmp cmp);
-private _Status_t      __hashMapEntryInsert(hashMapEntry *entry, hashMapEntry *newEntry, int isAfter);
 private _Status_t      __hashMapEntryAppend(hashMapEntry *entry, hashMapEntry *newEntry);
 private _Status_t      __hashMapEntryDel(hashMapEntry *entry);
 private hashMapEntry * __hashMapEntryDup(hashMapEntry *entry, void *k_dup, void *v_dup);
@@ -297,8 +295,21 @@ private _Status_t __hashMapRehashingStep(hashMap *map) {
 
 /* This macro should update map->rehashIdx */
 #define __REHASHING_THE_SLOT(M) ({       \
-    null;\
+    int idx = M->rehashIdx, ret = OK;                                \
+    hashMapEntry **currentEntry = &M->maps[0].entries[idx];\
+    while (!currentEntry) {\
+        if (__hashMapEntryIsLastSlot(currentEntry)) {   \
+            ret = ERROR;                                \
+            goto EXIT_THE_SLOT;                         \
+        }                                               \
+        ++currentEntry;\
+        ++idx;\
+    }\
+EXIT_THE_SLOT:\
+    M->rehashIdx = idx;
+    ret;      \
 })
+
 #define __REHASHING_STEPS(N_, M) ({\
     int idx, ret = OK;\
     hashMapEntry *current, *next, **newSlot;\
@@ -366,28 +377,35 @@ private _Bool __hashMapEntryIsLastSlot(hashMapEntry **entry, __hashMap *env) {
     return env->last == entry;
 }
 
-private hashMapEntry * __hashMapEntryPrev(hashMapEntry *entry) {
-
-}
-
 private hashMapEntry * __hashMapEntryNext(hashMapEntry *entry) {
-
+    return entry->next;
 }
 
 private hashMapEntry * __hashMapEntryTail(hashMapEntry *entry) {
-
+    while (entry) {
+        if (entry->next == NULL)
+            break;
+        entry = __hashMapEntryNext(entry);
+    }
+    return entry;
 }
 
 private hashMapEntry * __hashMapEntrySearch(hashMapEntry *entry, void *key, keyCmp cmp) {
+    while (entry) {
+        if (cmp(entry->key, key))
+            break;
+        entry = __hashMapEntryNext(entry);
+    }
 
-}
-
-private _Status_t __hashMapEntryInsert(hashMapEntry *entry, hashMapEntry *newEntry, int isAfter) {
-
+    return entry;
 }
 
 private _Status_t __hashMapEntryAppend(hashMapEntry *entry, hashMapEntry *newEntry) {
+    entry = __hashMapEntryTail(entry);
 
+    entry->next = newEntry;
+
+    return OK;
 }
 
 private _Status_t __hashMapEntryDel(hashMapEntry *entry) {
