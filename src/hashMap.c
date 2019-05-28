@@ -296,16 +296,15 @@ private _Status_t __hashMapRehashingStep(hashMap *map) {
 /* Do N steps of rehashing */
 
 /* This macro should update map->rehashIdx */
-#define __REHASHING_THE_SLOT(ENTRIES) ({\
-    /* Pending */ \
-    null\
+#define __REHASHING_THE_SLOT(M) ({       \
+    null;\
 })
 #define __REHASHING_STEPS(N_, M) ({\
     int idx, ret = OK;\
     hashMapEntry *current, *next, **newSlot;\
     \
     while (--N_) {\
-        current = __REHASHING_THE_SLOT(&M->maps[0].entries[M->rehashIdx]);\
+        current = __REHASHING_THE_SLOT(M);   \
         \
         if (isNull(current)) { ret = ERROR; goto EXIT; }\
         \
