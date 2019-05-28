@@ -2,10 +2,18 @@
 
 #include <malloc.h>
 #include <string.h>
+#include <assert.h>
 
 #include "type.h"
 #include "hashMap.h"
 #include "wrapper.h"
+
+/* Private variables */
+
+/* if map->maps[0].used / map->maps[0].size > hashMap_force_expand_ratio
+ * hashMap will be force to expand and then into rehashing state */
+private int hashMap_force_expand_ratio = 5;
+private int hashMap_init_size = 256;
 
 /* Private prototypes */
 typedef _Bool (*keyCmp)(const void *key);
@@ -17,20 +25,27 @@ private _Status_t      __hashMapEntryInsert(hashMapEntry *entry, hashMapEntry *n
 private _Status_t      __hashMapEntryAppend(hashMapEntry *entry, hashMapEntry *newEntry);
 private _Status_t      __hashMapEntryDel(hashMapEntry *entry);
 private hashMapEntry * __hashMapEntryDup(hashMapEntry *entry, void *k_dup, void *v_dup);
+private _Bool          __hashMapEntryIsLastSlot(hashMapEntry **entry, __hashMap *env);
+private hashMapEntry * __hashMapEntryDrag(hashMapEntry *entry);
 
 private _Status_t __hashMapRelease_do(hashMapType *tpe, __hashMap *map);
 private _Bool __hashMapIsNeedExpand(hashMap *map);
 private _Status_t __hashMapExpand(hashMap *map);
+private _Status_t __hashMapExpand_do(hashMap *map, int size);
 private _Status_t __hashMapRehashingStep(hashMap *map);
+private _Status_t __hashMapRehashingSteps(hashMap *map, int N);
 private _Status_t __hashMapRehashing(hashMap *map);
 private _Status_t __hashMapAdd(__hashMap *map, void *key, void *val);
 private _Status_t __hashMapDel(__hashMap *map, void *key, hashMap *env);
+/* This function return the first non-null entry of hashmap */
+private hashMapEntry * __hashMapFirstEntry(__hashMap *map, hashMapEntry * **slot);
 
 hashMap * hashMapCreate(hashMapType *type) {
     hashMap *map = (hashMap *)zMalloc(sizeof(hashMap));
 
     map->type = type;
     map->state = IN_NORMAL;
+    map->rehashIdx = 0;
     memset(map->maps, 0, sizeof(__hashMap) * 2);
 
     return map;
@@ -143,29 +158,80 @@ hashMap * hashMapDup(hashMap *map) {
     }
 }
 
-hashMapEntry * hashMapNext(hashMapIter *iter) {
+private hashMapEntry * __hashMapNext(hashMapIter *iter) {
+    hashMap *map = iter->map;
+    entryPos *pos = &iter->pos;
+    hashMapEntry **slot = hashEntryPosSlot(pos), *entry = hashEntryPosEntry(pos);
+    int tableIdx = iter->table;
 
-}
+    if (hashMapIsEmpty(map)) return null;
+    if (hashMapIsInRehashing(map)) __hashMapRehashingStep(map);
 
-hashMapEntry * hashMapPrev(hashMapIter *iter) {
+ Again:
+    if (!entry) {
+        return pos->entry =  __hashMapFirstEntry(&map->maps[tableIdx], &slot);
+    }
 
+    /* If still an element is after the current element */
+    if (entry->next) {
+        return pos->entry = __hashMapEntryNext(entry);
+    }
+
+    /* To the next nont-null slot */
+    while (hashEntryPosIsEmptySlot(++slot)) {
+        if (__hashMapEntryIsLastSlot(slot, &map->maps[tableIdx])) {
+            iter->pos.entry = null;
+            iter->pos.slot = null;
+
+            if (!hashMapIsInRehashing(map)) {
+                iter->table = tableIdx = 1;
+                goto Again;
+            }
+            return null;
+        }
+    }
+    iter->pos.slot = slot;
+    entry = *slot;
+    iter->pos.entry = entry;;
+
+    return entry;
 }
 
 hashMapIter hashMapGetIter(hashMap *map) {
+    hashMapIter iter;
+    iter.map = map;
+    iter.table = 0;
+    iter.pos.entry = null;
+    iter.pos.slot = null;
 
+    return iter;
 }
 
 hashMapIter hashMap_I_Successor(hashMapIter iter) {
+    __hashMapNext(&iter);
 
-}
-
-hashMapIter hashMap_I_Predecessor(hashMapIter iter) {
-
+    return iter;
 }
 
 /* Private procedures */
 
 // HashMap procedures
+private hashMapEntry * __hashMapFirstEntry(__hashMap *map, hashMapEntry * **slot) {
+    hashMapEntry **slot_;
+
+    slot_ = map->entries;
+
+    if (slot_) return slot_[0];
+
+    while (!(++slot_)[0]) {
+        if (__hashMapEntryIsLastSlot(slot_, map))
+            return null;
+    }
+
+    *slot = slot_;
+    return slot_[0];
+}
+
 private _Status_t __hashMapRelease_do(hashMapType *type, __hashMap *map) {
     hashMapEntry **entries, *currentEntry, *nextEntry;
 
@@ -183,15 +249,99 @@ private _Status_t __hashMapRelease_do(hashMapType *type, __hashMap *map) {
     return OK;
 }
 
+private _Bool __hashMapIsNeedExpand(hashMap *map) {
+    if (hashMapIsInRehashing(map)) return false;
+
+    if (hashMapIsEmpty(map) ||
+        map->maps[0].used / map->maps[0].size > hashMap_force_expand_ratio)
+
+        return true;
+
+    return false;
+}
+
+/* __hashMapIsNeedExpand should be call first to detect that
+ * expand condition has been satisfied */
 private _Status_t __hashMapExpand(hashMap *map) {
+    if (hashMapIsEmpty(map)) {
+        /* Expand hashMap to default size */
+        __hashMapExpand_do(map, hashMap_init_size);
+    } else {
+        /* Expand hashMap to 2 * map->maps[0].size size */
+        __hashMapExpand_do(map, map->maps[0].size);
+    }
     return OK;
 }
 
-private _Bool __hashMapIsNeedExpand(hashMap *map) {
-    return true;
+private _Status_t __hashMapExpand_do(hashMap *map, int size) {
+    __hashMap *theMap = &map->maps[1];
+
+    theMap->size = size;
+    theMap->used = 0;
+
+    theMap->entries = (hashMapEntry **)zMalloc(size * (sizeof(hashMapEntry *)));
+    theMap->last = theMap->entries + (size - 1);
+
+    map->state = IN_RE_HASHING;
+    map->rehashIdx = 0;
+
+    return OK;
 }
 
+/* Don only a step of rehashing */
 private _Status_t __hashMapRehashingStep(hashMap *map) {
+    return OK;
+}
+
+/* Do N steps of rehashing */
+
+/* This macro should update map->rehashIdx */
+#define __REHASHING_THE_SLOT(ENTRIES) ({\
+    /* Pending */ \
+    null\
+})
+#define __REHASHING_STEPS(N_, M) ({\
+    int idx, ret = OK;\
+    hashMapEntry *current, *next, **newSlot;\
+    \
+    while (--N_) {\
+        current = __REHASHING_THE_SLOT(&M->maps[0].entries[M->rehashIdx]);\
+        \
+        if (isNull(current)) { ret = ERROR; goto EXIT; }\
+        \
+        while (current) {\
+            next = current->next;\
+            \
+            idx = M->type->hashing(current->key) & M->maps[1].size;\
+            newSlot = &M->maps[1].entries[idx];\
+            current = __hashMapEntryDrag(current);\
+            if (*newSlot == null)\
+                *newSlot = current;                       \
+            else\
+                __hashMapEntryAppend(*newSlot, current);    \
+            \
+            current = next;\
+        }                  \
+    }\
+EXIT:\
+    ret;\
+})
+
+private _Status_t __hashMapRehashingSteps(hashMap *map, int N) {
+    assert(map->maps[0].size > map->rehashIdx);
+
+    /* Do rehashing with N steps */
+    __REHASHING_STEPS(N, map);
+
+    /* Is rehashing finished ? */
+    if (map->maps[0].used == 0) {
+        map->state = IN_NORMAL;
+        map->rehashIdx = 0;
+
+        free(map->maps[0].entries);
+        map->maps[0] = map->maps[1];
+    }
+
     return OK;
 }
 
@@ -213,6 +363,10 @@ private _Status_t __hashMapDel(__hashMap *map, void *key, hashMap *env) {
 }
 
 // HashMapEntry procedures
+private _Bool __hashMapEntryIsLastSlot(hashMapEntry **entry, __hashMap *env) {
+    return env->last == entry;
+}
+
 private hashMapEntry * __hashMapEntryPrev(hashMapEntry *entry) {
 
 }
@@ -243,5 +397,9 @@ private _Status_t __hashMapEntryDel(hashMapEntry *entry) {
 }
 
 private hashMapEntry * __hashMapEntryDup(hashMapEntry *entry, void *k_dup, void *v_dup) {
+    return null;
+}
+
+private hashMapEntry * __hashMapEntryDrag(hashMapEntry *entry) {
     return null;
 }

@@ -30,6 +30,7 @@ typedef struct __hashMap {
     int size;
     int used;
     hashMapEntry **entries;
+    hashMapEntry **last;
 } __hashMap;
 
 typedef enum {
@@ -43,11 +44,19 @@ typedef struct hashMap {
     __hashMap maps[2];
     hashMapType *type;
     rehashState state;
+    int rehashIdx;
 } hashMap;
+
+typedef struct entryPos {
+    hashMapEntry **slot;
+    hashMapEntry *entry;
+} entryPos;
 
 typedef struct hashMapIter {
     hashMap *map;
-    hashMapEntry *entry;
+    entryPos pos;
+    // 0: master, 1 : slave
+    int table;
 } hashMapIter;
 
 /* Functions implement as macros */
@@ -63,6 +72,14 @@ typedef struct hashMapIter {
 
 #define hashEntryGetValue(HE) ((HE)->value)
 #define hashEntrySetValue(HE, VALUE) ((HE)->value = VALUE)
+
+#define hashEntryPosSlot(POS) ((POS)->slot)
+#define hashEntryPosSetSlot(POS, S) ((POS)->slot = S)
+#define hashEntryPosIsEmptySlot(S) (*(S) == null)
+
+#define hashEntryPosEntry(POS) ((POS)->entry)
+#define hashEntryPosSetEntry(POS, E) ((POS)->entry = E)
+
 
 /* Prototype */
 hashMap * hashMapCreate(hashMapType *type);
