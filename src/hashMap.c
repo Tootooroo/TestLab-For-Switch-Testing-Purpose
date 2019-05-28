@@ -21,7 +21,6 @@ private hashMapEntry * __hashMapEntryNext(hashMapEntry *entry);
 private hashMapEntry * __hashMapEntryTail(hashMapEntry *entry);
 private hashMapEntry * __hashMapEntrySearch(hashMapEntry *entry, void *key, keyCmp cmp);
 private _Status_t      __hashMapEntryAppend(hashMapEntry *entry, hashMapEntry *newEntry);
-private _Status_t      __hashMapEntryDel(hashMapEntry *entry);
 private hashMapEntry * __hashMapEntryDup(hashMapEntry *entry, void *k_dup, void *v_dup);
 private _Bool          __hashMapEntryIsLastSlot(hashMapEntry **entry, __hashMap *env);
 private hashMapEntry * __hashMapEntryDrag(hashMapEntry *entry);
@@ -365,11 +364,38 @@ private _Status_t __hashMapAdd(__hashMap *map, void *key, void *val) {
 
 private _Status_t __hashMapDel(__hashMap *map, void *key, hashMap *env) {
     uint64_t index = hashMapHash(env, key) & map->size;
-    hashMapEntry *entryHead, *entryBeDel;
+    hashMapEntry *entryHead, *entryBeDel, *entryPrev;
 
     entryHead = map->entries[index];
-    entryBeDel = __hashMapEntrySearch(entryHead, key, (keyCmp)env->type->keyCmp);
-    return __hashMapEntryDel(entryBeDel);
+
+    /* Deal with the first element of the slot */
+    if (env->type->keyCmp(key, entryHead->key)) {
+        env->type->keyRelease(entryHead->key);
+        env->type->valRelease(entryHead->value);
+
+        map->entries[index] = entryHead->next;
+
+        free(entryHead);
+
+        return OK;
+    }
+
+    entryPrev = entryHead;
+    while (entryHead = __hashMapEntryNext(entryHead)) {
+        if (env->type->keyCmp(key, entryHead->key)) {
+            env->type->keyRelease(entryHead->key);
+            env->type->valRelease(entryHead->value);
+
+            entryPrev->next = entryHead->next;
+
+            free(entryHead);
+            return OK;
+        }
+
+        entryPrev = entryHead;
+    }
+
+    return ERROR;
 }
 
 // HashMapEntry procedures
@@ -408,12 +434,8 @@ private _Status_t __hashMapEntryAppend(hashMapEntry *entry, hashMapEntry *newEnt
     return OK;
 }
 
-private _Status_t __hashMapEntryDel(hashMapEntry *entry) {
-
-    return OK;
-}
-
 private hashMapEntry * __hashMapEntryDup(hashMapEntry *entry, void *k_dup, void *v_dup) {
+    hashMapEntry *entry = (hashMapEntry *)zMalloc(sizeof(hashMapEntry));
     return null;
 }
 
