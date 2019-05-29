@@ -1,5 +1,8 @@
 /* hashMap.h */
 
+#ifndef _HASH_MAP_H_
+#define _HASH_MAP_H_
+
 #include <inttypes.h>
 #include "type.h"
 
@@ -21,7 +24,7 @@ typedef struct hashMapType {
     uint64_t  (*hashing)(const void *key);
     _Status_t (*keyRelease)(void *key);
     void *    (*keyDup)(void *key);
-    _Bool     (*keyCmp)(void *key, void *key);
+    _Bool     (*keyCmp)(void *key1, void *key2);
     _Status_t (*valRelease)(void *value);
     void *    (*valDup)(void *value);
 } hashMapType;
@@ -34,8 +37,8 @@ typedef struct __hashMap {
 } __hashMap;
 
 typedef enum {
-    IN_RE_HASHING,
-    IN_NORMAL
+    IN_RE_HASHING = 0,
+    IN_NORMAL = 1
 } rehashState;
 
 typedef struct hashMap {
@@ -63,6 +66,8 @@ typedef struct hashMapIter {
 #define hashMapGetSize(HM, idx) ((HM)->maps[idx].size)
 #define hashMapGetEntry(HM, idx) ((HM)->maps[idx].entries)
 #define hashMapHash(HM, key) ((HM)->type->hashing(key))
+
+#define hashMapSizeMask(size) ((size) - 1)
 
 #define hashMapIsInRehashing(HM) ((HM)->state == IN_RE_HASHING)
 #define hashMapIsEmpty(HM) ((HM)->maps[0].used == 0)
@@ -94,3 +99,11 @@ hashMapEntry * hashMapPrev(hashMapIter *iter);
 hashMapIter hashMapGetIter(hashMap *map);
 hashMapIter hashMap_I_Successor(hashMapIter iter);
 hashMapIter hashMap_I_Predecessor(hashMapIter iter);
+
+#ifdef _TEST_LAB_UNIT_TESTING_
+
+void hashMap_Basic(void **state);
+
+#endif /* _TEST_LAB_UNIT_TESTING */
+
+#endif /* _HASH_MAP_H_ */

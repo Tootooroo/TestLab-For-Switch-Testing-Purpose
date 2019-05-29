@@ -16,12 +16,11 @@ private int hashMap_force_expand_ratio = 5;
 private int hashMap_init_size = 256;
 
 /* Private prototypes */
-typedef _Bool (*keyCmp)(const void *key);
 private hashMapEntry * __hashMapEntryNext(hashMapEntry *entry);
 private hashMapEntry * __hashMapEntryTail(hashMapEntry *entry);
-private hashMapEntry * __hashMapEntrySearch(hashMapEntry *entry, void *key, keyCmp cmp);
+private hashMapEntry * __hashMapEntrySearch(hashMapEntry *entry, void *key, hashMap *map);
 private _Status_t      __hashMapEntryAppend(hashMapEntry *entry, hashMapEntry *newEntry);
-private hashMapEntry * __hashMapEntryDup(hashMapEntry *entry, void *k_dup, void *v_dup);
+private hashMapEntry * __hashMapEntryDup(hashMapEntry *entry, hashMap *env);
 private _Bool          __hashMapEntryIsLastSlot(hashMapEntry **entry, __hashMap *env);
 private hashMapEntry * __hashMapEntryDrag(hashMapEntry *entry);
 
@@ -32,7 +31,6 @@ private _Status_t __hashMapExpand_do(hashMap *map, int size);
 private _Status_t __hashMapRehashingStep(hashMap *map);
 private _Status_t __hashMapRehashingSteps(hashMap *map, int N);
 private _Status_t __hashMapRehashing(hashMap *map);
-private _Status_t __hashMapAdd(__hashMap *map, void *key, void *val);
 private _Status_t __hashMapDel(__hashMap *map, void *key, hashMap *env);
 /* This function return the first non-null entry of hashmap */
 private hashMapEntry * __hashMapFirstEntry(__hashMap *map, hashMapEntry * **slot);
@@ -56,9 +54,13 @@ _Status_t hashMapRelease(hashMap *map) {
 
     if (hashMapIsInRehashing(map)) {
         __hashMapRelease_do(map->type, &map->maps[1]);
+        free(&map->maps[1]);
     }
 
-    return __hashMapRelease_do(map->type, &map->maps[0]);
+    __hashMapRelease_do(map->type, &map->maps[0]);
+    free(&map->maps[0]);
+
+    return OK;
 }
 
 _Status_t hashMapAdd(hashMap *map, void *key, void *val) {
@@ -72,13 +74,15 @@ _Status_t hashMapAdd(hashMap *map, void *key, void *val) {
     else
         currentMap = &map->maps[0];
 
-    uint64_t hashIdx = hashMapHash(map, key) & currentMap->size;
-    hashMapEntry *newEntry = zMalloc(sizeof(hashMapEntry));
+    uint64_t hashIdx = hashMapHash(map, key) & hashMapSizeMask(currentMap->size);
+    hashMapEntry *newEntry = (hashMapEntry *)zMalloc(sizeof(hashMapEntry));
     hashEntrySetKey(newEntry, key);
     hashEntrySetValue(newEntry, val);
 
     newEntry->next = currentMap->entries[hashIdx];
     currentMap->entries[hashIdx] = newEntry;
+
+    currentMap->used++;
 
     return OK;
 }
@@ -89,6 +93,9 @@ _Status_t hashMapDel(hashMap *map, void *key) {
 
     if (__hashMapDel(&map->maps[0], key, map) == OK)
         return OK;
+
+    /* If we can't find such element then try to search
+     * the element in slave map */
     if (hashMapIsInRehashing(map)) {
         return __hashMapDel(&map->maps[1], key, map);
     } else {
@@ -109,7 +116,7 @@ void * hashMapSearch(hashMap *map, void *key) {
     for (int i = 0; i < 2; i++) {
         currentMap = subMap + i;
 
-        index = index_ & currentMap->size;
+        index = index_ & hashMapSizeMask(currentMap->size);
         entry = currentMap->entries[index];
 
         if (entry == null)
@@ -117,7 +124,7 @@ void * hashMapSearch(hashMap *map, void *key) {
 
         do {
             if (map->type->keyCmp(key, entry->key))
-                return entry;
+                return entry->value;
         } while (entry = __hashMapEntryNext(entry));
 
         if (!hashMapIsInRehashing(map)) break;
@@ -144,15 +151,17 @@ hashMap * hashMapDup(hashMap *map) {
         idx = 0;
         size = subMap[i].size;
         while (size--) {
-            if (subMap->entries[idx] == null)
+            if (subMap->entries[idx] == null) {
+                idx++;
                 continue;
+            }
 
-            map_dup->maps[i].entries[idx] = __hashMapEntryDup(subMap[i].entries[idx],
-                                                              map->type->keyDup, map->type->valDup);
+            map_dup->maps[i].entries[idx] = __hashMapEntryDup(subMap[i].entries[idx], map);
             idx++;
         }
         if (!hashMapIsInRehashing(map)) break;
     }
+    return map_dup;
 }
 
 private hashMapEntry * __hashMapNext(hashMapIter *iter) {
@@ -218,7 +227,10 @@ private hashMapEntry * __hashMapFirstEntry(__hashMap *map, hashMapEntry * **slot
 
     slot_ = map->entries;
 
-    if (slot_) return slot_[0];
+    if (slot_[0]) {
+        *slot = slot_;
+        return slot_[0];
+    }
 
     while (!(++slot_)[0]) {
         if (__hashMapEntryIsLastSlot(slot_, map))
@@ -232,7 +244,10 @@ private hashMapEntry * __hashMapFirstEntry(__hashMap *map, hashMapEntry * **slot
 private _Status_t __hashMapRelease_do(hashMapType *type, __hashMap *map) {
     hashMapEntry **entries, *currentEntry, *nextEntry;
 
-    for (entries = map->entries; isNonNull(entries); ++entries) {
+    for (entries = map->entries; entries != map->last; ++entries) {
+        if (*entries == null)
+            continue;
+
         nextEntry = *entries;
         while (currentEntry = nextEntry) {
             type->keyRelease(currentEntry->key);
@@ -249,9 +264,11 @@ private _Status_t __hashMapRelease_do(hashMapType *type, __hashMap *map) {
 private _Bool __hashMapIsNeedExpand(hashMap *map) {
     if (hashMapIsInRehashing(map)) return false;
 
-    if (hashMapIsEmpty(map) ||
-        map->maps[0].used / map->maps[0].size > hashMap_force_expand_ratio)
+    if (map->maps[0].size == 0)
+        return true;
 
+    int ratio = map->maps[0].used / map->maps[0].size;
+    if (ratio > hashMap_force_expand_ratio)
         return true;
 
     return false;
@@ -260,12 +277,12 @@ private _Bool __hashMapIsNeedExpand(hashMap *map) {
 /* __hashMapIsNeedExpand should be call first to detect that
  * expand condition has been satisfied */
 private _Status_t __hashMapExpand(hashMap *map) {
-    if (hashMapIsEmpty(map)) {
+    if (map->maps[0].size == 0) {
         /* Expand hashMap to default size */
         __hashMapExpand_do(map, hashMap_init_size);
     } else {
         /* Expand hashMap to 2 * map->maps[0].size size */
-        __hashMapExpand_do(map, map->maps[0].size);
+        __hashMapExpand_do(map, map->maps[0].size * 2);
     }
     return OK;
 }
@@ -273,70 +290,80 @@ private _Status_t __hashMapExpand(hashMap *map) {
 private _Status_t __hashMapExpand_do(hashMap *map, int size) {
     __hashMap *theMap = &map->maps[1];
 
+    if (map->maps[0].size == 0) {
+        theMap = &map->maps[0];
+    } else {
+        map->state = IN_RE_HASHING;
+        map->rehashIdx = 0;
+    }
+
     theMap->size = size;
     theMap->used = 0;
 
     theMap->entries = (hashMapEntry **)zMalloc(size * (sizeof(hashMapEntry *)));
-    theMap->last = theMap->entries + (size - 1);
-
-    map->state = IN_RE_HASHING;
-    map->rehashIdx = 0;
+    theMap->last = &theMap->entries[size-1];
 
     return OK;
 }
 
 /* Don only a step of rehashing */
 private _Status_t __hashMapRehashingStep(hashMap *map) {
-    return OK;
+    return __hashMapRehashingSteps(map, 1);
 }
 
 /* Do N steps of rehashing */
 
 /* This macro should update map->rehashIdx */
-#define __REHASHING_THE_SLOT(M) ({       \
-    int idx = M->rehashIdx, ret = OK;                                \
-    hashMapEntry **currentEntry = &M->maps[0].entries[idx];\
-    while (!currentEntry) {\
-        if (__hashMapEntryIsLastSlot(currentEntry)) {   \
-            ret = ERROR;                                \
-            goto EXIT_THE_SLOT;                         \
-        }                                               \
-        ++currentEntry;\
-        ++idx;\
-    }\
-EXIT_THE_SLOT:\
+hashMapEntry * __REHASHING_THE_SLOT(hashMap *M) {
+    int idx = M->rehashIdx;
+    hashMapEntry *ret, **currentEntry = &M->maps[0].entries[idx];
+    while (!(*currentEntry)) {
+        if (__hashMapEntryIsLastSlot(currentEntry, &M->maps[0])) {
+            ret = null;
+            goto EXIT_THE_SLOT;
+        }
+        ++currentEntry;
+        ++idx;
+    }
+    ret = *currentEntry;
+EXIT_THE_SLOT:
+    ++idx;
     M->rehashIdx = idx;
-    ret;      \
-})
+    return ret;
+}
 
-#define __REHASHING_STEPS(N_, M) ({\
-    int idx, ret = OK;\
-    hashMapEntry *current, *next, **newSlot;\
-    \
-    while (--N_) {\
-        current = __REHASHING_THE_SLOT(M);   \
-        \
-        if (isNull(current)) { ret = ERROR; goto EXIT; }\
-        \
-        while (current) {\
-            next = current->next;\
-            \
-            idx = M->type->hashing(current->key) & M->maps[1].size;\
-            newSlot = &M->maps[1].entries[idx];\
-            current = __hashMapEntryDrag(current);\
-            if (*newSlot == null)\
-                *newSlot = current;                       \
-            else\
-                __hashMapEntryAppend(*newSlot, current);    \
-            \
-            current = next;\
-        }                  \
-    }\
-EXIT:\
-    ret;\
-})
+private _Status_t __REHASHING_STEPS(int N, hashMap *M) {
+    int idx, ret = OK;
+    hashMapEntry *current, *next, **newSlot;
+
+    while (N--) {
+        current = __REHASHING_THE_SLOT(M);
+        /* No more slot to be rehashed */
+        if (isNull(current)) { ret = OK; goto EXIT; }
+
+        while (current) {
+            next = current->next;
+            idx = hashMapHash(M, current->key) & hashMapSizeMask(M->maps[1].size);
+            newSlot = &M->maps[1].entries[idx];
+            current = __hashMapEntryDrag(current);
+            if (*newSlot == null)
+                *newSlot = current;
+            else
+                __hashMapEntryAppend(*newSlot, current);
+
+            current = next;
+            M->maps[0].used--;
+            M->maps[1].used++;
+        }
+    }
+EXIT:
+    return ret;
+}
 
 private _Status_t __hashMapRehashingSteps(hashMap *map, int N) {
+
+    if (!hashMapIsInRehashing(map)) return ERROR;
+
     assert(map->maps[0].size > map->rehashIdx);
 
     /* Do rehashing with N steps */
@@ -355,45 +382,35 @@ private _Status_t __hashMapRehashingSteps(hashMap *map, int N) {
 }
 
 private _Status_t __hashMapRehashing(hashMap *map) {
-    return OK;
-}
+    int steps = map->maps[0].size;
 
-private _Status_t __hashMapAdd(__hashMap *map, void *key, void *val) {
-    return OK;
+    return __hashMapRehashingSteps(map, steps);
 }
 
 private _Status_t __hashMapDel(__hashMap *map, void *key, hashMap *env) {
-    uint64_t index = hashMapHash(env, key) & map->size;
-    hashMapEntry *entryHead, *entryBeDel, *entryPrev;
+    uint64_t index = hashMapHash(env, key) & hashMapSizeMask(map->size);
+    hashMapEntry *entryHead, *entryPrev, *entryCurrent;
 
     entryHead = map->entries[index];
-
-    /* Deal with the first element of the slot */
-    if (env->type->keyCmp(key, entryHead->key)) {
-        env->type->keyRelease(entryHead->key);
-        env->type->valRelease(entryHead->value);
-
-        map->entries[index] = entryHead->next;
-
-        free(entryHead);
-
-        return OK;
-    }
+    entryCurrent = entryHead;
 
     entryPrev = entryHead;
-    while (entryHead = __hashMapEntryNext(entryHead)) {
-        if (env->type->keyCmp(key, entryHead->key)) {
-            env->type->keyRelease(entryHead->key);
-            env->type->valRelease(entryHead->value);
+    do {
+        if (env->type->keyCmp(key, entryCurrent->key)) {
+            env->type->keyRelease(entryCurrent->key);
+            env->type->valRelease(entryCurrent->value);
 
-            entryPrev->next = entryHead->next;
+            if (entryCurrent == entryHead) {
+                map->entries[index] = entryCurrent->next;
+            } else {
+                entryPrev->next = entryCurrent->next;
+            }
 
-            free(entryHead);
+            map->used--;
             return OK;
         }
-
-        entryPrev = entryHead;
-    }
+        entryPrev = entryCurrent;
+    } while (entryCurrent = __hashMapEntryNext(entryCurrent));
 
     return ERROR;
 }
@@ -416,9 +433,9 @@ private hashMapEntry * __hashMapEntryTail(hashMapEntry *entry) {
     return entry;
 }
 
-private hashMapEntry * __hashMapEntrySearch(hashMapEntry *entry, void *key, keyCmp cmp) {
+private hashMapEntry * __hashMapEntrySearch(hashMapEntry *entry, void *key, hashMap *map) {
     while (entry) {
-        if (cmp(entry->key, key))
+        if (map->type->keyCmp(key, entry->key))
             break;
         entry = __hashMapEntryNext(entry);
     }
@@ -434,11 +451,126 @@ private _Status_t __hashMapEntryAppend(hashMapEntry *entry, hashMapEntry *newEnt
     return OK;
 }
 
-private hashMapEntry * __hashMapEntryDup(hashMapEntry *entry, void *k_dup, void *v_dup) {
-    hashMapEntry *entry = (hashMapEntry *)zMalloc(sizeof(hashMapEntry));
-    return null;
+private hashMapEntry * __hashMapEntryDup(hashMapEntry *entry, hashMap *map) {
+    hashMapEntry anchor = { null, null, null }, *dupEntry;
+    hashMapType *env = map->type;
+
+    do {
+        dupEntry = (hashMapEntry *)zMalloc(sizeof(hashMapEntry));
+        dupEntry->key = env->keyDup(entry->key);
+        dupEntry->value = env->valDup(entry->value);
+        __hashMapEntryAppend(&anchor, dupEntry);
+    } while (entry = __hashMapEntryNext(entry));
+
+    return anchor.next;
 }
 
 private hashMapEntry * __hashMapEntryDrag(hashMapEntry *entry) {
-    return null;
+    entry->next = null;
+    return entry;
 }
+
+#ifdef _TEST_LAB_UNIT_TESTING_
+
+#include "test.h"
+
+uint64_t testHashing(const void *key) {
+    const int *key_int = (const int *)key;
+
+    return *key_int;
+}
+
+_Status_t testKeyRelease(void *key) {
+    free(key);
+    return OK;
+}
+
+void * testKeyDup(void *key) {
+    int *key_int = (int *)key;
+    int *new_key = (int *)zMalloc(sizeof(int));
+
+    *new_key = *key_int;
+    return new_key;
+}
+
+_Bool testKeyCmp(void *key1, void *key2) {
+    int *key_int1, *key_int2;
+
+    key_int1 = (int *)key1;
+    key_int2 = (int *)key2;
+
+    return *key_int1 == *key_int2;
+}
+
+_Status_t testValRelease(void *val) {
+    free(val);
+    return OK;
+}
+
+void * testValDup(void *val) {
+    int *val_int = (int *)val;
+    int *new_val = (int *)zMalloc(sizeof(int));
+
+    *new_val = *val_int;
+
+    return new_val;
+}
+
+hashMapType testType = {
+    testHashing,
+    testKeyRelease,
+    testKeyDup,
+    testKeyCmp,
+    testValRelease,
+    testValDup
+};
+
+void hashMap_Basic(void **state) {
+    hashMap *map = hashMapCreate(&testType);
+
+    int *a = (int *)zMalloc(sizeof(int)),
+        *a1 = (int *)zMalloc(sizeof(int));
+    *a = 0, *a1 = 2;
+    hashMapAdd(map, (void *)a, (void *)a1);
+    int *pa = hashMapSearch(map, (void *)a);
+    assert_int_equal(*pa, *a1);
+
+    hashMapDel(map, (void *)a);
+
+    int a_int = 0;
+    assert_non_null(!hashMapSearch(map, (void *)&a_int));
+
+    /* Insert much of elements to trigger expand */
+    const int num_of_elem_to_insert = map->maps[0].size * 100;
+    int idx = 0, count = num_of_elem_to_insert;
+
+    while (count--) {
+        a = (int *)zMalloc(sizeof(int));
+        a1 = (int *)zMalloc(sizeof(int));
+
+        *a = idx, *a1 = idx + 1;
+        hashMapAdd(map, (void *)a, (void *)a1);
+        idx++;
+    }
+
+    idx = 0;
+    count = num_of_elem_to_insert;
+    while (count--) {
+        a1 = (int *)hashMapSearch(map, (void *)&idx);
+        assert_int_equal(*a1, idx + 1);
+    }
+
+    /* HashMap dup */
+    hashMap *map1 = hashMapDup(map);
+    idx = 0;
+    count = num_of_elem_to_insert;
+    while (count--) {
+        a1 = (int *)hashMapSearch(map1, (void *)&idx);
+        assert_int_equal(*a1, idx + 1);
+    }
+
+    /* Release HashMap */
+    hashMapRelease(map);
+}
+
+#endif
