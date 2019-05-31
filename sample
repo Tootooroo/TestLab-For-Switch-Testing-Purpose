@@ -1,0 +1,27 @@
+import gl5610Ops from Gl5610_defs
+
+type Switch {
+    address addr;
+    mac     mAddr
+    serial  serialId;
+    opSet   ops;
+};
+
+type DUT from Switch { };
+
+start {
+    Switch S1 = [ "192.168.1.1", <macAddr>, 1, gl5610Ops ];
+    DUT D1 = [ "192.168.1.2", <macAddr>, 2, gl5610Ops ];
+
+    testCase tc1 = {
+        ArpPacket arp = [ "192.168.1.1", <macAddr>, "192.168.1.2", <macAddr> ];
+        S1.ops.sendArpPacket(D1, arp);
+        D1.pos.searchArp("192.168.1.1");
+    }
+
+    ret = runTestCase(tc1);
+    if (ret == false)
+        sendMail(fail);
+    else
+        sendMail(success);
+}
