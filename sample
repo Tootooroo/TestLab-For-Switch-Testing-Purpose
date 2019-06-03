@@ -1,27 +1,34 @@
 import gl5610Ops from Gl5610_defs
+import ArpPacket from Packets
 
-type Switch {
-    address addr;
-    mac     mAddr
-    serial  serialId;
-    opSet   ops;
+type Machine {
+    type t;
+    matchKey k;
+    opSet ops;
+    String[] tags;
+}
+
+type Switch :: Machine {
+     Machine :: t = "Switch"
 };
 
-type DUT from Switch { };
+type DUT_Switch :: Machine {
+    Machine :: t = "Switch";
+    Machine :: tags = ["DUT"];
+};
+
+Case arpTest(Switch S1, DUT_Switch D1) {
+    string ip1 = "192.168.1.1", ip2 = "192.168.1.2";
+    ArpPacket arp = [ ip1, <mac1>, ip2, <mac2> ];
+    S1->sendArpPacket(D1, arp);
+    D1->searchArp("192.168.1.1");
+}
 
 start {
-    Switch S1 = [ "192.168.1.1", <macAddr>, 1, gl5610Ops ];
-    DUT D1 = [ "192.168.1.2", <macAddr>, 2, gl5610Ops ];
+    Switch S1 = [ gl5610Ops ];
+    DUT_Switch D1 = [ gl5610Ops ];
 
-    testCase tc1 = {
-        ArpPacket arp = [ "192.168.1.1", <macAddr>, "192.168.1.2", <macAddr> ];
-        S1.ops.sendArpPacket(D1, arp);
-        D1.pos.searchArp("192.168.1.1");
-    }
+    ret = arpTest(S1, D1);
 
-    ret = runTestCase(tc1);
-    if (ret == false)
-        sendMail(fail);
-    else
-        sendMail(success);
+    return ret;
 }
