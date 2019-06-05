@@ -397,6 +397,7 @@ private _Status_t __hashMapDel(__hashMap *map, void *key, hashMap *env) {
     entryPrev = entryHead;
     do {
         if (env->type->keyCmp(key, entryCurrent->key)) {
+
             env->type->keyRelease(entryCurrent->key);
             env->type->valRelease(entryCurrent->value);
 

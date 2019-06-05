@@ -1,18 +1,18 @@
 import gl5610Ops from Gl5610_defs
 import ArpPacket from Packets
 
-type Machine {
+Object Machine {
     type t;
     matchKey k;
     opSet ops;
     String[] tags;
 }
 
-type Switch :: Machine {
+Object Switch :: Machine {
      Machine :: t = "Switch"
 };
 
-type DUT_Switch :: Machine {
+Object DUT_Switch :: Machine {
     Machine :: t = "Switch";
     Machine :: tags = ["DUT"];
 };
@@ -24,9 +24,9 @@ Case arpTest(Switch S1, DUT_Switch D1) {
     D1->searchArp("192.168.1.1");
 }
 
-start {
-    Switch S1 = [ gl5610Ops ];
-    DUT_Switch D1 = [ gl5610Ops ];
+Case start_ {
+    Switch S1 = Switch(k:"GL5610", ops:gl5610Ops);
+    DUT_Switch D1 = DUT_Switch(k:"GL5610", ops:gl5610Ops);
 
     ret = arpTest(S1, D1);
 
