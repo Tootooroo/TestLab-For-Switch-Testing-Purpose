@@ -34,5 +34,8 @@ typedef unsigned int _Index_t;
 #define isNull(v) ((v) == null)
 #define isNonNull(v) ((v) != null)
 
+#define errorMsg(msg, args...) fprintf(stderr, msg, ##args)
+#define abortWithMsg(msg, args...) ({ errorMsg(msg, ##args); exit(1); })
+
 #endif /* _TEST_LAB_TYPE_ */
 

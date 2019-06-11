@@ -16,11 +16,11 @@ typedef struct Case {
 
 /* Member function implemented as macros */
 #define CASE_IS_EMPTY_CASE(C) ((C)->statements == null)
-
-#define CASE_SET_OMPUTE_ROUTINE(C, COMPUTE) ((C)->compute = COMPUTE)
+#define CASE_SET_STATEMENT_LIST(C, L) ((C)->statements = (L))
 #define CASE_COMPUTING(C) ((C)->compute(C))
 
 /* Prototypes */
+Case * caseGenerate();
 _Status_t caseAppendStatement(Case *c, Statement *s);
 
 
