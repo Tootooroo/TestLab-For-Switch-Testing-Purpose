@@ -45,7 +45,10 @@ typedef struct ReturnStatement {
 
 typedef struct VarDeclStatement {
     Statement base;
+    /* list of pair(identifier, constantExpre) */
     list *varDeclExprs;
 } VarDeclStatement;
+
+
 
 #endif /* _AST_TREE_STATEMENT_H_ */

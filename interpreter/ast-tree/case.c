@@ -37,7 +37,12 @@ _Bool __caseComputing(Case *c) {
         // To check that is a return statement being computed.
         if (st.id == RETURN_STATEMENT_ID) {
             _Bool *returnVal = (_Bool *)st.v;
-            if (*returnVal == true) return true;
+            if (*returnVal == true) {
+                free(returnVal);
+                return true;
+            }
+
+            free(returnVal);
             return false;
         }
     }

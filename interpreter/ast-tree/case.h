@@ -23,5 +23,4 @@ typedef struct Case {
 Case * caseGenerate();
 _Status_t caseAppendStatement(Case *c, Statement *s);
 
-
 #endif /* _AST_TREE_CASE_H_ */
