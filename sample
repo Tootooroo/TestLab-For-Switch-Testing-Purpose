@@ -17,9 +17,9 @@ Object DUT_Switch :: Machine {
     Machine :: tags = ["DUT"];
 };
 
-Case arpTest(Switch S1, DUT_Switch D1) {
-    string ip1 = "192.168.1.1", ip2 = "192.168.1.2";
-    ArpPacket arp = [ ip1, <mac1>, ip2, <mac2> ];
+Int arpTest(Switch S1, DUT_Switch D1) {
+    String ip1 = "192.168.1.1", ip2 = "192.168.1.2";
+    ArpPacket arp = ArpPacket(ip1, <mac1>, ip2, <mac2>);
     S1->sendArpPacket(D1, arp);
     D1->searchArp("192.168.1.1");
 }

@@ -17,7 +17,7 @@ Primitive * primitiveGenerate_s(char *s) {
     Primitive *p = (Primitive *)zMalloc(sizeof(Primitive));
 
     p->type = PRIMITIVE_TYPE_STR;
-    p->val_i = s;
+    p->val_str = s;
 
     return p;
 }
@@ -29,4 +29,15 @@ Primitive * primitiveGenerate_op(Ops op) {
     p->ops = op;
 
     return p;
+}
+
+_Status_t primitiveRelease(Primitive *p) {
+    if (isPrimitive_str(p))
+        free(p->val_str);
+    else if (isPrimitive_ops(p))
+        listRelease(p->ops.ops);
+
+    free(p);
+
+    return OK;
 }

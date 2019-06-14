@@ -3,51 +3,44 @@
 #include "wrapper.h"
 #include "case.h"
 
-#define CASE_SET_OMPUTE_ROUTINE(C, COMPUTE) ((C)->compute = COMPUTE)
+#define FUNC_SET_COMPUTE_ROUTINE(C, COMPUTE) ((C)->compute = COMPUTE)
 
 /* Private prototypes */
-_Bool __caseComputing(Case *c);
+Variable __funcComputing(Func *c, Scope *s);
 
 /* Public procedures */
-Case * caseGenerate() {
-    Case *c = (Case *)zMalloc(sizeof(Case));
-    CASE_SET_OMPUTE_ROUTINE(c, __caseComputing);
+Func * funcGenerate() {
+    Func *c = (Func *)zMalloc(sizeof(Func));
+    FUNC_SET_COMPUTE_ROUTINE(c, __funcComputing);
     return c;
 }
 
-_Status_t caseAppendStatement(Case *c, Statement *s) {
+_Status_t caseAppendStatement(Func *c, Statement *s) {
     /* Initialize statements list */
-    if (CASE_IS_EMPTY_CASE(c)) c->statements = listCreate();
+    if (FUNC_IS_EMPTY_FUNC(c)) c->statements = listCreate();
 
     listAppend(c->statements, s);
     return OK;
 }
 
 /* Private procedures */
-_Bool __caseComputing(Case *c) {
-    if (CASE_IS_EMPTY_CASE(c)) return false;
+Variable __funcComputing(Func *c, Scope *s) {
+    if (FUNC_IS_EMPTY_FUNC(c)) return false;
 
-    listNode *current;
-    listIter iter = listGetIter(c->statements, LITER_FORWARD);
+    Variable v;
+    StatementTrack st;
+    Scope *localScope = subScopeGenerate(s);
 
-    while (current = listNext(&iter)) {
-        Statement *s = current->value;
-        StatementTrack st = s->compute(s);
+    st = statementCompute_untilReturn(c->statements, localScope);
 
-        // To check that is a return statement being computed.
-        if (st.id == RETURN_STATEMENT_ID) {
-            _Bool *returnVal = (_Bool *)st.v;
-            if (*returnVal == true) {
-                free(returnVal);
-                return true;
-            }
+    if (st.id == RETURN_STATEMENT_ID) {
+        v = st.v;
+        scopeRelease(localScope);
 
-            free(returnVal);
-            return false;
-        }
+        return v;
+    } else {
+        /* Every test case should have a bool return value to indicate whether
+        * the test case is running success */
+        abortWithMsg("Can't found return in a test case");
     }
-
-    /* Every test case should have a bool return value to indicate whether
-     * the test case is running success */
-    abortWithMsg("Can't found return in a test case");
 }

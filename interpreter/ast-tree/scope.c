@@ -4,6 +4,7 @@
 #include "scope.h"
 #include "wrapper.h"
 #include "string.h"
+#include "pair.h"
 
 /* Private Prototypes */
 private uint64_t scopeHashing(const void *key);
@@ -25,29 +26,36 @@ hashMapType scopeTypePrimitive = {
 };
 
 /* Public Procedures */
-scope * scopeGenerate() {
-    scope *s = (scope *)zMalloc(sizeof(scope));
+Scope * scopeGenerate() {
+    Scope *s = (Scope *)zMalloc(sizeof(Scope));
 
     return s;
 }
 
-scope * subScopeGenerate(scope *s) {
-    scope *sub = (scope *)zMalloc(sizeof(scope));
+Scope * subScopeGenerate(Scope *s) {
+    Scope *sub = (Scope *)zMalloc(sizeof(Scope));
     sub->outer = s;
 
     return sub;
 }
 
-_Status_t scopeNewCase(scope *s, Case *c) {
-
+_Status_t scopeNewCase(Scope *s, pair *c) {
+    return hashMapAdd(s->cases, pairLeft_s(p), pairRight_o(p));
 }
 
-_Status_t scopeNewPrimitive(scope *s, Primitive *p) {
+/* Type of pair is (Identifier, Primitive) */
+_Status_t scopeNewPrimitive(Scope *s, pair *p) {
+    // To check that is the identifier be used by an object.
+    if (hashMapSearch(s->objects, pairLeft_s(p))) return ERROR;
 
+    return hashMapAdd(s->primitives, pairLeft_s(p), pairRight_o(p));
 }
 
-_Status_t scopeNewObject(scope *s, Object *o) {
+_Status_t scopeNewObject(Scope *s, pair *p) {
+    // To check that is the identifier be used by an primitive.
+    if (hashMapSearch(s->objects, pairLeft_s(p))) return ERROR;
 
+    return hashMapAdd(s->objects, pairLeft_s(p), pairRight_o(p));
 }
 
 /* Private Procedures */

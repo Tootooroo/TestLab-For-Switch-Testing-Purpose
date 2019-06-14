@@ -6,6 +6,9 @@
 #include "type.h"
 #include "expression.h"
 #include "list.h"
+#include "scope.h"
+
+#include "variable.h"
 
 typedef enum {
     IF_STATEMENT_ID,
@@ -23,19 +26,19 @@ typedef struct StatementTrack {
     StatementID id;
     /* field v is used to hold value
      * return by a return statement */
-    void *v;
+    Variable v;
 } StatementTrack;
 
 /* Base statement structure */
 typedef struct Statement {
-    StatementTrack (*compute)(Statement *);
+    StatementTrack (*compute)(struct Statement *, Scope *);
 } Statement;
 
 typedef struct IfStatement {
     Statement base;
     Expression *conditionExpr;
-    Statement *trueStatement;
-    Statement *falseStatement;
+    list *trueStatements;
+    list *falseStatements;
 } IfStatement;
 
 typedef struct ReturnStatement {
@@ -45,10 +48,45 @@ typedef struct ReturnStatement {
 
 typedef struct VarDeclStatement {
     Statement base;
-    /* list of pair(identifier, constantExpre) */
+    /* list of pair(identifier, expr) */
     list *varDeclExprs;
 } VarDeclStatement;
 
+typedef struct AssignmentStatement {
+    /* compute in AssignmentStatement will compute expr in
+     * assigns then generate some variables */
+    Statement base;
+    /* list of pair(identifier, expr) */
+    list *assigns;
+} AssignmentStatement;
 
+/* Type alias */
+typedef StatementTrack (*stmtCompute)(struct Statement *, Scope *);
+
+/* Member function implement as macros */
+#define STATEMENT_COMPUTE(S, SCOPE) ((S)->compute((S), (SCOPE))
+
+/* Prototypes */
+
+/* Computing a list of statments until a return statement is computed. */
+StatementTrack statementCompute_untilReturn(list *listOfStmt, Scope *);
+
+Statement statementGenerate(stmtCompute compute);
+
+/* If statement */
+/* Parameters:
+ * compute_ - Procedure to compute if statement.
+ * expr_ - condition expression
+ * true_stmts - Will be computed if expr_ is true
+ * false_stmts - Will be computed if expr_ is false */
+IfStatement * ifStatementGenerate(stmtCompute compute_, Expression expr_,
+                                  list *true_stmts, list *false_stmts);
+StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope);
+
+/* Variable statement */
+/* Parameters:
+ * expr_ - list of expressions in a variable declaration statement */
+VarDeclStatement * varDeclStmtGenerate(stmtCompute compute_, list *expr_);
+StatementTrack varDeclStmt_compute(Statement *stmt, Scope *scope);
 
 #endif /* _AST_TREE_STATEMENT_H_ */

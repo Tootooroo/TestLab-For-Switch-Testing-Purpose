@@ -3,21 +3,18 @@
 #ifndef _SCOPE_H_
 #define _SCOPE_H_
 
-#include "case.h"
-#include "object.h"
-#include "primitive.h"
-
+#include "pair.h"
 #include "hashMap.h"
 
-typedef struct scope {
+typedef struct Scope {
     /* hashMap of cases */
     hashMap *cases;
     hashMap *primitives;
     hashMap *objects;
 
     /* Reference to outer scope */
-    struct scope *outer;
-} scope;
+    struct Scope *outer;
+} Scope;
 
 /* Member functions implement as macros */
 #define scopeGetCase(s, f) (hashMapSearch(s->cases, (void *)f))
@@ -29,11 +26,12 @@ typedef struct scope {
 #define isObjectExists(s, o) (scopeGetObject(s, o) != null)
 
 /* Prototypes */
-scope * scopeGenerate();
-scope * subScopeGenerate(scope *);
+Scope * scopeGenerate();
+Scope * subScopeGenerate(Scope *);
+_Status_t scopeRelease(Scope *);
 
-_Status_t scopeNewCase(scope *, Case *);
-_Status_t scopeNewPrimitive(scope *, Primitive *);
-_Status_t scopeNewObject(scope *, Object *);
+_Status_t scopeNewCase(Scope *, pair *);
+_Status_t scopeNewPrimitive(Scope *, pair *);
+_Status_t scopeNewObject(Scope *, pair *);
 
 #endif /* _SCOPE_H_ */
