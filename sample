@@ -5,7 +5,7 @@ Object Machine {
     type t;
     matchKey k;
     opSet ops;
-    String[] tags;
+    String tags;
 }
 
 Object Switch :: Machine {
@@ -14,17 +14,21 @@ Object Switch :: Machine {
 
 Object DUT_Switch :: Machine {
     Machine :: t = "Switch";
-    Machine :: tags = ["DUT"];
+    Machine :: tags = "DUT";
 };
 
 Int arpTest(Switch S1, DUT_Switch D1) {
     String ip1 = "192.168.1.1", ip2 = "192.168.1.2";
     ArpPacket arp = ArpPacket(ip1, <mac1>, ip2, <mac2>);
-    S1->sendArpPacket(D1, arp);
-    D1->searchArp("192.168.1.1");
+    Message msg1 = S1->sendArpPacket(D1, arp);
+
+    if (ret == 1) {
+       arp = D1->searchArp("192.168.1.1");
+    } else
+        return -1;
 }
 
-Case start_ {
+Int start_ {
     Switch S1 = Switch(k:"GL5610", ops:gl5610Ops);
     DUT_Switch D1 = DUT_Switch(k:"GL5610", ops:gl5610Ops);
 
@@ -32,3 +36,5 @@ Case start_ {
 
     return ret;
 }
+
+start_();
