@@ -5,7 +5,7 @@ Object Machine {
     type t;
     matchKey k;
     opSet ops;
-    String tags;
+    String[] tags;
 }
 
 Object Switch :: Machine {
@@ -14,7 +14,7 @@ Object Switch :: Machine {
 
 Object DUT_Switch :: Machine {
     Machine :: t = "Switch";
-    Machine :: tags = "DUT";
+    Machine :: tags = ["DUT"];
 };
 
 Int arpTest(Switch S1, DUT_Switch D1) {
