@@ -1,4 +1,4 @@
-import gl5610Ops from Gl5610_defs
+import gl5610Ops,gl8900Ops from Gl5610_defs
 import ArpPacket from Packets
 
 Object Machine {
@@ -6,7 +6,7 @@ Object Machine {
     matchKey k;
     opSet ops;
     String[] tags;
-}
+};
 
 Object Switch :: Machine {
      Machine :: t = "Switch"
