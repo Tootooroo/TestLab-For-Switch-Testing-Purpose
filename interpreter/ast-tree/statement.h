@@ -52,6 +52,8 @@ typedef struct VarDeclStatement {
     list *varDeclExprs;
 } VarDeclStatement;
 
+typedef struct FuncDeclStatement {} FuncDeclStatement;
+
 typedef struct AssignmentStatement {
     /* compute in AssignmentStatement will compute expr in
      * assigns then generate some variables */
@@ -59,6 +61,14 @@ typedef struct AssignmentStatement {
     /* list of pair(identifier, expr) */
     list *assigns;
 } AssignmentStatement;
+
+typedef struct ImportStatement {} ImportStatement;
+
+typedef struct ExpressionStatement {} ExpressionStatement;
+
+typedef struct ObjectDeclStatement {
+
+} ObjectDeclStatement;
 
 /* Type alias */
 typedef StatementTrack (*stmtCompute)(struct Statement *, Scope *);
@@ -79,9 +89,7 @@ Statement statementGenerate(stmtCompute compute);
  * expr_ - condition expression
  * true_stmts - Will be computed if expr_ is true
  * false_stmts - Will be computed if expr_ is false */
-IfStatement * ifStatementGenerate(stmtCompute compute_, Expression expr_,
-                                  list *true_stmts, list *false_stmts);
-StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope);
+IfStatement * ifStatementGenerate(Expression expr_, list *true_stmts, list *false_stmts);
 
 /* Variable statement */
 /* Parameters:

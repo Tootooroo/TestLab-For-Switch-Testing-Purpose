@@ -8,23 +8,21 @@
 #include "scope.h"
 
 typedef struct Program {
-    /* Test case "start_" is the
-     * entrance of a program */
-    Func *start_;
+    list *statements;
     /* This procedure will compute test cjase
      * which named "start_" */
-    void (*compute)(struct Program *, Scope *);
+    void (*compute)(struct Program *);
 } Program;
 
 /* Member function implemented as macros */
-#define PROGRAM_SET_ENTRANCE(P, EN) ((P)->start_ = (EN))
-#define PROGRAM_GET_ENTRANCE(P) ((P)->start_)
+#define PROGRAM_SET_STMTS(P, STMTS) ((P)->statements = (STMTS))
+#define PROGRAM_GET_STMTS(P) ((P)->statements)
 
 #define PROGRAM_SET_COMPUTE_ROUTINE(P, COMPUTE) ((P)->compute = (COMPUTE))
 #define PROGRAM_COMPUTING(P) ((P)->compute((P)))
 
 /* Prototypes */
-Program * programGenerate(Func *entrance);
+Program * programGenerate(list *statements);
 
 
 #endif /* _AST_TREE_PROGRAM_H_ */

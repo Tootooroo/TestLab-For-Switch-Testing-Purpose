@@ -1,6 +1,11 @@
 %union {
     char *str;
     int integer;
+
+    Program *program;
+    Statements *statements;
+    Statement *statement;
+    Expression *expression;
 }
 
 %token IMPORT FROM
@@ -29,17 +34,59 @@
 %left OPEN_PAREN CLOSE_PAREN
 %left DOT OPEN_SQUARE_BRACKET CLOSE_SQUARE_BRACKET
 
+/* Statements */
+%type   <program>       PROGRAM
+%type   <statements>    STATEMENTS
+%type   <statement>     STATEMENT
+%type   <statement>     IF_STATEMENT
+%type   <statement>     OBJECT_DECL_STATEMENT
+%type   <statement>     IMPORT_STATEMENT
+%type   <statement>     RETURN_STATEMENT
+%type   <statement>     VAR_DECL_STATEMENT
+%type   <statement>     FUNC_DECL_STATEMENT
+%type   <statement>     EXPRESSION_STATEMENT
+%type   <statement>     IF_STATEMENT_WITH_ELSE
+
+%type   <statement>     BLOCK IF_BLOCK
+%type   <str>           OBJECT_INHERITENCE
+
+%type   <integer>       DECL_QUALIFIER
+%type   <integer>       TYPE
+
+/* Expression */
+%type   <expression>    EXPRESSION
+%type   <expression>    PLUS_EXPRESSION
+%type   <expression>    MINUS_EXPRESSION
+%type   <expression>    MUL_EXPRESSION
+%type   <expression>    DIV_EXPRESSION
+%type   <expression>    LESS_THAN_EXPRESSION
+%type   <expression>    GREATER_THAN_EXPRESSION
+%type   <expression>    EQUAL_EXPRESSION
+%type   <expression>    LESS_OR_EQUAL_EXPRESSION
+%type   <expression>    GREATER_OR_EQUAL_EXPRESSION
+%type   <expression>    NOT_EQUAL_EXPRESSION
+%type   <expression>    MEMBER_SELECTION_EXPRESSION
+%type   <expression>    FUNCTION_CALL_EXPRESSION
+%type   <expression>    ASSIGNMENT_EXPRESSION
 
 %code top { }
 
 %%
 
 PROGRAM :
-    STATEMENTS;
+    STATEMENTS {
+        $$ = programGenerate($STATEMENTS);
+        $$->compute($$);
+    };
 
 STATEMENTS :
-    STATEMENT STATEMENTS
-    | /* empty */;
+    STATEMENT STATEMENTS {
+        listAppend($$, (void *)$STATEMENT);
+    }
+    | STATEMENT {
+        $$ = listCreate();
+        listAppend($$, (void *)$STATEMENT);
+    };
 
 STATEMENT :
     IF_STATEMENT
@@ -51,14 +98,23 @@ STATEMENT :
     | EXPRESSION_STATEMENT;
 
 IF_STATEMENT :
-    IF OPEN_PAREN EXPRESSION CLOSE_PAREN BLOCK
-    | IF OPEN_PAREN EXPRESSION CLOSE_PAREN IF_BLOCK ELSE BLOCK;
+    IF OPEN_PAREN EXPRESSION CLOSE_PAREN BLOCK {
+        $$ = (Statement *)ifStatementGenerate($EXPRESSION, $BLOCK, NULL);
+    }
+    | IF OPEN_PAREN EXPRESSION CLOSE_PAREN IF_BLOCK ELSE BLOCK {
+        $$ = (Statement *)ifStatementGenerate($EXPRESSION, $IF_BLOCK, $BLOCK);
+    };
 
 IF_BLOCK :
-    OPEN_CURVE_BRACKET STATEMENTS CLOSE_CURVE_BRACKET
-    | IF_STATEMENT_WITH_ELSE;
+    OPEN_CURVE_BRACKET STATEMENTS CLOSE_CURVE_BRACKET { $$ = STATEMENTS; }
+    | IF_STATEMENT_WITH_ELSE {
+        $$ = listCreate();
+        listAppend($$, (void *)$IF_STATEMENT_WITH_ELSE);
+    };
 IF_STATEMENT_WITH_ELSE :
-    IF OPEN_PAREN EXPRESSION CLOSE_PAREN IF_BLOCK ELSE IF_BLOCK
+    IF OPEN_PAREN EXPRESSION CLOSE_PAREN IF_BLOCK[TRUE] ELSE IF_BLOCK[FALSE] {
+        $$ = (Statement *)ifStatementGenerate($EXPRESSION, $TRUE, $FALSE);
+    }
     | OBJECT_DECL_STATEMENT
     | IMPORT_STATEMENT
     | RETURN_STATEMENT
@@ -67,9 +123,16 @@ IF_STATEMENT_WITH_ELSE :
     | EXPRESSION_STATEMENT
 
 OBJECT_DECL_STATEMENT :
-    OBJECT IDENTIFIER OBJECT_INHERITENCE OPEN_CURVE_BRACKET OBJECT_DEF CLOSE_CURVE_BRACKET SEMICOLON;
+    OBJECT IDENTIFIER OBJECT_INHERITENCE OPEN_CURVE_BRACKET OBJECT_DEF CLOSE_CURVE_BRACKET SEMICOLON {
+        `
+    };
 OBJECT_INHERITENCE:
-    BELONG IDENTIFIER
+    BELONG IDENTIFIER {
+       $$ = IDENTIFIER;
+    }
+    | /* empty */ {
+        $$ = null;
+    }
 OBJECT_DEF :
     /* Use to set value within parent */
     IDENTIFIER BELONG IDENTIFIER ASSIGNMENT EXPRESSION SEMICOLON OBJECT_DEF
@@ -78,11 +141,10 @@ OBJECT_DEF :
     | /* empty */;
 
 IMPORT_STATEMENT :
-    IMPORT IMPORT_LIST FROM IDENTIFIER
+    IMPORT IMPORT_LIST FROM IDENTIFIER;
 IMPORT_LIST :
-    IDENTIFIER IMPORT_LIST
-    | COMMA IDENTIFIER IMPORT_LIST
-    | /* empty */
+    IDENTIFIER COMMA IMPORT_LIST
+    | IDENTIFIER;
 
 RETURN_STATEMENT :
     RETURN EXPRESSION SEMICOLON;
@@ -103,10 +165,15 @@ EXPRESSION_STATEMENT :
     EXPRESSION SEMICOLON;
 
 TYPE :
-    INT
-    | STR
-    | MACHINE_OPERATIONS
-    | IDENTIFIER;
+    INT DECL_QUALIFIER
+    | STR DECL_QUALIFIER
+    | MACHINE_OPERATIONS ARRAY_QUALIFIER
+    | IDENTIFIER ARRAY_QUALIFIER;
+
+DECL_QUALIFIER :
+    ARRAY_QUALIFIER;
+ARRAY_QUALIFIER :
+    OPEN_SQUARE_BRACKET CLOSE_SQUARE_BRACKET
 
 EXPRESSION :
     OPEN_PAREN EXPRESSION CLOSE_PAREN
