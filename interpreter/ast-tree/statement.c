@@ -5,36 +5,19 @@
 
 /* Private Prototypes */
 Private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope);
+Private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope);
+Private StatementTrack objStmtCompute(Statement *stmt, Scope *scope);
+Private StatementTrack importStmtCompute(Statement *stmt, Scope *scope);
+Private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope);
 
 /* Public Procedures */
+
+// Base statement
 Statement statementGenerate(stmtCompoute compute_) {
     Statement s = {
         .compute = compute_;
     };
     return s;
-}
-
-IfStatement * ifStatementGenerate(Expression expr_, list *true_stmts, list *false_stmts) {
-
-    IfStatement *ifStmt = (IfStatement *)zMalloc(sizeof(IfStatement));
-    ifStmt->base = statementGenerate(ifStatement_Compute);
-    ifStmt->conditionExpr = expr_;
-    ifStmt->trueStatements = true_stmts;
-    ifStmt->falseStatements = false_stmts;
-
-    return ifStmt;
-}
-
-VarDeclStatement * varDeclStmtGenerate(stmtCompute compute_, list *expr_) {
-    VarDeclStatement *varStmt = (VarDeclStatement *)zMalloc(sizeof(VarDeclStatement));
-    varStmt->base = statementGenerate(compute_);
-    varStmt->varDeclExprs = expr_;
-
-    return varStmt;
-}
-
-StatementTrack varDeclStmt_compute(Statement *stmt, Scope *scope) {
-
 }
 
 StatementTrack statementCompute_untilReturn(list *listOfStmt, Scope *scope) {
@@ -55,6 +38,82 @@ StatementTrack statementCompute_untilReturn(list *listOfStmt, Scope *scope) {
     return st;
 }
 
+// If statement
+IfStatement * ifStatementGenerate(Expression expr_, list *true_stmts, list *false_stmts) {
+
+    IfStatement *ifStmt = (IfStatement *)zMalloc(sizeof(IfStatement));
+    ifStmt->base = statementGenerate(ifStatement_Compute);
+    ifStmt->conditionExpr = expr_;
+    ifStmt->trueStatements = true_stmts;
+    ifStmt->falseStatements = false_stmts;
+
+    return ifStmt;
+}
+
+// Variable declaration statement
+VarDeclStatement * varDeclStmtGenerate(list *expr_) {
+    VarDeclStatement *varStmt = (VarDeclStatement *)zMalloc(sizeof(VarDeclStatement));
+    varStmt->base = statementGenerate(varDeclStmtCompute);
+    varStmt->varDeclExprs = expr_;
+
+    return varStmt;
+}
+
+// Object declaration statement */
+ObjectDeclStatement * objDeclStmtDefault() {
+    ObjectDeclStatement *obj = (ObjectDeclStatement *)zMalloc(sizeof(ObjectDeclStatement));
+    obj->base.compute = statementGenerate(objStmtCompute);
+    return obj;
+}
+
+ObjectDeclStatement * objDeclStmtGen(char *objType, list *members, char *parent, list *overWrites) {
+    ObjectDeclStatement *obj = objDeclStmtDefault();
+    obj->objectType = objType;
+    obj->members = members;
+    obj->parent = parent;
+    obj->overWrites = overWrites;
+
+    return obj;
+}
+
+ObjectDeclBody * objBodyGen() {
+    ObjectDeclBody *body = (ObjectDeclBody *)zMalloc(sizeof(ObjectDeclBody));
+    return body;
+}
+
+ObjectDeclItem * objItemGen() {
+    ObjectDeclItem *item = (ObjectDeclBody *)zMalloc(sizeof(ObjectDeclBody));
+    return item;
+}
+
+// Import statement
+ImportStatement * importStmtDefault() {
+    ImportStatement *iStmt = (ImportStatement *)zMalloc(sizeof(ImportStatement));
+    iStmt->base.compute = statementGenerate(importStmtCompute);
+    return iStmt;
+}
+
+ImportStatement * importStmtGen(list *symbols, char *from) {
+    ImportStatement *iStmt = importStmtDefault();
+    iStmt->importSymbols = symbols;
+    iStmt->from = from;
+
+    return iStmt;
+}
+
+// Return statement
+ReturnStatement * returnStmtDefault() {
+    ReturnStatement *rStmt = (ReturnStatement *)zMalloc(sizeof(ReturnStatement));
+    rStmt->base.compute = statementGenerate(returnStmtCompute);
+
+    return rStmt;
+}
+ReturnStatement * returnStmtGen(Expression *expr) {
+    ReturnStatement *rStmt = returnStmtDefault();
+    rStmt->expr = expr;
+
+    return rStmt;
+}
 
 /* Private Procedures */
 Private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope) {
@@ -72,4 +131,20 @@ Private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope) {
     st = statementCompute_untilReturn(beComputed, scope);
 
     return st;
+}
+
+Private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
+
+}
+
+Private StatementTrack objStmtCompute(Statement *stmt, Scope *scope) {
+
+}
+
+Private StatementTrack importStmtCompute(Statement *stmt, Scope *scope) {
+
+}
+
+Private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope) {
+
 }

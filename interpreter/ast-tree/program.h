@@ -9,8 +9,6 @@
 
 typedef struct Program {
     list *statements;
-    /* This procedure will compute test cjase
-     * which named "start_" */
     void (*compute)(struct Program *);
 } Program;
 

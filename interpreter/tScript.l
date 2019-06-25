@@ -48,7 +48,7 @@ else      { return ELSE; }
 \{        { return OPEN_CURVE_BRACKET; }
 \}        { return CLOSE_CURVE_BRACKET; }
 
-"[^]*"   { return STR_LITERAL; }
+"[^""]*"   { return STR_LITERAL; }
 [0-9]+    { return NUM; }
 ([a-zA-Z0-9]|"-")+     { yylval.str = strdup(yytext); return IDENTIFIER; }
 

@@ -1,7 +1,7 @@
 %union {
     char *str;
     int integer;
-
+    list *list_;
     Program *program;
     Statements *statements;
     Statement *statement;
@@ -69,6 +69,10 @@
 %type   <expression>    FUNCTION_CALL_EXPRESSION
 %type   <expression>    ASSIGNMENT_EXPRESSION
 
+/* Misc */
+%type   <VAR_DECL_LIST> VAR_DECL_LIST
+%type   <expression>    VAR_DECL
+
 %code top { }
 
 %%
@@ -80,7 +84,7 @@ PROGRAM :
     };
 
 STATEMENTS :
-    STATEMENT STATEMENTS {
+    STATEMENTS STATEMENT {
         listAppend($$, (void *)$STATEMENT);
     }
     | STATEMENT {
@@ -124,7 +128,14 @@ IF_STATEMENT_WITH_ELSE :
 
 OBJECT_DECL_STATEMENT :
     OBJECT IDENTIFIER OBJECT_INHERITENCE OPEN_CURVE_BRACKET OBJECT_DEF CLOSE_CURVE_BRACKET SEMICOLON {
-        `
+        $$ = objDeclStmtDefault();
+        $$->objectType = $IDENTIFIER;
+        if ($OBJECT_INHERITENCE) {
+            /* Deal with inheritence */
+            $$->parent = $OBJECT_INHERITENCE;
+            $$->overWrites = $OBJECT_DEF.overWrites;
+        }
+        $$->members = $OBJECT_DEF.newMembers;
     };
 OBJECT_INHERITENCE:
     BELONG IDENTIFIER {
@@ -132,31 +143,85 @@ OBJECT_INHERITENCE:
     }
     | /* empty */ {
         $$ = null;
-    }
+    };
+
 OBJECT_DEF :
     /* Use to set value within parent */
-    IDENTIFIER BELONG IDENTIFIER ASSIGNMENT EXPRESSION SEMICOLON OBJECT_DEF
+    OBJECT_DEF OBJECT_DEF_ITEM {
+        if ($OBJECT_DEF_ITEM->type == 0) {
+            listAppend($$->overWrites, (void *)$OBJECT_DEF_ITEM->item);
+        } else {
+            listAppend($$->overWrites, (void *)$OBJECT_DEF_ITEM->item);
+        }
+    }
     /* Define a new member for the a new object */
-    | TYPE IDENTIFIER SEMICOLON OBJECT_DEF
-    | /* empty */;
+    | OBJECT_DEF_ITEM {
+        $$ = objBodyGen();
+        if ($OBJECT_DEF_ITEM->type == 0) {
+            $$->overwrites = listCreate();
+            listAppend($$->overWrites, (void *)$OBJECT_DEF_ITEM->item);
+        } else {
+            $$->newMembers = listCreate();
+            listAppend($$->newMembers, (void *)$OBJECT_DEF_ITEM->item);
+        }
+    };
+OBJECT_DEF_ITEM :
+    IDENTIFIER[MEMBER] BELONG IDENTIFIER[PARENT] ASSIGNMENT EXPRESSION SEMICOLON {
+        $$ = objItemGen();
+        $$->type = 0;
+        $$->item = pairGenerate((void *)$MEMBER, (void *)$PARENT);
+    }
+    | TYPE IDENTIFIER SEMICOLON {
+        $$ = objItemGen();
+        $$->type = 1;
+        $$->item = pairGenerate((void *)$IDENTIFIER, $TYPE);
+    };
 
 IMPORT_STATEMENT :
-    IMPORT IMPORT_LIST FROM IDENTIFIER;
+    IMPORT IMPORT_LIST FROM IDENTIFIER {
+        $$ = importStmtDefault();
+        $$->importSymbols = $IMPORT_LIST;
+        $$->from = $IDENTIFIER;
+    };
 IMPORT_LIST :
-    IDENTIFIER COMMA IMPORT_LIST
-    | IDENTIFIER;
+    IMPORT_LIST COMMA IDENTIFIER {
+        listAppend($$, (void *)$IDENTIFIER);
+    }
+    | IDENTIFIER {
+        $$ = listCreate();
+        listAppend($$, (void *)$IDENTIFIER);
+    };
 
 RETURN_STATEMENT :
-    RETURN EXPRESSION SEMICOLON;
+    RETURN EXPRESSION SEMICOLON {
+        $$ = returnStmtGen($EXPRESSION);
+    };
 
 VAR_DECL_STATEMENT :
-    TYPE VAR_DECL_LIST SEMICOLON;
+    TYPE VAR_DECL_LIST SEMICOLON {
+        $$ = varDeclStmtGenerate($VAR_DECL_LIST);
+    };
 VAR_DECL_LIST :
-    VAR_DECL COMMA VAR_DECL_LIST
-    | VAR_DECL;
+    VAR_DECL_LIST COMMA VAR_DECL {
+        listAppend($$, (void *)$VAR_DECL);
+    }
+    | VAR_DECL {
+        $$ = listCreate();
+        listAppend($$, (void *)$VAR_DECL);
+    };
 VAR_DECL :
-    IDENTIFIER
-    | ASSIGNMENT_EXPRESSION;
+    STR_LITERAL {
+        $$ = (Expression *)constExprDefault();
+        CONSTANT_SET_STR((ConstantExpression *)$$, $STR_LITERAL);
+    }
+    | NUM {
+        $$ = (Expression *)constExprDefault();
+        /* fixme: should transfer $NUM from char * into int */
+        CONSTANT_SET_INT((ConstantExpression *)$$, $NUM);
+    }
+    | ASSIGNMENT_EXPRESSION {
+        $$ = (Expression *)
+    };
 
 FUNC_DECL_STATEMENT :
     TYPE IDENTIFIER OPEN_PAREN ARGUMENT_LIST CLOSE_PAREN SEMICOLON;

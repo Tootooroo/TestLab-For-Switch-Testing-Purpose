@@ -62,13 +62,39 @@ typedef struct AssignmentStatement {
     list *assigns;
 } AssignmentStatement;
 
-typedef struct ImportStatement {} ImportStatement;
+typedef struct ImportStatement {
+    Statement base;
+    /* list<char *> */
+    list *importSymbols;
+    /* Name of the module be imported */
+    char *from;
+} ImportStatement;
 
-typedef struct ExpressionStatement {} ExpressionStatement;
+typedef struct ExpressionStatement {
+
+} ExpressionStatement;
 
 typedef struct ObjectDeclStatement {
-
+    Statement base;
+    char *objectType;
+    char *parent;
+    /* list of pair(parent's member, value) */
+    list *overWrites;
+    /* list of pair(member name, type name) */
+    list *members;
 } ObjectDeclStatement;
+
+typedef struct ObjectDeclBody {
+    list *newMembers;
+    list *overWrites;
+} ObjectDeclBody;
+
+typedef struct ObjectDeclItem {
+    /* 0: Overwrite
+     * 1: member */
+    int type;
+    pair *item;
+} ObjectDeclItem;
 
 /* Type alias */
 typedef StatementTrack (*stmtCompute)(struct Statement *, Scope *);
@@ -95,6 +121,19 @@ IfStatement * ifStatementGenerate(Expression expr_, list *true_stmts, list *fals
 /* Parameters:
  * expr_ - list of expressions in a variable declaration statement */
 VarDeclStatement * varDeclStmtGenerate(stmtCompute compute_, list *expr_);
-StatementTrack varDeclStmt_compute(Statement *stmt, Scope *scope);
+
+/* Object declaration statement */
+ObjectDeclStatement * objDeclStmtDefault();
+ObjectDeclStatement * objDeclStmtGen(char *objType, list *members, char *parent, list *overWrites);
+ObjectDeclBody * objBodyGen();
+ObjectDeclItem * objItemGen();
+
+/* Import statement */
+ImportStatement * importStmtDefault();
+ImportStatement * importStmtGen(list *symbols, char *from);
+
+/* Return statement */
+ReturnStatement * returnStmtDefault();
+ReturnStatement * returnStmtGen(Expression *expr);
 
 #endif /* _AST_TREE_STATEMENT_H_ */

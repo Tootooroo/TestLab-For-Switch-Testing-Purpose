@@ -28,13 +28,6 @@ Int arpTest(Switch S1, DUT_Switch D1) {
         return -1;
 }
 
-Int start_ {
-    Switch S1 = [ k = "GL5610", ops = gl5610Ops ];
-    DUT_Switch D1 = [ k = "GL5610", ops = gl5610Ops ];
-
-    ret = arpTest(S1, D1);
-
-    return ret;
-}
-
-start_();
+Switch S1 = [ k = "GL5610", ops = gl5610Ops ];
+DUT_Switch D1 = [ k = "GL5610", ops = gl5610Ops ];
+arpTest(S1, D1);
