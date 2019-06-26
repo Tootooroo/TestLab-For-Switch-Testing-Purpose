@@ -6,6 +6,9 @@
     Statements *statements;
     Statement *statement;
     Expression *expression;
+
+    ObjectDeclBody *objDeclBody;
+    ObjectDeclItem *objDeclItem;
 }
 
 %token IMPORT FROM
@@ -68,10 +71,17 @@
 %type   <expression>    MEMBER_SELECTION_EXPRESSION
 %type   <expression>    FUNCTION_CALL_EXPRESSION
 %type   <expression>    ASSIGNMENT_EXPRESSION
+%type   <expression>    CONSTANT_EXPRESSION
+%type   <expression>    IDENTIFIER_EXPRESSION
 
 /* Misc */
 %type   <VAR_DECL_LIST> VAR_DECL_LIST
 %type   <expression>    VAR_DECL
+%type   <objDeclBody>   OBJECT_DEF
+%type   <objDeclItem>   OBJECT_DEF_ITEM
+%type   <list_>         IMPORT_LIST
+%type   <expression>    MEMBER_SELECTION_ENTITY
+%type   <list_>         ARGUMENT_LIST
 
 %code top { }
 
@@ -220,11 +230,13 @@ VAR_DECL :
         CONSTANT_SET_INT((ConstantExpression *)$$, $NUM);
     }
     | ASSIGNMENT_EXPRESSION {
-        $$ = (Expression *)
+        $$ = (Expression *)$ASSIGNMENT_EXPRESSION;
     };
 
 FUNC_DECL_STATEMENT :
-    TYPE IDENTIFIER OPEN_PAREN ARGUMENT_LIST CLOSE_PAREN SEMICOLON;
+    TYPE IDENTIFIER OPEN_PAREN ARGUMENT_LIST CLOSE_PAREN SEMICOLON {
+
+    };
 
 EXPRESSION_STATEMENT :
     EXPRESSION SEMICOLON;
@@ -247,7 +259,7 @@ EXPRESSION :
     | MEMBER_SELECTION_EXPRESSION
     | FUNCTION_CALL_EXPRESSION
     | ASSIGNMENT_EXPRESSION
-    | CONSTANT
+    | CONSTANT_EXPRESSION
     | IDENTIFIER;
 
 ARITHMETIC_EXPRESSION :
@@ -295,28 +307,55 @@ NOT_EQUAL_EXPRESSION :
     EXPRESSION NOT_EQUAL EXPRESSION;
 
 MEMBER_SELECTION_EXPRESSION :
-    MEMBER_SELECTION_ENTITY DOT IDENTIFIER;
+    MEMBER_SELECTION_EXPRESSION DOT IDENTIFIER {
+        memberSelectAppendSub($$, $IDENTIFIER);
+    }
+    | MEMBER_SELECTION_ENTITY {
+        $$ = memberSelectDefault();
+        MEMBER_SELECT_SET_HEAD($$, $MEMBER_SELECTION_ENTITY);
+    };
 MEMBER_SELECTION_ENTITY :
-    IDENTIFIER
-    | FUNCTION_CALL_EXPRESSION;
+    IDENTIFIER {
+
+    }
+    | FUNCTION_CALL_EXPRESSION {
+        /* Need to check that whether the return value
+         * of function is left-value. */
+        $$ = $FUNCTION_CALL_EXPRESSION;
+    };
 
 FUNCTION_CALL_EXPRESSION :
-    IDENTIFIER OPEN_PAREN ARGUMENT_LIST CLOSE_PAREN ;
+    IDENTIFIER OPEN_PAREN ARGUMENT_LIST CLOSE_PAREN {
+        $$ = funcCallExprGen($IDENTIFIER, $ARGUMENT_LIST);
+    };
 
 ARGUMENT_LIST :
-    EXPRESSION
-    | EXPRESSION COMMA ARGUMENT_LIST;
+    ARGUMENT_LIST COMMA EXPRESSION {
+        listAppend($$, $EXPRESSION);
+    }
+    | EXPRESSION {
+        $$ = listCreate();
+        listAppend($$, $EXPRESSION);
+    };
 
+/* Statement */
 ASSIGNMENT_EXPRESSION :
-    ASSIGNMENT_LVAL ASSIGNMENT EXPRESSION;
-ASSIGNMENT_LVAL :
-    IDENTIFIER
-    | MEMBER_SELECTION_EXPRESSION;
+    EXPRESSION[LEFT] ASSIGNMENT EXPRESSION[RIGHT] {
+        $$ = assignExprGen($LEFT, $RIGHT);
+    };
 
 BLOCK :
     OPEN_CURVE_BRACKET STATEMENTS CLOSE_CURVE_BRACKET
     | STATEMENT;
 
-CONSTANT : NUM | STR_LITERAL;
+CONSTANT_EXPRESSION :
+    NUM {
+        $$ = constExprDefault();
+        CONSTANT_SET_INT($$, $NUM);
+    }
+    | STR_LITERAL {
+        $$ = constExprDefault();
+        CONSTANT_SET_STR($$, $STR_LITERAL);
+    };
 
 %%

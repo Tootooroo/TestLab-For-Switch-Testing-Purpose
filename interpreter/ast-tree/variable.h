@@ -10,8 +10,8 @@ typedef enum { VAR_EMPTY, VAR_PRIMITIVE, VAR_OBJECT } VarType;
 
 typedef struct Variable {
     /* ident of variable, this field
-     * may will be  null if the var is
-     * return by procedure */
+     * may will be null if its a te-
+     * mporary variable. */
     char *identifier;
 
     // Type of variable

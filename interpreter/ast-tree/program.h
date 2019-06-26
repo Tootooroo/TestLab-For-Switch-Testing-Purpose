@@ -22,5 +22,4 @@ typedef struct Program {
 /* Prototypes */
 Program * programGenerate(list *statements);
 
-
 #endif /* _AST_TREE_PROGRAM_H_ */

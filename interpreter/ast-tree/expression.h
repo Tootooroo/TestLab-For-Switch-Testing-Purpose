@@ -22,9 +22,12 @@ typedef struct Expression {
 
 /* Member function implement as macros */
 #define exprType(E) ((E)->type)
-#defien exprSetType(E, T) ((E)->type = (T))
+#define exprSetType(E, T) ((E)->type = (T))
+#define exprCompute(E, S) ((E)->compute(E, S))
 
-typedef struct PlusExpression {} PlusExpression;
+typedef struct PlusExpression {
+
+} PlusExpression;
 typedef struct MinusExpression {} MinusExpression;
 typedef struct MulExpression {} MulExpression;
 typedef struct DivExpression {} DivExpression;
@@ -34,13 +37,57 @@ typedef struct EqualExpression {} EqualExpression;
 typedef struct LessOrEqualExpression {} LessOrEqualExpression;
 typedef struct GreaterOrEqualExpression {} GreaterOrEqualExpression;
 typedef struct NotEqualExpression {} NotEqualExpression;
-typedef struct MemberSelectExpression {} MemberSelectExpression;
-typedef struct FuncCallExpression {} FuncCallExpression;
+
+// Member Select expression
+typedef struct MemberSelectExpression {
+    Expression base;
+    Expression *headExpr;
+    list *subs;
+} MemberSelectExpression;
+
+#define MEMBER_SELECT_HEAD(M) ((M)->head)
+#define MEMBER_SELECT_SET_HEAD(M, H) ((M)->head = (H))
+#define MEMBER_SELECT_SUBS(M) ((M)->subs)
+
+MemberSelectExpression * memberSelectDefault();
+void memberSelectAppendSub(MemberSelectExpression *, char *);
+
+// Function call expression
+typedef struct FuncCallExpression {
+    Expression base;
+    char *funcIdent;
+    /* list of argument's names
+     * compute procedure will
+     * search these arguments in
+     * current scope. */
+    list *arguments;
+} FuncCallExpression;
+
+#define FUNC_CALL_SET_IDENT(F, I) ((F)->funcIdent = (I))
+#define FUNC_CALL_SET_ARGUL(F, L) ((F)->arguments = (L))
+
+FuncCallExpression * funcCallExprDefault();
+FuncCallExpression * funcCallExprGen(char *ident, list *arguments);
 
 // Assignment expression
+typedef enum { ASSIGN_L_IDENT, ASSIGN_L_MEMBER } Assign_l_type;
 typedef struct AssignmentExpression {
+    Expression base;
 
+    /* Left value */
+    Expression *l;
+    Expression *r;
 } AssignmentExpression;
+
+#define ASSIGN_IS_L_IDENT(A) ((A)->type == ASSIGN_L_IDENT)
+#define ASSIGN_IS_L_MEMBER(A) ((A)->type == ASSIGN_L_MEMBER)
+#define ASSIGN_GET_IDENT(A) ((A)->ident)
+#define ASSIGN_GET_MEMBER(A, S) ((A)->expr)
+
+/* Prototypes */
+AssignmentExpression * assignExprDefault();
+AssignmentExpression * assignExprGen(void *left, Expression *right);
+void assignExprRelease(Expression *);
 
 // Constant expression
 typedef enum { CONSTANT_INT, CONSTANT_STR } Constant_type;
@@ -62,6 +109,11 @@ typedef struct ConstantExpression {
 #define IS_STR_CONSTANT_EXPR(C) ((C)->type == CONSTANT_STR)
 
 ConstantExpression * constExprDefault();
+
+// Identifier expression
+typedef struct IdentifierExpression {
+
+} IdentifierExpression;
 
 /* Member functions implement as macros */
 

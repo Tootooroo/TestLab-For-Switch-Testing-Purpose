@@ -41,6 +41,7 @@ typedef struct listIter {
 #define listSetNode(l, n) ((l)->node = n)
 #define listGetTail(l) ((l)->tail)
 #define listSetTail(l, t) ((l)->tail = t)
+#define listGetHead(l) ((l)->node)
 #define listSetReleaseMethod(l, m) ((l)->release = m)
 #define listSetMatchMethod(l, m) ((l)->match = m)
 #define listSetDupMethod(l, m) ((l)->dup = m)
