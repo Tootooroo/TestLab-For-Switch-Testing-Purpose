@@ -111,9 +111,10 @@ typedef struct ConstantExpression {
 ConstantExpression * constExprDefault();
 
 // Identifier expression
-typedef struct IdentifierExpression {
-
-} IdentifierExpression;
+typedef struct IdentExpression {
+    Expression base;
+    char *ident;
+} IdentExpression;
 
 /* Member functions implement as macros */
 

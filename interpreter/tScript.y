@@ -72,7 +72,6 @@
 %type   <expression>    FUNCTION_CALL_EXPRESSION
 %type   <expression>    ASSIGNMENT_EXPRESSION
 %type   <expression>    CONSTANT_EXPRESSION
-%type   <expression>    IDENTIFIER_EXPRESSION
 
 /* Misc */
 %type   <VAR_DECL_LIST> VAR_DECL_LIST
@@ -80,8 +79,8 @@
 %type   <objDeclBody>   OBJECT_DEF
 %type   <objDeclItem>   OBJECT_DEF_ITEM
 %type   <list_>         IMPORT_LIST
-%type   <expression>    MEMBER_SELECTION_ENTITY
 %type   <list_>         ARGUMENT_LIST
+%type   <expression>    MEMBER_SELECTION_ENTITY
 
 %code top { }
 
@@ -307,22 +306,21 @@ NOT_EQUAL_EXPRESSION :
     EXPRESSION NOT_EQUAL EXPRESSION;
 
 MEMBER_SELECTION_EXPRESSION :
-    MEMBER_SELECTION_EXPRESSION DOT IDENTIFIER {
-        memberSelectAppendSub($$, $IDENTIFIER);
-    }
-    | MEMBER_SELECTION_ENTITY {
-        $$ = memberSelectDefault();
-        MEMBER_SELECT_SET_HEAD($$, $MEMBER_SELECTION_ENTITY);
-    };
-MEMBER_SELECTION_ENTITY :
-    IDENTIFIER {
+    MEMBER_SELECTION_EXPRESSION IDENTIFIER {
 
     }
-    | FUNCTION_CALL_EXPRESSION {
-        /* Need to check that whether the return value
-         * of function is left-value. */
-        $$ = $FUNCTION_CALL_EXPRESSION;
+    | MEMBER_SELECTION_EXPRESSION MEMBER_SELECTION_ENTITY {
+
+    }
+    | MEMBER_SELECTION_ENTITY {
+
     };
+
+MEMBER_SELECTION_ENTITY :
+    IDENTIFIER DOT {
+        $$ =
+    }
+    | FUNCTION_CALL_EXPRESSION DOT;
 
 FUNCTION_CALL_EXPRESSION :
     IDENTIFIER OPEN_PAREN ARGUMENT_LIST CLOSE_PAREN {
