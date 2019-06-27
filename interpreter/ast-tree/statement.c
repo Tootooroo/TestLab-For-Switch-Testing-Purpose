@@ -9,6 +9,8 @@ Private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope);
 Private StatementTrack objStmtCompute(Statement *stmt, Scope *scope);
 Private StatementTrack importStmtCompute(Statement *stmt, Scope *scope);
 Private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope);
+Private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope);
+Private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope);
 
 /* Public Procedures */
 
@@ -115,6 +117,35 @@ ReturnStatement * returnStmtGen(Expression *expr) {
     return rStmt;
 }
 
+// Function Declaration statement
+FuncDeclStatement * funcDeclStmtDefault() {
+    FuncDeclStatement *fStmt = (FuncDeclStatement *)zMalloc(sizeof(FuncDeclStatement));
+    fStmt->base.compute = funcDeclStmtCompute;
+
+    return fStmt;
+}
+
+FuncDeclStatement * funcDeclStmtGen(Func *f) {
+    FuncDeclStatement *fStmt =funcDeclStmtDefault();
+    fStmt->f = f;
+
+    return fStmt;
+}
+
+// Expression Statement
+ExpressionStatement * exprStmtDefault() {
+    ExpressionStatement * eStmt = (ExpressionStatement *)zMalloc(sizeof(ExpressionStatement));
+    eStmt->base.compute = exprStmtCompute;
+    return eStmt;
+}
+
+ExpressionStatement * exprStmtGen(Expression *expr) {
+    ExpressionStatement *eStmt = exprStmtDefault();
+    EXPR_STMT_SET_EXPR(eStmt, expr);
+
+    return eStmt;
+}
+
 /* Private Procedures */
 Private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope) {
     StatementTrack st = { .s = stmt, .id = IF_STATEMENT_ID };
@@ -146,5 +177,13 @@ Private StatementTrack importStmtCompute(Statement *stmt, Scope *scope) {
 }
 
 Private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope) {
+
+}
+
+Private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope) {
+
+}
+
+Private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope) {
 
 }

@@ -25,10 +25,32 @@ typedef struct Expression {
 #define exprSetType(E, T) ((E)->type = (T))
 #define exprCompute(E, S) ((E)->compute(E, S))
 
+// Plus Expression
 typedef struct PlusExpression {
-
+    Expression base;
+    Expression *left;
+    Expression *right;
 } PlusExpression;
-typedef struct MinusExpression {} MinusExpression;
+
+#define PLUS_EXPR_SET_LEFT(E, L) ((E)->left = (L))
+#define PLUS_EXPR_SET_RIGHT(E, R) ((E)->right = (R))
+
+PlusExpression * plusStmtDefault();
+PlusExpression * plusStmtGen(Expression *left, Expression *right);
+
+// Minus Expression
+typedef struct MinusExpression {
+    Expression base;
+    Expression *left;
+    Expression *right;
+} MinusExpression;
+
+#define MINUS_EXPR_SET_LEFT(E, L) ((E)->left = (L))
+#define MINUS_EXPR_SET_RIGHT(E, R) ((E)->right= (R))
+
+MinusExpression * minusStmtDefault();
+MinusExpression * minusStmtGen(Expression *left, Expression *right);
+
 typedef struct MulExpression {} MulExpression;
 typedef struct DivExpression {} DivExpression;
 typedef struct LessThanExpression {} LessThanExpression;
@@ -41,7 +63,7 @@ typedef struct NotEqualExpression {} NotEqualExpression;
 // Member Select expression
 typedef struct MemberSelectExpression {
     Expression base;
-    Expression *headExpr;
+    Expression *head;
     list *subs;
 } MemberSelectExpression;
 
@@ -94,27 +116,27 @@ typedef enum { CONSTANT_INT, CONSTANT_STR } Constant_type;
 typedef struct ConstantExpression {
     Expression base;
     Constant_type type;
-    union {
-        int number;
-        char *string;
-    };
+    Variable *constant_var;
 } ConstantExpression;
-
-#define CONSTANT_GET_INT(C) ((C)->number)
-#define CONSTANT_GET_STR(C) ((C)->string)
-#define CONSTANT_SET_INT(C, I) ((C)->number = (I))
-#define CONSTANT_SET_STR(C, S) ((C)->string = (S))
 
 #define IS_INT_CONSTANT_EXPR(C) ((C)->type == CONSTANT_INT)
 #define IS_STR_CONSTANT_EXPR(C) ((C)->type == CONSTANT_STR)
 
 ConstantExpression * constExprDefault();
+_Status_t constExprSetInt(ConstantExpression *expr, int num);
+_Status_t constExprSetStr(ConstantExpression *expr, char *str);
 
 // Identifier expression
 typedef struct IdentExpression {
     Expression base;
     char *ident;
 } IdentExpression;
+
+#define IDENT_EXPR_SET(E, I) ((E)->ident = (I))
+#define IDENT_EXPR_GET(E) ((E)->ident)
+
+IdentExpression * identExprDefault();
+IdentExpression * identExprGen(char *);
 
 /* Member functions implement as macros */
 

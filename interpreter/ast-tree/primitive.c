@@ -3,6 +3,11 @@
 #include "primitive.h"
 #include "wrapper.h"
 
+/* Private prototypes */
+Private Primitive * primitivePlusOp_Integer(Primitive *l, Primitive *r);
+Private Primitive * primitiveMinusOp_Integer(Primitive *l, Primitive *r);
+
+
 /* Public Procedures */
 Primitive * primitiveGenerate_i(int i) {
     Primitive *p = (Primitive *)zMalloc(sizeof(Primitive));
@@ -40,4 +45,31 @@ _Status_t primitiveRelease(Primitive *p) {
     free(p);
 
     return OK;
+}
+
+/* Operators
+ * Definition space check is already done by caller(Variable)
+ * so arguments should all support operators defined here. */
+
+Primitive * primitivePlusOp(Primitive *l, Primitive *r) {
+    if (isPrimitive_int(l)) return primitivePlusOp_Integer(l, r);
+
+    return NULL;
+}
+
+Primitive * primitiveMinusOp(Primitive *l, Primitive *r) {
+    if (isPrimitive_int(l)) return primitiveMinusOp_Integer(l, r);
+
+    return NULL;
+}
+
+/* Private procedures */
+Private Primitive * primitivePlusOp_Integer(Primitive *l, Primitive *r) {
+    int sum = l->val_i + r->val_i;
+    return primitiveGenerate_i(sum);
+}
+
+Private Primitive * primitiveMinusOp_Integer(Primitive *l, Primitive *r) {
+    int diff = l->val_i - r->val_i;
+    return primitiveGenerate_i(diff);
 }

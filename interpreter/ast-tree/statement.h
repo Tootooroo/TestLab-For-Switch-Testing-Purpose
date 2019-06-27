@@ -52,7 +52,10 @@ typedef struct VarDeclStatement {
     list *varDeclExprs;
 } VarDeclStatement;
 
-typedef struct FuncDeclStatement {} FuncDeclStatement;
+typedef struct FuncDeclStatement {
+    Statement base;
+    Func *f;
+} FuncDeclStatement;
 
 typedef struct AssignmentStatement {
     /* compute in AssignmentStatement will compute expr in
@@ -70,9 +73,16 @@ typedef struct ImportStatement {
     char *from;
 } ImportStatement;
 
+// Expression statement
 typedef struct ExpressionStatement {
-
+    Statement base;
+    Expression *expr;
 } ExpressionStatement;
+
+#define EXPR_STMT_SET_EXPR(ES, E) ((ES)->expr = (E))
+
+ExpressionStatement * exprStmtDefault();
+ExpressionStatement * exprStmtGen(Expression *expr);
 
 typedef struct ObjectDeclStatement {
     Statement base;
@@ -135,5 +145,9 @@ ImportStatement * importStmtGen(list *symbols, char *from);
 /* Return statement */
 ReturnStatement * returnStmtDefault();
 ReturnStatement * returnStmtGen(Expression *expr);
+
+/* Function declaration statement */
+FuncDeclStatement * funcDeclStmtDefault();
+FuncDeclStatement * funcDeclStmtGen(Func *);
 
 #endif /* _AST_TREE_STATEMENT_H_ */

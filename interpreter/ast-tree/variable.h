@@ -7,6 +7,7 @@
 #include "primitive.h"
 
 typedef enum { VAR_EMPTY, VAR_PRIMITIVE, VAR_OBJECT } VarType;
+typedef enum { VAR_OP_PLUS, VAR_OP_MINUS } VarOp;
 
 typedef struct Variable {
     /* ident of variable, this field
@@ -26,10 +27,16 @@ typedef struct Variable {
 /* Member function implement as macros */
 #define VAR_SET_PRIMITIVE(V, P) ({ (V)->type = VAR_PRIMITIVE; (V)->p = (P) })
 #define VAR_SET_OBJECT(V, O) ({ (V)->type = VAR_OBJECT; (V)->o = (O); })
+#define VAR_IS_PRIMITIVE(V) ((V)->type == VAR_PRIMITIVE)
+#define VAR_IS_OBJECT(V)    ((V)->type == VAR_OBJECT)
 
 /* Prototypes */
 Variable varDefault_Empty();
 Variable * varDefault();
 Variable * varGen(char *ident, VarType type, void *value);
+
+// Operators
+Variable *varPlusOp(Variable *l, Variable *r);
+Variable *varMinusOp(Variable *l, Variable *r);
 
 #endif /* _AST_TREE_VARIABLE_H_ */

@@ -86,12 +86,18 @@
 
 %%
 
+/* type : Program */
 PROGRAM :
     STATEMENTS {
         $$ = programGenerate($STATEMENTS);
         $$->compute($$);
     };
 
+/* With left-recursion grammar to make
+ * sure the second rule be match before
+ * the frist rule
+ *
+ * type : list<Statement> */
 STATEMENTS :
     STATEMENTS STATEMENT {
         listAppend($$, (void *)$STATEMENT);
@@ -101,6 +107,7 @@ STATEMENTS :
         listAppend($$, (void *)$STATEMENT);
     };
 
+/* type : Statement */
 STATEMENT :
     IF_STATEMENT
     | OBJECT_DECL_STATEMENT
@@ -110,6 +117,7 @@ STATEMENT :
     | FUNC_DECL_STATEMENT
     | EXPRESSION_STATEMENT;
 
+/* type : Statement */
 IF_STATEMENT :
     IF OPEN_PAREN EXPRESSION CLOSE_PAREN BLOCK {
         $$ = (Statement *)ifStatementGenerate($EXPRESSION, $BLOCK, NULL);
@@ -118,12 +126,15 @@ IF_STATEMENT :
         $$ = (Statement *)ifStatementGenerate($EXPRESSION, $IF_BLOCK, $BLOCK);
     };
 
+/* type : list<Statement> */
 IF_BLOCK :
     OPEN_CURVE_BRACKET STATEMENTS CLOSE_CURVE_BRACKET { $$ = STATEMENTS; }
     | IF_STATEMENT_WITH_ELSE {
         $$ = listCreate();
         listAppend($$, (void *)$IF_STATEMENT_WITH_ELSE);
     };
+
+/* type : Statement */
 IF_STATEMENT_WITH_ELSE :
     IF OPEN_PAREN EXPRESSION CLOSE_PAREN IF_BLOCK[TRUE] ELSE IF_BLOCK[FALSE] {
         $$ = (Statement *)ifStatementGenerate($EXPRESSION, $TRUE, $FALSE);
@@ -135,6 +146,7 @@ IF_STATEMENT_WITH_ELSE :
     | FUNC_DECL_STATEMENT
     | EXPRESSION_STATEMENT
 
+/* type : Statement */
 OBJECT_DECL_STATEMENT :
     OBJECT IDENTIFIER OBJECT_INHERITENCE OPEN_CURVE_BRACKET OBJECT_DEF CLOSE_CURVE_BRACKET SEMICOLON {
         $$ = objDeclStmtDefault();
@@ -146,6 +158,7 @@ OBJECT_DECL_STATEMENT :
         }
         $$->members = $OBJECT_DEF.newMembers;
     };
+/* type : char * */
 OBJECT_INHERITENCE:
     BELONG IDENTIFIER {
        $$ = IDENTIFIER;
@@ -154,6 +167,7 @@ OBJECT_INHERITENCE:
         $$ = null;
     };
 
+/* type : ObjectDeclBody */
 OBJECT_DEF :
     /* Use to set value within parent */
     OBJECT_DEF OBJECT_DEF_ITEM {
@@ -174,6 +188,7 @@ OBJECT_DEF :
             listAppend($$->newMembers, (void *)$OBJECT_DEF_ITEM->item);
         }
     };
+/* type : ObjectDeclItem */
 OBJECT_DEF_ITEM :
     IDENTIFIER[MEMBER] BELONG IDENTIFIER[PARENT] ASSIGNMENT EXPRESSION SEMICOLON {
         $$ = objItemGen();
@@ -186,12 +201,15 @@ OBJECT_DEF_ITEM :
         $$->item = pairGenerate((void *)$IDENTIFIER, $TYPE);
     };
 
+/* type : Statement */
 IMPORT_STATEMENT :
     IMPORT IMPORT_LIST FROM IDENTIFIER {
         $$ = importStmtDefault();
         $$->importSymbols = $IMPORT_LIST;
         $$->from = $IDENTIFIER;
     };
+
+/* type : list<char *> */
 IMPORT_LIST :
     IMPORT_LIST COMMA IDENTIFIER {
         listAppend($$, (void *)$IDENTIFIER);
@@ -201,15 +219,18 @@ IMPORT_LIST :
         listAppend($$, (void *)$IDENTIFIER);
     };
 
+/* type : Statement */
 RETURN_STATEMENT :
     RETURN EXPRESSION SEMICOLON {
         $$ = returnStmtGen($EXPRESSION);
     };
 
+/* type : Statement */
 VAR_DECL_STATEMENT :
     TYPE VAR_DECL_LIST SEMICOLON {
         $$ = varDeclStmtGenerate($VAR_DECL_LIST);
     };
+/* type : list<Expression> */
 VAR_DECL_LIST :
     VAR_DECL_LIST COMMA VAR_DECL {
         listAppend($$, (void *)$VAR_DECL);
@@ -218,6 +239,8 @@ VAR_DECL_LIST :
         $$ = listCreate();
         listAppend($$, (void *)$VAR_DECL);
     };
+
+/* type : Expression */
 VAR_DECL :
     STR_LITERAL {
         $$ = (Expression *)constExprDefault();
@@ -232,13 +255,23 @@ VAR_DECL :
         $$ = (Expression *)$ASSIGNMENT_EXPRESSION;
     };
 
+/* type : Statement */
 FUNC_DECL_STATEMENT :
     TYPE IDENTIFIER OPEN_PAREN ARGUMENT_LIST CLOSE_PAREN SEMICOLON {
+        $$ = funcDeclStmtDefault();
 
+        Func *f = funcGenerate();
+        FUNC_SET_IDENT(f, $IDENTIFIER);
+        FUNC_SET_STATEMENT_LIST(f, $ARGUMENT_LIST);
+        FUNC_SET_RETURN_TYPE(f, $TYPE);
+
+        $$->f = f;
     };
-
+/* type : Statement */
 EXPRESSION_STATEMENT :
-    EXPRESSION SEMICOLON;
+    EXPRESSION SEMICOLON {
+        $$ = exprStmtGen($EXPRESSION);
+    };
 
 TYPE :
     INT DECL_QUALIFIER
@@ -251,6 +284,7 @@ DECL_QUALIFIER :
 ARRAY_QUALIFIER :
     OPEN_SQUARE_BRACKET CLOSE_SQUARE_BRACKET
 
+/* type : Expression */
 EXPRESSION :
     OPEN_PAREN EXPRESSION CLOSE_PAREN
     | ARITHMETIC_EXPRESSION
@@ -261,24 +295,34 @@ EXPRESSION :
     | CONSTANT_EXPRESSION
     | IDENTIFIER;
 
+/* type : Expression */
 ARITHMETIC_EXPRESSION :
     PLUS_EXPRESSION
     | MINUS_EXPRESSION
     | MUL_EXPRESSION
     | DIV_EXPRESSION;
 
+/* type : Expression */
 PLUS_EXPRESSION :
-    EXPRESSION PLUS EXPRESSION;
+    EXPRESSION[LEFT] PLUS EXPRESSION[RIGHT] {
+        $$ = plusStmtGen($LEFT, $RIGHT);
+    };
 
+/* type : Expression */
 MINUS_EXPRESSION :
-    EXPRESSION MINUS EXPRESSION;
+    EXPRESSION[LEFT] MINUS EXPRESSION[RIGHT] {
+        $$ = minusStmtGen($LEFT, $RIGHT);
+    };
 
+/* type : Expression */
 MUL_EXPRESSION :
     EXPRESSION MUL EXPRESSION;
 
+/* type : Expression */
 DIV_EXPRESSION :
     EXPRESSION DIV EXPRESSION;
 
+/* type : Expression */
 ORDER_EXPRESSION :
     LESS_THAN_EXPRESSION
     | GREATER_THAN_EXPRESSION
@@ -287,46 +331,60 @@ ORDER_EXPRESSION :
     | GREATER_OR_EQUAL_EXPRESSION
     | NOT_EQUAL_EXPRESSION;
 
+/* type : Expression */
 LESS_THAN_EXPRESSION :
     EXPRESSION LESS_THAN EXPRESSION;
 
+/* type : Expression */
 GREATER_THAN_EXPRESSION :
     EXPRESSION GREATER_THAN EXPRESSION;
 
+/* type : Expression */
 EQUAL_EXPRESSION :
     EXPRESSION EQUAL EXPRESSION;
 
+/* type : Expression */
 LESS_OR_EQUAL_EXPRESSION :
     EXPRESSION LESS_OR_EQUAL EXPRESSION;
 
+/* type : Expression */
 GREATER_OR_EQUAL_EXPRESSION :
     EXPRESSION GREATER_OR_EQUAL EXPRESSION;
 
+/* type : Expression */
 NOT_EQUAL_EXPRESSION :
     EXPRESSION NOT_EQUAL EXPRESSION;
 
+/* type : Expression */
 MEMBER_SELECTION_EXPRESSION :
     MEMBER_SELECTION_EXPRESSION IDENTIFIER {
-
+        listAppend($$->subs, identExprGen($IDENTIFIER));
     }
     | MEMBER_SELECTION_EXPRESSION MEMBER_SELECTION_ENTITY {
-
+        listAppend($$->subs, $MEMBER_SELECTION_ENTITY);
     }
     | MEMBER_SELECTION_ENTITY {
-
+        $$ = memberSelectDefault();
+        $$->subs = listCreate();
+        $$->head = $MEMBER_SELECTION_ENTITY;
     };
 
+/* type : Expression */
 MEMBER_SELECTION_ENTITY :
     IDENTIFIER DOT {
-        $$ =
+        $$ = identExprGen($IDENTIFIER);
     }
-    | FUNCTION_CALL_EXPRESSION DOT;
+    | FUNCTION_CALL_EXPRESSION DOT {
+        $$ = $FUNCTION_CALL_EXPRESSION;
+    };
 
+/* type : Expression */
 FUNCTION_CALL_EXPRESSION :
     IDENTIFIER OPEN_PAREN ARGUMENT_LIST CLOSE_PAREN {
         $$ = funcCallExprGen($IDENTIFIER, $ARGUMENT_LIST);
     };
 
+/* type : list<Expression> */
 ARGUMENT_LIST :
     ARGUMENT_LIST COMMA EXPRESSION {
         listAppend($$, $EXPRESSION);
@@ -334,6 +392,8 @@ ARGUMENT_LIST :
     | EXPRESSION {
         $$ = listCreate();
         listAppend($$, $EXPRESSION);
+    } /* empty */ {
+        $$ = NULL;
     };
 
 /* Statement */
@@ -342,18 +402,20 @@ ASSIGNMENT_EXPRESSION :
         $$ = assignExprGen($LEFT, $RIGHT);
     };
 
+/* type : list<Statement> */
 BLOCK :
     OPEN_CURVE_BRACKET STATEMENTS CLOSE_CURVE_BRACKET
     | STATEMENT;
 
+/* type : Expression */
 CONSTANT_EXPRESSION :
     NUM {
         $$ = constExprDefault();
-        CONSTANT_SET_INT($$, $NUM);
+        constExprSetInt($$, str2Int($NUM));
     }
     | STR_LITERAL {
         $$ = constExprDefault();
-        CONSTANT_SET_STR($$, $STR_LITERAL);
+        constExprSetStr($$, $STR_LITERAL);
     };
 
 %%

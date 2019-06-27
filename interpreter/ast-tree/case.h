@@ -23,7 +23,9 @@ typedef struct Func {
 
 /* Member function implemented as macros */
 #define FUNC_IS_EMPTY_FUNC(F) ((F)->statements == null)
+#define FUNC_SET_IDENT(F, I) ((F)->identifier = (I))
 #define FUNC_SET_STATEMENT_LIST(F, L) ((F)->statements = (L))
+#define FUNC_SET_RETURN_TYPE(F, R) ((F)->type = R)
 #define FUNC_COMPUTING(F, S) ((F)->compute(F, S))
 
 /* Prototypes */
