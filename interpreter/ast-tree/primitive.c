@@ -11,6 +11,7 @@ Private Primitive * primitiveDivOp_Integer(Primitive *l, Primitive *r);
 Private Primitive * primitiveLessThanOp_Integer(Primitive *l, Primitive *r);
 Private Primitive * primitiveGreaterThanOp_Integer(Primitive *l, Primitive *r);
 Private Primitive * primitiveLessOrEqualOp_Integer(Primitive *l, Primitive *r);
+Private Primitive * primitiveGreaterOrEqualOp_Integer(Primitive *l, Primitive *r);
 
 
 /* Public Procedures */
@@ -90,6 +91,14 @@ Primitive * primitiveLessOrEqualOp(Primitive *l, Primitive *r) {
     if (isPrimitive_int(l)) return primitiveLessOrEqualOp_Integer(l, r);
 }
 
+Primitive * primitiveGreaterOrEqualOp(Primitive *l, Primitive *r) {
+    if (isPrimitive_int(l)) return primitiveGreaterOrEqualOp_Integer(l, r);
+}
+
+Primitive * primitiveNotEqualOp(Primitive *l, Primitive *r) {
+    if (isPrimitive_int(l)) return primitiveNotEqualOp_Integer(l, r);
+}
+
 /* Private procedures */
 Private Primitive * primitivePlusOp_Integer(Primitive *l, Primitive *r) {
     return primitiveGenerate_i(l->val_i + r->val_i);
@@ -122,4 +131,12 @@ Private Primitive * primitiveGreaterThanOp_Integer(Primitive *l, Primitive *r) {
 
 Private Primitive * primitiveLessOrEqualOp_Integer(Primitive *l, Primitive *r) {
     return primitiveGenerate_i(l->val_i <= r->val_i);
+}
+
+Private Primitive * primitiveLessOrEqualOp_Integer(Primitive *l, Primitive *r) {
+    return primitiveGenerate_i(l->val_i >= r->val_i);
+}
+
+Private Primitive * primitiveGreaterOrEqualOp_Integer(Primitive *l, Primitive *r) {
+    return primitiveGenerate_i(l->val_i != r->val_i);
 }

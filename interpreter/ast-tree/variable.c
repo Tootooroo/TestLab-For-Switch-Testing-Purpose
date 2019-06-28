@@ -97,6 +97,22 @@ Variable * varLessOrEqualOp(Variable *l, Variable *r) {
     return varGen(NULL, VAR_PRIMITIVE, primitiveLessOrEqualOp(l->p, r->p));
 }
 
+Variable * varGreaterOrEqualOp(Variable *l, Variable *r) {
+    if (varOpDefSpaceCheck_Binary(l, r, VAR_OP_GREATER_OR_EQUAL) == false)
+        return NULL;
+
+    // Generate a temporary variable, a right value
+    return varGen(NULL, VAR_PRIMITIVE, primitiveGreaterOrEqualOp(l->p, r->p));
+}
+
+Variable * varNotEqualOp(Variable *l, Variable *r) {
+    if (varOpDefSpaceCheck_Binary(l, r, VAR_OP_NOT_EQUAL) == false)
+        return NULL;
+
+    // Generate a temporary variable, a right value
+    return varGen(NULL, VAR_PRIMITIVE, primitiveNotEqualOp(l->p, r->p));
+}
+
 /* Private procedures */
 
 /* fixme: How to implement ? */

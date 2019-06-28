@@ -14,7 +14,9 @@ typedef enum {
     VAR_OP_MUL,
     VAR_OP_LESS_THAN,
     VAR_OP_GREATER_THAN,
-    VAR_OP_LESS_OR_EQUAL
+    VAR_OP_LESS_OR_EQUAL,
+    VAR_OP_GREATER_OR_EQUAL,
+    VAR_OP_NOT_EQUAL
 } VarOp;
 
 typedef struct Variable {
@@ -51,5 +53,7 @@ Variable * varDivOp(Variable *l, Variable *r);
 Variable * varLessThanOp(Variable *l, Variable *r);
 Variable * varGreaterThanOp(Variable *l, Variable *r);
 Variable * varLessOrEqualOp(Variable *l, Variable *r);
+Variable * varGreaterOrEqualOp(Variable *l, Variable *r);
+Variable * varNotEqualOp(Variable *l, Variable *r);
 
 #endif /* _AST_TREE_VARIABLE_H_ */

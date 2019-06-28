@@ -18,6 +18,8 @@ Private Variable lessThanExprCompute(Expression *expr, Scope *scope);
 Private Variable greaterThanExprCompute(Expression *expr, Scope *scope);
 Private Variable equalExprCOmpute(Expression *expr, Scope *scope);
 Private Variable lessOrEqualExprCompute(Expression *expr, Scope *scope);
+Private Variable greaterOrEqualCompute(Expression *expr, Scope *scope);
+Private Variable notEqualCompute(Expression *expr, Scope *scope);
 
 /* Public procedures */
 
@@ -312,5 +314,17 @@ Private Variable equalExprCOmpute(Expression *expr, Scope *scope) {
 Private Variable lessOrEqualExprCompute(Expression *expr, Scope *scope) {
     Expression *left = expr->left, *right = expr->right;
 
-    return varLessOrEqual(left.compute(left, scope), right.compute(right, scope));
+    return varLessOrEqualOp(left.compute(left, scope), right.compute(right, scope));
+}
+
+Private Variable greaterOrEqualCompute(Expression *expr, Scope *scope) {
+    Expression *left = expr->left, *right = expr->right;
+
+    return varGreaterOrEqualOp(left.compute(left, scope), right.compute(right, scope));
+}
+
+Private Variable notEqualCompute(Expression *expr, Scope *scope) {
+    Expression *left = expr->left, *right = expr->right;
+
+    return varNotEqualOp(left.compute(left, scope), right.compute(right, scope));
 }
