@@ -128,8 +128,31 @@ typedef struct LessOrEqualExpression {
 LessOrEqualExpression * lessOrEqualExprDefault();
 LessOrEqualExpression * lessOrEqualExprGen(Expression *left, Expression *right);
 
-typedef struct GreaterOrEqualExpression {} GreaterOrEqualExpression;
-typedef struct NotEqualExpression {} NotEqualExpression;
+// Greater or equal expression
+typedef struct GreaterOrEqualExpression {
+    Expression base;
+    Expression *left;
+    Expression *right;
+} GreaterOrEqualExpression;
+
+#define GREATER_OR_EQUAL_EXPR_SET_LEFT(E, L) ((E)->left = (L))
+#define GREATER_OR_EQUAL_EXPR_SET_RIGHT(E, R) ((E)->right = (R))
+
+GreaterOrEqualExpression * greaterOrEqualExprDefault();
+GreaterOrEqualExpression * greaterOrEqualGen(Expression *left, Expression *right);
+
+// Not Equal expression
+typedef struct NotEqualExpression {
+    Expression base;
+    Expression *left;
+    Expression *right;
+} NotEqualExpression;
+
+#define NOT_EQUAL_EXPR_SET_LEFT(E, L) ((E)->left = (L))
+#define NOT_EQUAL_EXPR_SET_RIGHT(E, R) ((E)->right = (R))
+
+NotEqualExpression * notEqualExprDefault();
+NotEqualExpression * notEqualExprGen(Expression *left, Expression *right);
 
 // Member Select expression
 typedef struct MemberSelectExpression {
