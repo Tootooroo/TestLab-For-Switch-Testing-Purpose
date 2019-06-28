@@ -51,5 +51,10 @@ _Status_t primitiveRelease(Primitive *);
 // Operators
 Primitive * primitivePlusOp(Primitive *l, Primitive *r);
 Primitive * primitiveMinusOp(Primitive *l, Primitive *r);
+Primitive * primitiveMulOp(Primitive *l, Primitive *r);
+Primitive * primitiveDivOp(Primitive *l, Primitive *r);
+Primitive * primitiveLessThanOp(Primitive *l, Primitive *r);
+Primitive * primitiveGreaterThanOp(Primitive *l, Primitive *r);
+Primitive * primitiveLessOrEqualOp(Primitive *l, Primitive *r);
 
 #endif /* _AST_TREE_PRIMITIVE_H_ */

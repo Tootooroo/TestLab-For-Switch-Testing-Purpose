@@ -12,6 +12,12 @@ Private Variable identExprCompute(Expression *expr, Scope *scope);
 // Operators
 Private Variable plusStmtCompute(Expression *expr, Scope *scope);
 Private Variable minusStmtCompute(Expression *expr, Scope *scope);
+Private Variable mulStmtCompute(Expression *expr, Scope *scope);
+Private Variable divStmtCompute(EXpression *expr, Scope *scope);
+Private Variable lessThanExprCompute(Expression *expr, Scope *scope);
+Private Variable greaterThanExprCompute(Expression *expr, Scope *scope);
+Private Variable equalExprCOmpute(Expression *expr, Scope *scope);
+Private Variable lessOrEqualExprCompute(Expression *expr, Scope *scope);
 
 /* Public procedures */
 
@@ -134,6 +140,95 @@ MinusExpression * minusStmtGen(Expression *left, Expression *right) {
     return expr;
 }
 
+// Mul expression
+MulExpression * mulStmtDefault() {
+    MulExpression *mExpr = (MulExpression *)zMalloc(sizeof(MulExpression));
+    mExpr->base.compute = mulStmtCompute;
+    return mExpr;
+}
+
+MulExpression mulStmtGen(Expression *left, Expression *right) {
+    MulExpression *mExpr = mulStmtDefault();
+    MUL_EXPR_SET_LEFT(mExpr, left);
+    MUL_EXPR_SET_RIGHT(mExpr, right);
+
+    return mExpr;
+}
+
+// Div expression
+DivExpression * divStmtDefault() {
+    DivExpression *dExpr = (DivExpression *)zMalloc(sizeof(DivExpression));
+    dExpr->base.compute = divStmtCompute;
+    return dExpr;
+}
+
+DivExpression * divStmtDefault(Expression *l, Expression *r) {
+    DivExpression *dExpr = divStmtDefault();
+    MUL_EXPR_SET_LEFT(dExpr, l);
+    MUL_EXPR_SET_RIGHT(dExpr, r);
+    return dExpr;
+}
+
+// Less thant expression
+LessThanExpression * lessThanExprDefault() {
+    LessThanExpression *lExpr = (LessThanExpression *)zMalloc(sizeof(LessThanExpression));
+    lExpr->base.compute = lessThanStmtcompute;
+    return lExpr;
+}
+
+LessThanExpression * lessThanExprGen(Expression *left, Expression *right) {
+    LessThanExpression *lExpr = lessThanExprDefault();
+    LESS_THAN_SET_LEFT(lExpr, left);
+    LESS_THAN_SET_RIGHT(lExpr, right);
+
+    return lExpr;
+}
+
+// Greater than expression
+GreaterThanExpression * greaterThanExprDefault() {
+    GreaterThanExpression *gExpr = (GreaterThanExpression *)zMalloc(sizeof(GreaterThanExpression));
+    gExpr->base.compute = greaterThanExprCompute;
+    return gExpr;
+}
+
+GreaterThanEexpression * greaterThanExprGen(Expression *left, Expression *right) {
+    GreaterThanExpression *gExpr = greaterThanExprDefault();
+    GREATER_THAN_SET_LEFT(gExpr, left);
+    GREATER_THAN_SET_RIGHT(gExpr, right);
+    return gExpr;
+}
+
+// Equal expression
+EqualExpression * equalExprDefault() {
+    EqualExpression *expr = (EqualExpression *)zMalloc(sizeof(EqualExpression));
+    expr->base.compute = equalExprCompute;
+
+    return expr;
+}
+
+EqualExpression * equalExprGen(Expression *left, Expression *right) {
+    EqualExpression *expr = equalExprDefault();
+    EQUAL_EXPR_SET_LEFT(expr, left);
+    EQUAL_EXPR_SET_RIGHT(expr, right);
+
+    return expr;
+}
+
+// Less or equal expression
+LessOrEqualExpression * lessOrEqualExprDefault() {
+    LessOrEqualExpression *expr = (LessOrEqualExpression *)zMalloc(sizeof(LessOrEqualExpression));
+    expr->base.compute = lessOrEqualExprCompute;
+    return expr;
+}
+
+LessOrEqualExpression * lessOrEqualExprGen(Expression *left, Expression *right) {
+    LessOrEqualExpression *expr = lessOrEqualExprDefualt();
+    LESS_OR_EQUAL_EXPR_SET_LEFT(expr, left);
+    LESS_OR_EQUAL_EXPR_SET_RIGHT(expr, right);
+
+    return expr;
+}
+
 /* Private procedures */
 Private Variable constExprCompute(Expression *expr, Scope *scope) {
     ConstantExpression *cExpr = (ConstantExpression *)expr;
@@ -182,4 +277,40 @@ Private Variable minusStmtCompute(Expression *expr, Scope *scope) {
     Expression *left = expr->left, *right = expr->right;
 
     return varMinusOp(left.compute(left, scope), right.compute(right, scope));
+}
+
+Private Variable mulStmtCompute(Expression *expr, Scope *scope) {
+    Expression *left = expr->left, *right = expr->right;
+
+    return varMulOp(left.compute(left, scope), right.compute(right, scope));
+}
+
+Private Variable divStmtCompute(EXpression *expr, Scope *scope) {
+    Expression *left = expr->left, *right = expr->right;
+
+    return varDivOp(left.compute(left, scope), right.compute(right, scope));
+}
+
+Private Variable lessThanExprCompute(Expression *expr, Scope *scope) {
+    Expression *left = expr->left, *right = expr->right;
+
+    return varLessThanOp(left.compute(left, scope), right.compute(right, scope));
+}
+
+Private Variable greaterThanExprCompute(Expression *expr, Scope *scope) {
+    Expression *left = expr->left, *right = expr->right;
+
+    return varGreaterThanOp(left.compute(left, scope), right.compute(right, scope));
+}
+
+Private Variable equalExprCOmpute(Expression *expr, Scope *scope) {
+    Expression *left = expr->left, *right = expr->right;
+
+    return varEqualOp(left.comput(left, scope), right.compute(right, scope));
+}
+
+Private Variable lessOrEqualExprCompute(Expression *expr, Scope *scope) {
+    Expression *left = expr->left, *right = expr->right;
+
+    return varLessOrEqual(left.compute(left, scope), right.compute(right, scope));
 }

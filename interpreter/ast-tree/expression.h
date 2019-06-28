@@ -51,12 +51,83 @@ typedef struct MinusExpression {
 MinusExpression * minusStmtDefault();
 MinusExpression * minusStmtGen(Expression *left, Expression *right);
 
-typedef struct MulExpression {} MulExpression;
-typedef struct DivExpression {} DivExpression;
-typedef struct LessThanExpression {} LessThanExpression;
-typedef struct GreaterThanExpression {} GreaterThanExpression;
-typedef struct EqualExpression {} EqualExpression;
-typedef struct LessOrEqualExpression {} LessOrEqualExpression;
+// Multiplication Expression
+typedef struct MulExpression {
+    Expression base;
+    Expression *left;
+    Expression *right;
+} MulExpression;
+
+#define MUL_EXPR_SET_LEFT(E, L) ((E)->left = (L))
+#define MUL_EXPR_SET_RIGHT(E, R) ((E)->right = (R))
+
+MulExpression * mulStmtDefault();
+MulExpression * mulStmtGen(Expression *left, Expression *right);
+
+// Division expression
+typedef struct DivExpression {
+    Expression base;
+    Expression *left;
+    Expression *right;
+} DivExpression;
+
+#define MUL_EXPR_SET_LEFT(E, L) ((E)->left = (L))
+#define MUL_EPXR_SET_RIGHT(E, R) ((E)->right = (R))
+
+DivExpression * divStmtDefault();
+DivExpression * divStmtGen(Expression *left, Expression *right);
+
+// Less than expression
+typedef struct LessThanExpression {
+    Expression base;
+    Expression *left;
+    Expression *right;
+} LessThanExpression;
+
+#define LESS_THAN_SET_LEFT(E, L) ((E)->left = (L))
+#define LESS_THAN_SET_RIGHT(E, R) ((E)->right = (R))
+
+LessThanExpression * lessThanExprDefault();
+LessThanExpression * lessThanExprGen(Expression *left, Expression *right);
+
+typedef struct GreaterThanExpression {
+    Expression base
+    Expression *left;
+    Expression *right;
+} GreaterThanExpression;
+
+#define GREATER_THAN_SET_LEFT(E, L) ((E)->left = (L))
+#define GREATER_THAN_SET_RIGHT(E, R) ((E)->right = (R))
+
+GreaterThanExpression * greaterThanExprDefault();
+GreaterThanExpression * greaterhanExprGen(Expression *left, Expression *right);
+
+// Equal expression
+typedef struct EqualExpression {
+    Expression base;
+    Expression *left;
+    Expression *right;
+} EqualExpression;
+
+#define EQUAL_EXPR_SET_LEFT(E, L) ((E)->left = (L))
+#define EQUAL_EXPR_SET_RIGHT(E, R) ((E)->right = (R))
+
+EqualExpression * equalExprDefault();
+EqualExpression * equalExprGen(Expression *left, Expression *right);
+
+// Less or equal expression
+typedef struct LessOrEqualExpression {
+    Expression base;
+    Expression *left;
+    Expression *right;
+} LessOrEqualExpression;
+
+#define LESS_OR_EQUAL_EXPR_SET_LEFT(E, L) ((E)->left = (L))
+#define LESS_OR_EQUAL_EXPR_SET_RIGHT(E, R) ((E)->right = (R))
+
+LessOrEqualExpression * lessOrEqualExprDefault();
+LessOrEqualExpression * lessOrEqualExprGen(Expression *left, Expression *right);
+
 typedef struct GreaterOrEqualExpression {} GreaterOrEqualExpression;
 typedef struct NotEqualExpression {} NotEqualExpression;
 

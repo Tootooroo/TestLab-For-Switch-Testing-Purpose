@@ -7,7 +7,15 @@
 #include "primitive.h"
 
 typedef enum { VAR_EMPTY, VAR_PRIMITIVE, VAR_OBJECT } VarType;
-typedef enum { VAR_OP_PLUS, VAR_OP_MINUS } VarOp;
+
+typedef enum {
+    VAR_OP_PLUS,
+    VAR_OP_MINUS,
+    VAR_OP_MUL,
+    VAR_OP_LESS_THAN,
+    VAR_OP_GREATER_THAN,
+    VAR_OP_LESS_OR_EQUAL
+} VarOp;
 
 typedef struct Variable {
     /* ident of variable, this field
@@ -36,7 +44,12 @@ Variable * varDefault();
 Variable * varGen(char *ident, VarType type, void *value);
 
 // Operators
-Variable *varPlusOp(Variable *l, Variable *r);
-Variable *varMinusOp(Variable *l, Variable *r);
+Variable * varPlusOp(Variable *l, Variable *r);
+Variable * varMinusOp(Variable *l, Variable *r);
+Variable * varMulOp(Variable *l, Variable *r);
+Variable * varDivOp(Variable *l, Variable *r);
+Variable * varLessThanOp(Variable *l, Variable *r);
+Variable * varGreaterThanOp(Variable *l, Variable *r);
+Variable * varLessOrEqualOp(Variable *l, Variable *r);
 
 #endif /* _AST_TREE_VARIABLE_H_ */

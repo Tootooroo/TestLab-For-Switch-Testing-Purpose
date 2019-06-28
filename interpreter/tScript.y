@@ -316,11 +316,15 @@ MINUS_EXPRESSION :
 
 /* type : Expression */
 MUL_EXPRESSION :
-    EXPRESSION MUL EXPRESSION;
+    EXPRESSION[LEFT] MUL EXPRESSION[RIGHT] {
+        $$ = mulStmtGen($LEFT, $RIGHT);
+    };
 
 /* type : Expression */
 DIV_EXPRESSION :
-    EXPRESSION DIV EXPRESSION;
+    EXPRESSION[LEFT] DIV EXPRESSION[RIGHT] {
+        $$ = divStmtGen($LEFT, $RIGHT);
+    };
 
 /* type : Expression */
 ORDER_EXPRESSION :
@@ -333,11 +337,15 @@ ORDER_EXPRESSION :
 
 /* type : Expression */
 LESS_THAN_EXPRESSION :
-    EXPRESSION LESS_THAN EXPRESSION;
+    EXPRESSION[LEFT] LESS_THAN EXPRESSION[RIGHT] {
+        $$ = lessThanExprGen($LEFT, $RIGHT);
+    };
 
 /* type : Expression */
 GREATER_THAN_EXPRESSION :
-    EXPRESSION GREATER_THAN EXPRESSION;
+    EXPRESSION[LEFT] GREATER_THAN EXPRESSION[RIGHT] {
+        $$ = greaterThanExprGen($LEFT, $RIGHT);
+    };
 
 /* type : Expression */
 EQUAL_EXPRESSION :

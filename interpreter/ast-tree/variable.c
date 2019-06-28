@@ -57,6 +57,46 @@ Variable * varMinusOp(Variable *l, Variable *r) {
     return varGen(NULL, VAR_PRIMITIVE, primitiveMinusOp(l->p, r->p));
 }
 
+Variable * varMulOp(Variable *l, Variable *r) {
+    if (varOpDefSapceCheck_Binary(l, r, VAR_OP_MUL) == false)
+        return NULL;
+
+    // Generate a temporary variable, a right value
+    return varGen(NULL, VAR_PRIMITIVE, primitiveMulOp(l->p, r->p));
+}
+
+Variable * varDivOp(Variable *l, Variable *r) {
+    if (varOpDefSpaceCheck_Binary(l, r, VAR_OP_DIV) == false)
+        return NULL;
+
+    // Generate a temporary variable, a right value
+    return varGen(NULL, VAR_PRIMITIVE, primitiveDivOp(l->p, r->p));
+}
+
+Variable * varLessThanOp(Variable *l, Variable *r) {
+    if (varOpDefSpaceCheck_Binary(l, r, VAR_OP_LESS_THAN) == false)
+        return NULL;
+
+    // Generate a temporary variable, a right value
+    return varGen(NULL, VAR_PRIMITIVE, primitiveLessThanOp(l->p, r->p));
+}
+
+Variable * varGreaterThanOp(Variable *l, Variable *r) {
+    if (varOpDefSpaceCheck_Binary(l, r, VAR_OP_GREATER_THAN) == false)
+        return NULL;
+
+    // Generate a temporary variable, a right value
+    return varGen(NULL, VAR_PRIMITIVE, primitiveGreaterThanOp(l->p, r->p));
+}
+
+Variable * varLessOrEqualOp(Variable *l, Variable *r) {
+    if (varOpDefSpaceCheck_Binary(l, r, VAR_OP_LESS_OR_EQUAL) == false)
+        return NULL;
+
+    // Generate a temporary variable, a right value
+    return varGen(NULL, VAR_PRIMITIVE, primitiveLessOrEqualOp(l->p, r->p));
+}
+
 /* Private procedures */
 
 /* fixme: How to implement ? */
