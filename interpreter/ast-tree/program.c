@@ -1,4 +1,4 @@
-/* program .c */
+/* program.c */
 
 #include "program.h"
 #include "wrapper.h"
