@@ -5,8 +5,10 @@
 
 #include "type.h"
 
+/* Prototypes */
 void * zMalloc(size_t size);
-
+int str2Num(char *);
+_Bool strCompare(char *, char *);
 
 #endif /* _WRAPPER_H_ */
 
