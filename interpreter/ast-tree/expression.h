@@ -17,13 +17,15 @@ typedef enum {
 
 typedef struct Expression {
     ExprType type;
-    Variable (*compute)(struct Expression *, Scope *);
+    Variable * (*compute)(struct Expression *, Scope *);
+    void (*release)(struct Expression *, Scope *);
 } Expression;
 
 /* Member function implement as macros */
 #define exprType(E) ((E)->type)
 #define exprSetType(E, T) ((E)->type = (T))
 #define exprCompute(E, S) ((E)->compute(E, S))
+#define exprRelease(E, S) ((E)->release(E, S))
 
 // Plus Expression
 typedef struct PlusExpression {
@@ -91,7 +93,7 @@ LessThanExpression * lessThanExprDefault();
 LessThanExpression * lessThanExprGen(Expression *left, Expression *right);
 
 typedef struct GreaterThanExpression {
-    Expression base
+    Expression base;
     Expression *left;
     Expression *right;
 } GreaterThanExpression;
@@ -186,7 +188,6 @@ FuncCallExpression * funcCallExprDefault();
 FuncCallExpression * funcCallExprGen(char *ident, list *arguments);
 
 // Assignment expression
-typedef enum { ASSIGN_L_IDENT, ASSIGN_L_MEMBER } Assign_l_type;
 typedef struct AssignmentExpression {
     Expression base;
 
@@ -195,15 +196,15 @@ typedef struct AssignmentExpression {
     Expression *r;
 } AssignmentExpression;
 
-#define ASSIGN_IS_L_IDENT(A) ((A)->type == ASSIGN_L_IDENT)
-#define ASSIGN_IS_L_MEMBER(A) ((A)->type == ASSIGN_L_MEMBER)
-#define ASSIGN_GET_IDENT(A) ((A)->ident)
-#define ASSIGN_GET_MEMBER(A, S) ((A)->expr)
+#define ASSIGN_IS_L_IDENT(A) ()
+#define ASSIGN_IS_L_MEMBER(A) ()
+#define ASSIGN_GET_IDENT(A) ()
+#define ASSIGN_GET_MEMBER(A, S) ()
 
 /* Prototypes */
 AssignmentExpression * assignExprDefault();
-AssignmentExpression * assignExprGen(void *left, Expression *right);
-void assignExprRelease(Expression *);
+AssignmentExpression * assignExprGen(Expression *left, Expression *right);
+void assignExprRelease(Expression *, Scope *scope);
 
 // Constant expression
 typedef enum { CONSTANT_INT, CONSTANT_STR } Constant_type;
@@ -219,6 +220,7 @@ typedef struct ConstantExpression {
 ConstantExpression * constExprDefault();
 _Status_t constExprSetInt(ConstantExpression *expr, int num);
 _Status_t constExprSetStr(ConstantExpression *expr, char *str);
+void constExprRelease(ConstantExpression *expr, Scope *scope);
 
 // Identifier expression
 typedef struct IdentExpression {

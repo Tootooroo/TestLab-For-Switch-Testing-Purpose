@@ -5,8 +5,14 @@
 
 #include "object.h"
 #include "primitive.h"
+#include "scope.h"
 
-typedef enum { VAR_EMPTY, VAR_PRIMITIVE, VAR_OBJECT } VarType;
+typedef enum {
+    VAR_EMPTY,
+    VAR_PRIMITIVE_INT,
+    VAR_PRIMITIVE_STR,
+    VAR_OBJECT
+} VarType;
 
 typedef enum {
     VAR_OP_PLUS,
@@ -19,6 +25,7 @@ typedef enum {
     VAR_OP_NOT_EQUAL
 } VarOp;
 
+struct VarOps;
 typedef struct Variable {
     /* ident of variable, this field
      * may will be null if its a te-
@@ -32,7 +39,24 @@ typedef struct Variable {
         Primitive *p;
         Object *o;
     };
+
+    // Operators
+    struct VarOps *ops;
+
+    void (*release)(struct Variable *, Scope *);
 } Variable;
+
+typedef struct VarOps {
+    Variable * (*plus)(Variable *, Variable *);
+    Variable * (*minus)(Variable *, Variable *);
+    Variable * (*mul)(Variable *, Variable *);
+    Variable * (*div)(Variable *, Variable *);
+    Variable * (*lessThan)(Variable *, Variable *);
+    Variable * (*greaterThan)(Variable *, Variable *);
+    Variable * (*lessOrEqual)(Variable *, Variable *);
+    Variable * (*greaterOrEqual)(Variable *, Variable *);
+    Variable * (*notEqual)(Variable *, Variable *);
+} VarOps;
 
 /* Member function implement as macros */
 #define VAR_SET_PRIMITIVE(V, P) ({ (V)->type = VAR_PRIMITIVE; (V)->p = (P) })
@@ -40,20 +64,13 @@ typedef struct Variable {
 #define VAR_IS_PRIMITIVE(V) ((V)->type == VAR_PRIMITIVE)
 #define VAR_IS_OBJECT(V)    ((V)->type == VAR_OBJECT)
 
+#define VAR_SET_RELEASE_METHOD(V, M) ((V)->release = (M))
+#define VAR_SET_OP(V, OP_SET) ((V)->ops = OP_SET)
+#define VAR_BIN_OP_CALL(V, OP, AR1, AR2) ((V)->ops->OP(AR1, AR2))
+
 /* Prototypes */
 Variable varDefault_Empty();
 Variable * varDefault();
 Variable * varGen(char *ident, VarType type, void *value);
-
-// Operators
-Variable * varPlusOp(Variable *l, Variable *r);
-Variable * varMinusOp(Variable *l, Variable *r);
-Variable * varMulOp(Variable *l, Variable *r);
-Variable * varDivOp(Variable *l, Variable *r);
-Variable * varLessThanOp(Variable *l, Variable *r);
-Variable * varGreaterThanOp(Variable *l, Variable *r);
-Variable * varLessOrEqualOp(Variable *l, Variable *r);
-Variable * varGreaterOrEqualOp(Variable *l, Variable *r);
-Variable * varNotEqualOp(Variable *l, Variable *r);
 
 #endif /* _AST_TREE_VARIABLE_H_ */

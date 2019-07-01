@@ -26,6 +26,5 @@ typedef struct Member {
 } Member;
 
 /* Member function implement as macros */
-#define
 
 #endif /* _AST_TREE_OBJECT_H_ */

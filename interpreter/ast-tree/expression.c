@@ -1,25 +1,26 @@
 /* epression.c */
 
 #include "expression.h"
+#include "wrapper.h"
 
-/* Private prototypes */
-Private Variable constExprCompute(Expression *, Scope *);
-Private Variable assignExprCompute(Expression *, Scope *);
-Private Variable memberSelectExprCompute(Expression *, Scope *);
-Private Variable funcCallExprCompute(Expression *, Scope *);
-Private Variable identExprCompute(Expression *expr, Scope *scope);
+/* private prototypes */
+private Variable constExprCompute(Expression *, Scope *);
+private Variable assignExprCompute(Expression *, Scope *);
+private Variable memberSelectExprCompute(Expression *, Scope *);
+private Variable funcCallExprCompute(Expression *, Scope *);
+private Variable identExprCompute(Expression *expr, Scope *scope);
 
 // Operators
-Private Variable plusStmtCompute(Expression *expr, Scope *scope);
-Private Variable minusStmtCompute(Expression *expr, Scope *scope);
-Private Variable mulStmtCompute(Expression *expr, Scope *scope);
-Private Variable divStmtCompute(EXpression *expr, Scope *scope);
-Private Variable lessThanExprCompute(Expression *expr, Scope *scope);
-Private Variable greaterThanExprCompute(Expression *expr, Scope *scope);
-Private Variable equalExprCOmpute(Expression *expr, Scope *scope);
-Private Variable lessOrEqualExprCompute(Expression *expr, Scope *scope);
-Private Variable greaterOrEqualCompute(Expression *expr, Scope *scope);
-Private Variable notEqualCompute(Expression *expr, Scope *scope);
+private Variable  * plusStmtCompute(Expression *expr, Scope *scope);
+private Variable  * minusStmtCompute(Expression *expr, Scope *scope);
+private Variable  * mulStmtCompute(Expression *expr, Scope *scope);
+private Variable  * divStmtCompute(Expression *expr, Scope *scope);
+private Variable  * lessThanExprCompute(Expression *expr, Scope *scope);
+private Variable  * greaterThanExprCompute(Expression *expr, Scope *scope);
+private Variable  * equalExprCOmpute(Expression *expr, Scope *scope);
+private Variable  * lessOrEqualExprCompute(Expression *expr, Scope *scope);
+private Variable  * greaterOrEqualCompute(Expression *expr, Scope *scope);
+private Variable  * notEqualCompute(Expression *expr, Scope *scope);
 
 /* Public procedures */
 
@@ -49,6 +50,11 @@ _Status_t constExprSetStr(ConstantExpression *expr, char *str) {
     return OK;
 }
 
+void constExprRelease(ConstantExpression *expr, Scope *scope) {
+    ConstantExpression *cExpr = (ConstantExpression *)expr;
+
+}
+
 // Asignment expression
 AssignmentExpression * assignExprDefault() {
     AssignmentExpression *aExpr = (AssignmentExpression *)zMalloc(sizeof(AssignmentExpression));
@@ -57,16 +63,22 @@ AssignmentExpression * assignExprDefault() {
     return aExpr;
 }
 
-AssignmentExpression * assignExprGen(void *left, Expression *right, Assign_l_type type) {
+AssignmentExpression * assignExprGen(Expression *left, Expression *right) {
     AssignmentExpression *aExpr = assignExprDefault();
-    aExpr->ident = (char *)left;
-    aExpr->rVal = right;
-    aExpr->type = type;
+    aExpr->l = left;
+    aExpr->r = right;
 
     return aExpr;
 }
 
-void assignExprRelease(Expression *expr) {}
+void assignExprRelease(Expression *expr, Scope *scope) {
+    AssignmentExpression *aExpr = (AssignmentExpression *)expr;
+
+    Expression *left = aExpr->l, *right  = aExpr->r;
+
+    exprRelease(left, scope);
+    exprRelease(right, scope)
+}
 
 // Member select expression
 MemberSelectExpression * memberSelectDefault() {
@@ -231,8 +243,8 @@ LessOrEqualExpression * lessOrEqualExprGen(Expression *left, Expression *right) 
     return expr;
 }
 
-/* Private procedures */
-Private Variable constExprCompute(Expression *expr, Scope *scope) {
+/* private procedures */
+private Variable constExprCompute(Expression *expr, Scope *scope) {
     ConstantExpression *cExpr = (ConstantExpression *)expr;
     Variable var = VarDefault_Empty();
     Primitive *p;
@@ -247,14 +259,14 @@ Private Variable constExprCompute(Expression *expr, Scope *scope) {
     return var;
 }
 
-Private Variable assignExprCompute(Expression *expr, Scope *scope) {}
+private Variable assignExprCompute(Expression *expr, Scope *scope) {}
 
-Private Variable memberSelectExprCompute(Expression *expr, Scope *scope) {}
+private Variable memberSelectExprCompute(Expression *expr, Scope *scope) {}
 
-Private Variable funcCallExprCompute(Expression *expr, Scope *scope) {}
+private Variable funcCallExprCompute(Expression *expr, Scope *scope) {}
 
 // Operators
-Private Variable identExprCompute(Expression *expr, Scope *scope) {
+private Variable identExprCompute(Expression *expr, Scope *scope) {
     IdentExpression *iExpr = expr;
 
     char *ident = iExpr->ident;
@@ -269,61 +281,70 @@ Private Variable identExprCompute(Expression *expr, Scope *scope) {
     return varDefault_Empty();
 }
 
-Private Variable plusStmtCompute(Expression *expr, Scope *scope) {
-    Expression *left = expr->left, *right = expr->right;
+#define VAR_REJECT_FROM_EXPR(EXPR, LEFT_REJECT_EXPR, RIGHT_REJECT_EXPR) ({})
 
-    return varPlusOp(left.compute(left, scope), right.compute(right, scope));
+private Variable * plusExprCompute(Expression *expr, Scope *scope) {
+    PlusExpression *pExpr = (PlusExpression *)expr;
+
+    Variable *left_var = exprCompute(pExpr->left, scope),
+        *right_var = exprCompute(pExpr->right, scope);
+
+    return VAR_BIN_OP_CALL(left_var, plus, left_var, right_var);
 }
 
-Private Variable minusStmtCompute(Expression *expr, Scope *scope) {
-    Expression *left = expr->left, *right = expr->right;
+private Variable * minusExprCompute(Expression *expr, Scope *scope) {
+    MinusExpression *mExpr = (MinusExpression *)expr;
 
-    return varMinusOp(left.compute(left, scope), right.compute(right, scope));
+    Variable *left_var = exprCompute(mExpr->left, scope),
+        *right_var = exprCompute(mExpr->right, scope);
+
+    return VAR_BIN_OP_CALL(left_var, minus, left_var, right_var);
 }
 
-Private Variable mulStmtCompute(Expression *expr, Scope *scope) {
-    Expression *left = expr->left, *right = expr->right;
+private Variable  * mulExprCompute(Expression *expr, Scope *scope) {
+    MulExpression *mExpr = (MulExpression *)expr;
 
-    return varMulOp(left.compute(left, scope), right.compute(right, scope));
+    Variable *left_var = exprCompute(mExpr->left, scope),
+        *right_var = exprCompute(mExpr->left, scope);
+
+    return VAR_BIN_OP_CALL(left_var, mul, left_var, right_var);
 }
 
-Private Variable divStmtCompute(EXpression *expr, Scope *scope) {
-    Expression *left = expr->left, *right = expr->right;
+private Variable divStmtCompute(EXpression *expr, Scope *scope) {
 
-    return varDivOp(left.compute(left, scope), right.compute(right, scope));
 }
 
-Private Variable lessThanExprCompute(Expression *expr, Scope *scope) {
+private Variable lessThanExprCompute(Expression *expr, Scope *scope) {
     Expression *left = expr->left, *right = expr->right;
 
     return varLessThanOp(left.compute(left, scope), right.compute(right, scope));
 }
 
-Private Variable greaterThanExprCompute(Expression *expr, Scope *scope) {
+private Variable greaterThanExprCompute(Expression *expr, Scope *scope) {
     Expression *left = expr->left, *right = expr->right;
 
     return varGreaterThanOp(left.compute(left, scope), right.compute(right, scope));
 }
 
-Private Variable equalExprCOmpute(Expression *expr, Scope *scope) {
+private Variable equalExprCOmpute(Expression *expr, Scope *scope) {
     Expression *left = expr->left, *right = expr->right;
 
     return varEqualOp(left.comput(left, scope), right.compute(right, scope));
 }
 
-Private Variable lessOrEqualExprCompute(Expression *expr, Scope *scope) {
+private Variable lessOrEqualExprCompute(Expression *expr, Scope *scope) {
     Expression *left = expr->left, *right = expr->right;
 
     return varLessOrEqualOp(left.compute(left, scope), right.compute(right, scope));
 }
 
-Private Variable greaterOrEqualCompute(Expression *expr, Scope *scope) {
+private Variable greaterOrEqualCompute(Expression *expr, Scope *scope) {
     Expression *left = expr->left, *right = expr->right;
 
     return varGreaterOrEqualOp(left.compute(left, scope), right.compute(right, scope));
 }
 
-Private Variable notEqualCompute(Expression *expr, Scope *scope) {
+private Variable notEqualCompute(Expression *expr, Scope *scope) {
     Expression *left = expr->left, *right = expr->right;
 
     return varNotEqualOp(left.compute(left, scope), right.compute(right, scope));
