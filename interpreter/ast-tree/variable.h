@@ -51,6 +51,7 @@ typedef struct VarOps {
     Variable * (*minus)(Variable *, Variable *);
     Variable * (*mul)(Variable *, Variable *);
     Variable * (*div)(Variable *, Variable *);
+    Variable * (*equal)(Variable *, Variable *);
     Variable * (*lessThan)(Variable *, Variable *);
     Variable * (*greaterThan)(Variable *, Variable *);
     Variable * (*lessOrEqual)(Variable *, Variable *);

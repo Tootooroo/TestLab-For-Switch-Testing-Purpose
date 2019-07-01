@@ -37,7 +37,7 @@ typedef struct PlusExpression {
 #define PLUS_EXPR_SET_LEFT(E, L) ((E)->left = (L))
 #define PLUS_EXPR_SET_RIGHT(E, R) ((E)->right = (R))
 
-PlusExpression * plusStmtDefault();
+PlusExpression * plusExprDefault();
 PlusExpression * plusStmtGen(Expression *left, Expression *right);
 
 // Minus Expression
@@ -216,6 +216,7 @@ typedef struct ConstantExpression {
 
 #define IS_INT_CONSTANT_EXPR(C) ((C)->type == CONSTANT_INT)
 #define IS_STR_CONSTANT_EXPR(C) ((C)->type == CONSTANT_STR)
+#define CONSTANT_GET_VAR(C) ((C)->constant_var)
 
 ConstantExpression * constExprDefault();
 _Status_t constExprSetInt(ConstantExpression *expr, int num);
