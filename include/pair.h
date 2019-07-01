@@ -41,9 +41,10 @@ Pair * pairDefault(void *dupMethod, void *releaseMethod, void *cmpMethod);
 Pair * pairGen(void *left, void *right, void *, void *, void *);
 Pair * pairGen_Integer(int left, int right, void *dupMethod, void *releasemethod, void *cmpMethod);
 
-
 #ifdef _TEST_LAB_UNIT_TESTING_
+
 void pairTest(void **state);
+
 #endif /* _TEST_LAB_UNIT_TESTING_ */
 
 

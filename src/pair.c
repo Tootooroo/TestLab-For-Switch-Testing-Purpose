@@ -37,7 +37,7 @@ Pair * pairGen_Integer(int left, int right, void *dupMethod, void *releaseMethod
 #include "test.h"
 
 Pair * tPairDup(Pair *p) {
-    Pair *dup = (Pair *)zMalloc(szieof(Pair));
+    Pair *dup = (Pair *)zMalloc(sizeof(Pair));
 
     PAIR_SET_DUP_METHOD(dup, p->pairDup);
     PAIR_SET_RELEASE_METHOD(dup, p->pairRelease);
@@ -68,7 +68,7 @@ void pairTest(void **state) {
     Pair *pair = pairDefault(tPairDup, tPairRelease, tPairCmp);
 
     PAIR_SET_LEFT_I(pair, 1);
-    PAIR_SET_LEFT_I(pair, 2);
+    PAIR_SET_RIGHT_I(pair, 2);
 
     assert_int_equal(PAIR_GET_LEFT_I(pair), 1);
     assert_int_equal(PAIR_GET_RIGHT_I(pair), 2);
