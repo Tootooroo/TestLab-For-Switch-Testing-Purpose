@@ -239,5 +239,9 @@ IdentExpression * identExprGen(char *);
 
 /* Prototypes */
 
+#ifdef _TEST_LAB_UNIT_TESTING_
+
+
+#endif /* _TEST_LAB_UNIT_TESTING_ */
 
 #endif /* _AST_TREE_EXPRESSION_H_ */

@@ -2,6 +2,7 @@
 
 #include "expression.h"
 #include "wrapper.h"
+#include "string.h"
 
 /* private prototypes */
 private Variable * constExprCompute(Expression *, Scope *);
@@ -11,16 +12,16 @@ private Variable * funcCallExprCompute(Expression *, Scope *);
 private Variable * identExprCompute(Expression *expr, Scope *scope);
 
 // Operators
-private Variable  * plusExprCompute(Expression *expr, Scope *scope);
-private Variable  * minusStmtCompute(Expression *expr, Scope *scope);
-private Variable  * mulStmtCompute(Expression *expr, Scope *scope);
-private Variable  * divStmtCompute(Expression *expr, Scope *scope);
-private Variable  * lessThanExprCompute(Expression *expr, Scope *scope);
-private Variable  * greaterThanExprCompute(Expression *expr, Scope *scope);
-private Variable  * equalExprCOmpute(Expression *expr, Scope *scope);
-private Variable  * lessOrEqualExprCompute(Expression *expr, Scope *scope);
-private Variable  * greaterOrEqualCompute(Expression *expr, Scope *scope);
-private Variable  * notEqualCompute(Expression *expr, Scope *scope);
+private Variable * plusExprCompute(Expression *expr, Scope *scope);
+private Variable * minusExprCompute(Expression *expr, Scope *scope);
+private Variable * mulExprCompute(Expression *expr, Scope *scope);
+private Variable * divExprCompute(Expression *expr, Scope *scope);
+private Variable * lessThanExprCompute(Expression *expr, Scope *scope);
+private Variable * greaterThanExprCompute(Expression *expr, Scope *scope);
+private Variable * equalExprCompute(Expression *expr, Scope *scope);
+private Variable * lessOrEqualExprCompute(Expression *expr, Scope *scope);
+private Variable * greaterOrEqualCompute(Expression *expr, Scope *scope);
+private Variable * notEqualCompute(Expression *expr, Scope *scope);
 
 /* Public procedures */
 
@@ -77,13 +78,13 @@ void assignExprRelease(Expression *expr, Scope *scope) {
     Expression *left = aExpr->l, *right  = aExpr->r;
 
     exprRelease(left, scope);
-    exprRelease(right, scope)
+    exprRelease(right, scope);
 }
 
 // Member select expression
 MemberSelectExpression * memberSelectDefault() {
     MemberSelectExpression *mExpr = (MemberSelectExpression *)zMalloc(sizeof(MemberSelectExpression));
-    mExpr->base.compute = memberSelectCompute;
+    mExpr->base.compute = memberSelectExprCompute;
 
     return mExpr;
 }
@@ -102,7 +103,7 @@ FuncCallExpression * funcCallExprDefault() {
     return f;
 }
 
-FuncCallExprEssion * funcCallExprGen(char *ident, list *arguments) {
+FuncCallExpression * funcCallExprGen(char *ident, list *arguments) {
     FuncCallExpression *f = funcCallExprDefault();
     f->funcIdent = ident;
     f->arguments = arguments;
@@ -133,7 +134,7 @@ PlusExpression * plusExprDefault() {
 }
 
 PlusExpression * plusStmtGen(Expression *left, Expression *right) {
-    PlusExpression *expr = plusStmtDefault();
+    PlusExpression *expr = (PlusExpression *)plusExprDefault();
     PLUS_EXPR_SET_LEFT(expr, left);
     PLUS_EXPR_SET_RIGHT(expr, right);
 
@@ -142,8 +143,8 @@ PlusExpression * plusStmtGen(Expression *left, Expression *right) {
 
 // Minus expression
 MinusExpression * minusStmtDefault() {
-    MinusExpression *expr = (PlusExpression *)zMalloc(sizeof(MinusExpression));
-    expr->base.compute = minusStmtCompute;
+    MinusExpression *expr = (MinusExpression *)zMalloc(sizeof(MinusExpression));
+    expr->base.compute = minusExprCompute;
     return expr;
 }
 
@@ -157,11 +158,11 @@ MinusExpression * minusStmtGen(Expression *left, Expression *right) {
 // Mul expression
 MulExpression * mulStmtDefault() {
     MulExpression *mExpr = (MulExpression *)zMalloc(sizeof(MulExpression));
-    mExpr->base.compute = mulStmtCompute;
+    mExpr->base.compute = mulExprCompute;
     return mExpr;
 }
 
-MulExpression mulStmtGen(Expression *left, Expression *right) {
+MulExpression * mulExprGen(Expression *left, Expression *right) {
     MulExpression *mExpr = mulStmtDefault();
     MUL_EXPR_SET_LEFT(mExpr, left);
     MUL_EXPR_SET_RIGHT(mExpr, right);
@@ -172,11 +173,11 @@ MulExpression mulStmtGen(Expression *left, Expression *right) {
 // Div expression
 DivExpression * divStmtDefault() {
     DivExpression *dExpr = (DivExpression *)zMalloc(sizeof(DivExpression));
-    dExpr->base.compute = divStmtCompute;
+    dExpr->base.compute = divExprCompute;
     return dExpr;
 }
 
-DivExpression * divStmtDefault(Expression *l, Expression *r) {
+DivExpression * divExprDefault(Expression *l, Expression *r) {
     DivExpression *dExpr = divStmtDefault();
     MUL_EXPR_SET_LEFT(dExpr, l);
     MUL_EXPR_SET_RIGHT(dExpr, r);
@@ -186,7 +187,7 @@ DivExpression * divStmtDefault(Expression *l, Expression *r) {
 // Less thant expression
 LessThanExpression * lessThanExprDefault() {
     LessThanExpression *lExpr = (LessThanExpression *)zMalloc(sizeof(LessThanExpression));
-    lExpr->base.compute = lessThanStmtcompute;
+    lExpr->base.compute = lessThanExprCompute;
     return lExpr;
 }
 
@@ -205,7 +206,7 @@ GreaterThanExpression * greaterThanExprDefault() {
     return gExpr;
 }
 
-GreaterThanEexpression * greaterThanExprGen(Expression *left, Expression *right) {
+GreaterThanExpression * greaterThanExprGen(Expression *left, Expression *right) {
     GreaterThanExpression *gExpr = greaterThanExprDefault();
     GREATER_THAN_SET_LEFT(gExpr, left);
     GREATER_THAN_SET_RIGHT(gExpr, right);
@@ -236,9 +237,41 @@ LessOrEqualExpression * lessOrEqualExprDefault() {
 }
 
 LessOrEqualExpression * lessOrEqualExprGen(Expression *left, Expression *right) {
-    LessOrEqualExpression *expr = lessOrEqualExprDefualt();
+    LessOrEqualExpression *expr = (LessOrEqualExpression *)lessOrEqualExprDefault();
     LESS_OR_EQUAL_EXPR_SET_LEFT(expr, left);
     LESS_OR_EQUAL_EXPR_SET_RIGHT(expr, right);
+
+    return expr;
+}
+
+// Greater or equal expression
+GreaterOrEqualExpression * greaterOrEqualExprDefault() {
+    GreaterOrEqualExpression *expr = (GreaterOrEqualExpression *)zMalloc(sizeof(GreaterOrEqualExpression));
+    expr->base.compute = greaterOrEqualCompute;
+    return expr;
+}
+
+GreaterOrEqualExpression *greaterOrEqualGen(Expression *left, Expression *right) {
+    GreaterOrEqualExpression *expr = (GreaterOrEqualExpression *)greaterOrEqualExprDefault();
+    GREATER_OR_EQUAL_EXPR_SET_LEFT(expr, left);
+    GREATER_OR_EQUAL_EXPR_SET_RIGHT(expr, right);
+
+    return expr;
+}
+
+// Not Equal expression
+
+NotEqualExpression * notEqualExprDefault() {
+    NotEqualExpression *expr = (NotEqualExpression *)zMalloc(sizeof(NotEqualExpression));
+    expr->base.compute = notEqualCompute;
+    return expr;
+}
+
+NotEqualExpression * notEqualExprGen(Expression *left, Expression *right) {
+    NotEqualExpression *expr = notEqualExprDefault();
+
+    NOT_EQUAL_EXPR_SET_LEFT(expr, left);
+    NOT_EQUAL_EXPR_SET_RIGHT(expr, right);
 
     return expr;
 }
@@ -258,18 +291,25 @@ private Variable * funcCallExprCompute(Expression *expr, Scope *scope) {}
 
 // Operators
 private Variable * identExprCompute(Expression *expr, Scope *scope) {
-    IdentExpression *iExpr = expr;
+    IdentExpression *iExpr = (IdentExpression *)expr;
 
     char *ident = iExpr->ident;
 
     Primitive *p = scopeGetPrimitive(scope, ident);
-    if (p) return varGen(strdup(ident), VAR_PRIMITIVE, p);
+    if (p) {
+        if (isPrimitive_int(p))
+            return varGen(strdup(ident), VAR_PRIMITIVE_INT, p);
+        else if (isPrimitive_str(p))
+            return varGen(strdup(ident), VAR_PRIMITIVE_STR, p);
+        else if (isPrimitive_ops(p))
+            return varGen(strdup(ident), VAR_PRIMITIVE_OPS, p);
+    }
 
     Object *o = scopeGetObject(scope, ident);
     if (o) return varGen(strdup(ident), VAR_OBJECT, o);
 
     // Can not find the identifer in the current scope.
-    return varDefault_Empty();
+    return NULL;
 }
 
 #define VAR_EXTRACT_FROM_EXPR(LEFT_EXPR, RIGHT_EXPR, SCOPE) ({ \
@@ -343,7 +383,7 @@ private Variable * greaterThanExprCompute(Expression *expr, Scope *scope) {
                            PAIR_GET_RIGHT(&operands));
 }
 
-private Variable * equalExprCOmpute(Expression *expr, Scope *scope) {
+private Variable * equalExprCompute(Expression *expr, Scope *scope) {
     EqualExpression *eExpr = (EqualExpression *)expr;
 
     pair operands = VAR_EXTRACT_FROM_EXPR(eExpr->left, eExpr->right, scope);
@@ -382,3 +422,13 @@ private Variable * notEqualCompute(Expression *expr, Scope *scope) {
                            PAIR_GET_LEFT(&operands),
                            PAIR_GET_RIGHT(&operands));
 }
+
+#ifdef _TEST_LAB_UNIT_TESTING_
+
+#include "test.h"
+
+void exprTesting(void **state) {
+
+}
+
+#endif /* _TEST_LAB_UNIT_TESTING_ */

@@ -3,17 +3,28 @@
 #include "variable.h"
 #include "wrapper.h"
 #include "pair.h"
+#include "string.h"
+#include "object.h"
+
+/* Private Variables */
+int opOnTypes[VAR_TYPE_NUM][VAR_OP_NUM] = {
+    /* +, -, *, /, ==, <, >, <=, >=, !=  */
+    {  1, 1, 1, 1,  1, 1, 1,  1,  1,  1 }, /* Integer */
+    {  0, 0, 0, 0,  0, 0, 0,  0,  0,  0 }, /* String */
+    {  0, 0, 0, 0,  0, 0, 0,  0,  0,  0 }, /* OPS */
+};
 
 /* Private prototypes */
 private _Bool varOpDefSpaceCheck_Binary(Variable *l, Variable *r, VarOp op);
 private _Bool varSupportCheck(Variable *, VarOp);
-private pair * varTypeIs(Variable *v);
+private VarType varTypeIs(Variable *v);
 
 // Operators
 private Variable * varPlusOp(Variable *l, Variable *r);
 private Variable * varMinusOp(Variable *l, Variable *r);
 private Variable * varMulOp(Variable *l, Variable *r);
 private Variable * varDivOp(Variable *l, Variable *r);
+private Variable * varEqualOp(Variable *l, Variable *r);
 private Variable * varLessThanOp(Variable *l, Variable *r);
 private Variable * varGreaterThanOp(Variable *l, Variable *r);
 private Variable * varLessOrEqualOp(Variable *l, Variable *r);
@@ -30,6 +41,8 @@ private VarOps primitiveOps_integer = {
     varMulOp,
     /* Division */
     varDivOp,
+    /* Equal */
+    varEqualOp,
     /* Less than */
     varLessThanOp,
     /* Greater than */
@@ -52,6 +65,8 @@ private VarOps primitiveOps_string = {
     NULL,
     /* Division */
     NULL,
+    /* Equal */
+    NULL,
     /* Less than */
     NULL,
     /* Greater than */
@@ -73,6 +88,8 @@ private VarOps objectOps = {
     /* Multiplication */
     NULL,
     /* Division */
+    NULL,
+    /* Equal */
     NULL,
     /* Less than */
     NULL,
@@ -127,14 +144,40 @@ Variable * varGen(char *ident, VarType type, void *value) {
     return var;
 }
 
+void varRelease(Variable *v) {
+    if (v->identifier) free(v->identifier);
+    if (VAR_IS_PRIMITIVE(v)) {
+        primitiveRelease(v->p);
+    } else {
+        objectRelease(v->o);
+    }
+
+    free(v);
+}
+
+Variable * varDup(Variable *orig) {
+    Variable *dup = varDefault();
+
+    VAR_SET_IDENT(dup, strdup(VAR_IDENT(orig)));
+    VAR_SET_TYPE(dup, VAR_TYPE(orig));
+
+    if (VAR_IS_PRIMITIVE(orig)) {
+        /* Primitive */
+        VAR_SET_PRIMITIVE(dup, primitiveDup(orig->p));
+    } else {
+        /* Object */
+        VAR_SET_OBJECT(dup, objDup(orig->o));
+    }
+}
+
 /* Private procedures */
 
 /* Operators */
 
 /* Operatos of integer */
 #define VAR_OPS_INT_PRE_CHECK(l, r, ops, type)\
-    varOpDefSpaceCheck_Binary(l, r, ops) == false &&\
-    varTypeIs(l)->right_i != type
+    varOpDefSpaceCheck_Binary(l, r, ops) == false ||\
+    varTypeIs(l) != type
 
 #define VAR_OPS_BINARY_INT_COMPUTE(V1, V2, OP) ({\
     Primitive *l_pri = l->p, *r_pri = r->p, *ret_pri;\
@@ -145,7 +188,7 @@ Variable * varGen(char *ident, VarType type, void *value) {
 
 private Variable * varPlusOp(Variable *l, Variable *r) {
 
-    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_PLUS, PRIMITIVE_TYPE_INT))
+    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_PLUS, VAR_PRIMITIVE_INT))
         return NULL;
 
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, +);
@@ -153,7 +196,7 @@ private Variable * varPlusOp(Variable *l, Variable *r) {
 
 private Variable * varMinusOp(Variable *l, Variable *r) {
 
-    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_PLUS, PRIMITIVE_TYPE_INT))
+    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_MINUS, VAR_PRIMITIVE_INT))
         return NULL;
 
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, -);
@@ -161,7 +204,7 @@ private Variable * varMinusOp(Variable *l, Variable *r) {
 
 private Variable * varMulOp(Variable *l, Variable *r) {
 
-    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_PLUS, PRIMITIVE_TYPE_INT))
+    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_MUL, VAR_PRIMITIVE_INT))
         return NULL;
 
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, *);
@@ -169,15 +212,22 @@ private Variable * varMulOp(Variable *l, Variable *r) {
 
 private Variable * varDivOp(Variable *l, Variable *r) {
 
-    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_PLUS, PRIMITIVE_TYPE_INT))
+    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_DIV, VAR_PRIMITIVE_INT))
         return NULL;
 
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, /);
 }
 
+private Variable *varEqualOp(Variable *l, Variable *r) {
+    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_EQUAL, VAR_PRIMITIVE_INT))
+        return NULL;
+
+    return VAR_OPS_BINARY_INT_COMPUTE(l, r, ==);
+}
+
 private Variable * varLessThanOp(Variable *l, Variable *r) {
 
-    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_PLUS, PRIMITIVE_TYPE_INT))
+    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_LESS_THAN, VAR_PRIMITIVE_INT))
         return NULL;
 
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, <);
@@ -185,7 +235,7 @@ private Variable * varLessThanOp(Variable *l, Variable *r) {
 
 private Variable * varGreaterThanOp(Variable *l, Variable *r) {
 
-    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_PLUS, PRIMITIVE_TYPE_INT))
+    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_GREATER_THAN, VAR_PRIMITIVE_INT))
         return NULL;
 
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, >);
@@ -193,7 +243,7 @@ private Variable * varGreaterThanOp(Variable *l, Variable *r) {
 
 private Variable * varLessOrEqualOp(Variable *l, Variable *r) {
 
-    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_PLUS, PRIMITIVE_TYPE_INT))
+    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_LESS_OR_EQUAL, VAR_PRIMITIVE_INT))
         return NULL;
 
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, <=);
@@ -201,7 +251,7 @@ private Variable * varLessOrEqualOp(Variable *l, Variable *r) {
 
 private Variable * varGreaterOrEqualOp(Variable *l, Variable *r) {
 
-    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_PLUS, PRIMITIVE_TYPE_INT))
+    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_GREATER_OR_EQUAL, VAR_PRIMITIVE_INT))
         return NULL;
 
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, >=);
@@ -209,19 +259,16 @@ private Variable * varGreaterOrEqualOp(Variable *l, Variable *r) {
 
 private Variable * varNotEqualOp(Variable *l, Variable *r) {
 
-    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_PLUS, PRIMITIVE_TYPE_INT))
+    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_NOT_EQUAL, VAR_PRIMITIVE_INT))
         return NULL;
 
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, !=);
 }
 
 private _Bool varOpDefSpaceCheck_Binary(Variable *l, Variable *r, VarOp op) {
-    pair *left_type = varTypeIs(l), *right_type = varTypeIs(r);
+    VarType left_type = varTypeIs(l), right_type = varTypeIs(r);
 
-    _Bool isSame = pairLeft_i(left_type) == pairLeft_i(right_type) &&
-        pairRight_i(left_type) == pairRight_i(right_type);
-
-    if (!isSame) return false;
+    if (left_type != right_type) return false;
     // To check whether the type of variable
     // support <op> operation.
     if (!varSupportCheck(l, op)) return false;
@@ -231,12 +278,26 @@ private _Bool varOpDefSpaceCheck_Binary(Variable *l, Variable *r, VarOp op) {
 
 /* fixme: implement pending */
 private _Bool varSupportCheck(Variable *v, VarOp op) {
-    return true;
+    VarType type = varTypeIs(v);
+    return opOnTypes[type][op];
 }
 
-private pair * varTypeIs(Variable *v) {
-    VarType t = v->type;
-    primitiveType pType = v->p->type;
-
-    return pairGen_Integer(t, pType, null, null, null);
+private VarType  varTypeIs(Variable *v) {
+    return v->type;
 }
+
+#ifdef _AST_TREE_TESTING_
+
+#include "test.h"
+
+void varTest(void *state) {
+    int left_int = 2, right_int = 1;;
+    Variable *left = varGen(NULL, VAR_PRIMITIVE_INT, primitiveGenerate_i(left_int));
+    Variable *right = varGen(NULL, VAR_PRIMITIVE_INT, primitiveGenerate_i(right_int));
+
+    Variable *sum = varPlusOp(left, right);
+    assert_non_null(sum);
+    assert_int_equal(getPrimitive_int(sum->p), 3);
+}
+
+#endif /* _AST_TREE_TESTING_ */

@@ -8,21 +8,26 @@
 #include "scope.h"
 
 typedef enum {
-    VAR_EMPTY,
-    VAR_PRIMITIVE_INT,
-    VAR_PRIMITIVE_STR,
-    VAR_OBJECT
+    VAR_EMPTY = 4,
+    VAR_PRIMITIVE_INT = 0,
+    VAR_PRIMITIVE_STR = 1,
+    VAR_PRIMITIVE_OPS = 2,
+    VAR_OBJECT = 3,
+    VAR_TYPE_NUM = 3
 } VarType;
 
 typedef enum {
     VAR_OP_PLUS,
     VAR_OP_MINUS,
     VAR_OP_MUL,
+    VAR_OP_DIV,
+    VAR_OP_EQUAL,
     VAR_OP_LESS_THAN,
     VAR_OP_GREATER_THAN,
     VAR_OP_LESS_OR_EQUAL,
     VAR_OP_GREATER_OR_EQUAL,
-    VAR_OP_NOT_EQUAL
+    VAR_OP_NOT_EQUAL,
+    VAR_OP_NUM
 } VarOp;
 
 struct VarOps;
@@ -42,8 +47,6 @@ typedef struct Variable {
 
     // Operators
     struct VarOps *ops;
-
-    void (*release)(struct Variable *, Scope *);
 } Variable;
 
 typedef struct VarOps {
@@ -60,9 +63,20 @@ typedef struct VarOps {
 } VarOps;
 
 /* Member function implement as macros */
-#define VAR_SET_PRIMITIVE(V, P) ({ (V)->type = VAR_PRIMITIVE; (V)->p = (P) })
+#define VAR_SET_IDENT(V, I) ((V)->identifier = (I))
+#define VAR_IDENT(V) ((V)->identifier)
+
+#define VAR_SET_TYPE(V, T) ((V)->type = (T))
+#define VAR_TYPE(V) ((V)->type)
+
+#define VAR_SET_PRIMITIVE(V, P) ({\
+    if (isPrimitive_int( (P) )) (V)->type = VAR_PRIMITIVE_INT;  \
+    else if (isPrimitive_str( (P) )) (V)->type = VAR_PRIMITIVE_STR;\
+    (V)->p = (P);\
+})
 #define VAR_SET_OBJECT(V, O) ({ (V)->type = VAR_OBJECT; (V)->o = (O); })
-#define VAR_IS_PRIMITIVE(V) ((V)->type == VAR_PRIMITIVE)
+#define VAR_IS_PRIMITIVE(V) ((V)->type == VAR_PRIMITIVE_INT || \
+                             (V)->type == VAR_PRIMITIVE_STR)
 #define VAR_IS_OBJECT(V)    ((V)->type == VAR_OBJECT)
 
 #define VAR_SET_RELEASE_METHOD(V, M) ((V)->release = (M))
@@ -73,5 +87,13 @@ typedef struct VarOps {
 Variable varDefault_Empty();
 Variable * varDefault();
 Variable * varGen(char *ident, VarType type, void *value);
+void varRelease(Variable *);
+Variable * varDup(Variable *);
+
+#ifdef _AST_TREE_TESTING_
+
+void varTest(void *state);
+
+#endif /* _AST_TREE_TESTING_ */
 
 #endif /* _AST_TREE_VARIABLE_H_ */

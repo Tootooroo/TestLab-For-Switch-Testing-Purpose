@@ -16,4 +16,13 @@ link_libraries(cmocka)
 add_executable(unitTest ${ROOT}/src/unitTest.c ${SRCS})
 target_compile_definitions(unitTest PUBLIC _TEST_LAB_UNIT_TESTING_)
 
+project(interpreter)
+set(I_SRC_DIR ${ROOT}/interpreter/ast-tree)
+set(I_SRCS ${I_SRC_DIR}/variable.c ${I_SRC_DIR}/primitive.c)
+
+project(interpreterTest)
+link_libraries(cmocka)
+add_executable(interpreterTest ${I_SRC_DIR}/unitTest.c ${I_SRCS} ${SRCS})
+target_compile_definitions(interpreterTest PUBLIC _AST_TREE_TESTING_)
+
 include_directories(${HEADERS})

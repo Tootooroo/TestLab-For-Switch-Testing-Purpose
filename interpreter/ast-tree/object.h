@@ -13,7 +13,7 @@ typedef struct Object {
     char *objectType;
     /* identifier of an entity of a objectType */
     char *identifier;
-    /* hashMap<String, Member> */
+    /* hashMap<Variable> */
     hashMap *members;
 } Object;
 
@@ -26,5 +26,21 @@ typedef struct Member {
 } Member;
 
 /* Member function implement as macros */
+#define OBJ_IDENTIFIER(O) ((O)->identifier)
+#define OBJ_SET_IDENTIFIER(O, N) ((O)->identifier = (N))
+
+#define OBJ_TYPE(O) ((O)->identifier)
+#define OBJ_SET_TYPE(O, T) ((O)->objectType = (T))
+
+#define OBJ_MEMBERS(O) ((O)->members)
+#define OBJ_SET_MEMBERS(O, M) ((O)->members = (M))
+
+/* Prototypes */
+Object * objDefualt();
+Object * objGen(char *identifier, char *type);
+Object * objDup(Object *);
+void objectRelease(Object *);
+
+
 
 #endif /* _AST_TREE_OBJECT_H_ */

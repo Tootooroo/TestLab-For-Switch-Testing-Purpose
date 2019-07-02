@@ -29,7 +29,7 @@ typedef struct Primitive {
     union {
         int val_i;
         char *val_str;
-        Ops ops;
+        Ops *ops;
     };
 } Primitive;
 
@@ -43,9 +43,14 @@ typedef struct Primitive {
 #define getPrimitive_ops(p) ((p)->ops)
 
 /* Prototypes */
-Primitive * primitiveGenerate_i(int i);
-Primitive * primitiveGenerate_s(char *s);
-Primitive * primitiveGenerate_op(Ops op);
+Primitive * primitiveGen(void *, primitiveType);
+Primitive * primitiveDup(Primitive *);
 _Status_t primitiveRelease(Primitive *);
+
+// Ops procedures
+Ops *opsDefault();
+_Bool opsIsSupportOp(Ops *ops, char *opName);
+
+#define OPS_SET_OP_SET(OP, SET) ((OP)->ops = (SET))
 
 #endif /* _AST_TREE_PRIMITIVE_H_ */

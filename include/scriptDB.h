@@ -5,6 +5,7 @@
 
 #include <dirent.h>
 
+
 typedef struct scriptDB {
     DIR *dbDir;
     int numOfScripts;

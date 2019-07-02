@@ -85,7 +85,6 @@ typedef struct hashMapIter {
 #define hashEntryPosEntry(POS) ((POS)->entry)
 #define hashEntryPosSetEntry(POS, E) ((POS)->entry = E)
 
-
 /* Prototype */
 hashMap * hashMapCreate(hashMapType *type);
 _Status_t hashMapRelease(hashMap *map);
