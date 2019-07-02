@@ -36,7 +36,7 @@ Primitive * primitiveDup(Primitive *orig) {
     } else if (type == PRIMITIVE_TYPE_STR) {
         dup->val_str = strdup(orig->val_str);
     } else {
-        dup->ops.ops = listDup(orig->ops.ops);
+        dup->ops->ops = listDup(orig->ops->ops);
     }
 
     return dup;
@@ -46,7 +46,7 @@ _Status_t primitiveRelease(Primitive *p) {
     if (isPrimitive_str(p))
         free(p->val_str);
     else if (isPrimitive_ops(p))
-        listRelease(p->ops.ops);
+        listRelease(p->ops->ops);
 
     free(p);
 
@@ -59,7 +59,7 @@ Ops * opsDefault() {
 }
 
 _Bool opsIsSupportOp(Ops *ops, char *opName) {
-    return listSearch(ops, const (void *)opName) != NULL;
+    return listSearch(ops->ops, (void *)opName) != NULL;
 }
 
 /* Private procedures */
