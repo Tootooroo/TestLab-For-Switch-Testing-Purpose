@@ -43,14 +43,31 @@ typedef struct Primitive {
 #define getPrimitive_ops(p) ((p)->ops)
 
 /* Prototypes */
+Primitive * primitiveDefault(void);
 Primitive * primitiveGen(void *, primitiveType);
 Primitive * primitiveDup(Primitive *);
 _Status_t primitiveRelease(Primitive *);
+_Bool primitiveIsEqual(Primitive *, Primitive *);
+_Status_t primitiveAssign(Primitive *, Primitive *);
 
-// Ops procedures
-Ops *opsDefault();
+/* Ops procedures
+ *
+ * Ops should be regular so Primitive can also be regular */
+Ops * opsDefault(void);
+_Status_t opsNewMember(Ops *op, char *member);
+_Status_t opsRmMember(Ops *op, char *member);
+void opsRelease(Ops *);
+Ops * opsDup(Ops *);
+_Bool opsIsEqual(Ops *, Ops *);
+_Status_t opsAssign(Ops *, Ops *);
 _Bool opsIsSupportOp(Ops *ops, char *opName);
 
 #define OPS_SET_OP_SET(OP, SET) ((OP)->ops = (SET))
+
+#ifdef _AST_TREE_TESTING_
+
+void primitiveTest(void **state);
+
+#endif /* AST_TREE_TESTING_ */
 
 #endif /* _AST_TREE_PRIMITIVE_H_ */

@@ -41,4 +41,10 @@ _Status_t scopeNewCase(Scope *, pair *);
 _Status_t scopeNewPrimitive(Scope *, pair *);
 _Status_t scopeNewObject(Scope *, pair *);
 
+#ifdef _AST_TREE_TESTING_
+
+void scopeTest(void **state);
+
+#endif /* _AST_TREE_TESTING_ */
+
 #endif /* _SCOPE_H_ */

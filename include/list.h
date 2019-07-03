@@ -60,6 +60,7 @@ listNode *  listSearch(const list *, const void *key);
 listNode *  listPrev(listIter *);
 listNode *  listNext(listIter *);
 _Status_t   listRewind(listIter *);
+_Bool       listIsEqual(list *l, list *r);
 
 _Bool    listIsIterValid(listIter i);
 listIter listGetIter(list *l, LITER_DIR dir);

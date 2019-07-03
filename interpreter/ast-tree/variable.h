@@ -92,7 +92,7 @@ Variable * varDup(Variable *);
 
 #ifdef _AST_TREE_TESTING_
 
-void varTest(void *state);
+void varTest(void **state);
 
 #endif /* _AST_TREE_TESTING_ */
 

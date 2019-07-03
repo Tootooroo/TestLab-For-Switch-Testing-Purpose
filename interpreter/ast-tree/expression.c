@@ -34,7 +34,7 @@ ConstantExpression * constExprDefault() {
 }
 
 _Status_t constExprSetInt(ConstantExpression *expr, int num) {
-    Primitive *int_pri = primitiveGenerate_i(num);
+    Primitive *int_pri = primitiveGen(&num, PRIMITIVE_TYPE_INT);
     Variable *var = varGen(NULL, VAR_PRIMITIVE_INT, int_pri);
 
     expr->constant_var = var;
@@ -43,7 +43,7 @@ _Status_t constExprSetInt(ConstantExpression *expr, int num) {
 }
 
 _Status_t constExprSetStr(ConstantExpression *expr, char *str) {
-    Primitive *str_pri = primitiveGenerate_s(str);
+    Primitive *str_pri = primitiveGen(str, PRIMITIVE_TYPE_STR);
     Variable *var = varGen(NULL, VAR_PRIMITIVE_STR, str_pri);
 
     expr->constant_var = var;
@@ -54,6 +54,8 @@ _Status_t constExprSetStr(ConstantExpression *expr, char *str) {
 void constExprRelease(ConstantExpression *expr, Scope *scope) {
     ConstantExpression *cExpr = (ConstantExpression *)expr;
 
+    varRelease(cExpr->constant_var);
+    free(expr);
 }
 
 // Asignment expression
@@ -66,8 +68,8 @@ AssignmentExpression * assignExprDefault() {
 
 AssignmentExpression * assignExprGen(Expression *left, Expression *right) {
     AssignmentExpression *aExpr = assignExprDefault();
-    aExpr->l = left;
-    aExpr->r = right;
+    ASSIGN_SET_LEFT(aExpr, left);
+    ASSIGN_SET_RIGHT(aExpr, right);
 
     return aExpr;
 }
@@ -75,10 +77,8 @@ AssignmentExpression * assignExprGen(Expression *left, Expression *right) {
 void assignExprRelease(Expression *expr, Scope *scope) {
     AssignmentExpression *aExpr = (AssignmentExpression *)expr;
 
-    Expression *left = aExpr->l, *right  = aExpr->r;
-
-    exprRelease(left, scope);
-    exprRelease(right, scope);
+    exprRelease(ASSIGN_GET_LEFT(aExpr), scope);
+    exprRelease(ASSIGN_GET_RIGHT(aExpr), scope);
 }
 
 // Member select expression
@@ -96,6 +96,16 @@ void memberSelectAppendSub(MemberSelectExpression *expr, char *sub) {
     listAppend(expr->subs, sub);
 }
 
+void memberSelectRelease(Expression *expr, Scope *scope) {
+    MemberSelectExpression *mExpr = (MemberSelectExpression *)expr;
+
+    Expression *head = mExpr->head;
+    if (head) head->release(head, scope);
+
+    list *l = mExpr->subs;
+    if (l) listRelease(l);
+}
+
 // Function call expression
 FuncCallExpression * funcCallExprDefault() {
     FuncCallExpression *f = (FuncCallExpression *)zMalloc(sizeof(FuncCallExpression));
@@ -109,6 +119,14 @@ FuncCallExpression * funcCallExprGen(char *ident, list *arguments) {
     f->arguments = arguments;
 
     return f;
+}
+
+void funcCallRelease(Expression *expr, Scope *s) {
+    FuncCallExpression *fExpr = (FuncCallExpression *)expr;
+
+    free(fExpr->funcIdent);
+
+    listRelease(fExpr->arguments);
 }
 
 // Identifier expression
@@ -126,6 +144,12 @@ IdentExpression * identExprGen(char *ident) {
     return iExpr;
 }
 
+void identExprRelease(Expression *expr, Scope *s) {
+    IdentExpression *iExpr = (IdentExpression *)expr;
+
+    free(iExpr->ident);
+}
+
 // Plus expression
 PlusExpression * plusExprDefault() {
     PlusExpression *expr = (PlusExpression *)zMalloc(sizeof(PlusExpression));
@@ -133,12 +157,21 @@ PlusExpression * plusExprDefault() {
     return expr;
 }
 
-PlusExpression * plusStmtGen(Expression *left, Expression *right) {
+PlusExpression * plusExprGen(Expression *left, Expression *right) {
     PlusExpression *expr = (PlusExpression *)plusExprDefault();
     PLUS_EXPR_SET_LEFT(expr, left);
     PLUS_EXPR_SET_RIGHT(expr, right);
 
     return expr;
+}
+
+void plusExprRelease(Expression *expr, Scope *s) {
+    PlusExpression *pExpr = (PlusExpression *)expr;
+
+    Expression *left = pExpr->left, *right = pExpr->right;
+
+    left->release(left, s);
+    right->release(right, s);
 }
 
 // Minus expression
@@ -148,11 +181,19 @@ MinusExpression * minusStmtDefault() {
     return expr;
 }
 
-MinusExpression * minusStmtGen(Expression *left, Expression *right) {
+MinusExpression * minusExprGen(Expression *left, Expression *right) {
     MinusExpression *expr = minusStmtDefault();
     MINUS_EXPR_SET_LEFT(expr, left);
     MINUS_EXPR_SET_RIGHT(expr, right);
     return expr;
+}
+
+void minusExprRelease(Expression *expr, Scope *s) {
+    MinusExpression *mExpr = (MinusExpression *)expr;
+
+    Expression *left = mExpr->left, *right = mExpr->right;
+    left->release(left, s);
+    right->release(right, s);
 }
 
 // Mul expression
@@ -170,18 +211,34 @@ MulExpression * mulExprGen(Expression *left, Expression *right) {
     return mExpr;
 }
 
+void mulExprRelease(Expression *expr, Scope *s) {
+    MulExpression *mExpr = (MulExpression *)expr;
+
+    Expression *left = mExpr->left, *right = mExpr->right;
+    left->release(left, s);
+    right->release(right, s);
+}
+
 // Div expression
-DivExpression * divStmtDefault() {
+DivExpression * divExprDefault() {
     DivExpression *dExpr = (DivExpression *)zMalloc(sizeof(DivExpression));
     dExpr->base.compute = divExprCompute;
     return dExpr;
 }
 
-DivExpression * divExprDefault(Expression *l, Expression *r) {
-    DivExpression *dExpr = divStmtDefault();
+DivExpression * divExprGen(Expression *l, Expression *r) {
+    DivExpression *dExpr = (DivExpression *)divExprDefault();
     MUL_EXPR_SET_LEFT(dExpr, l);
     MUL_EXPR_SET_RIGHT(dExpr, r);
     return dExpr;
+}
+
+void divExprRelease(Expression *expr, Scope *s) {
+    DivExpression *dExpr = (DivExpression *)expr;
+
+    Expression *left = dExpr->left, *right = dExpr->right;
+    left->release(left, s);
+    right->release(right, s);
 }
 
 // Less thant expression
@@ -199,6 +256,14 @@ LessThanExpression * lessThanExprGen(Expression *left, Expression *right) {
     return lExpr;
 }
 
+void lessThanExprRelease(Expression *expr, Scope *s) {
+    LessThanExpression * lExpr = (LessThanExpression *)expr;
+
+    Expression *left = lExpr->left, *right = lExpr->right;
+    left->release(left, s);
+    right->release(right, s);
+}
+
 // Greater than expression
 GreaterThanExpression * greaterThanExprDefault() {
     GreaterThanExpression *gExpr = (GreaterThanExpression *)zMalloc(sizeof(GreaterThanExpression));
@@ -211,6 +276,14 @@ GreaterThanExpression * greaterThanExprGen(Expression *left, Expression *right) 
     GREATER_THAN_SET_LEFT(gExpr, left);
     GREATER_THAN_SET_RIGHT(gExpr, right);
     return gExpr;
+}
+
+void greaterThanExprRelease(Expression *expr, Scope *s) {
+    GreaterThanExpression *gExpr = (GreaterThanExpression *)expr;
+
+    Expression *left = gExpr->left, *right = gExpr->right;
+    left->release(left, s);
+    right->release(right, s);
 }
 
 // Equal expression
@@ -229,6 +302,14 @@ EqualExpression * equalExprGen(Expression *left, Expression *right) {
     return expr;
 }
 
+void equalExprRelease(Expression *expr, Scope *s) {
+    EqualExpression *eExpr = (EqualExpression *)expr;
+
+    Expression *left = eExpr->left, *right = eExpr->right;
+    left->release(left, s);
+    right->release(right, s);
+}
+
 // Less or equal expression
 LessOrEqualExpression * lessOrEqualExprDefault() {
     LessOrEqualExpression *expr = (LessOrEqualExpression *)zMalloc(sizeof(LessOrEqualExpression));
@@ -242,6 +323,14 @@ LessOrEqualExpression * lessOrEqualExprGen(Expression *left, Expression *right) 
     LESS_OR_EQUAL_EXPR_SET_RIGHT(expr, right);
 
     return expr;
+}
+
+void lessOrEqualExprRelease(Expression *expr, Scope *s) {
+    LessOrEqualExpression *lExpr = (LessOrEqualExpression *)expr;
+
+    Expression *left = lExpr->left, *right = lExpr->right;
+    left->release(left, s);
+    right->release(right, s);
 }
 
 // Greater or equal expression
@@ -259,8 +348,15 @@ GreaterOrEqualExpression *greaterOrEqualGen(Expression *left, Expression *right)
     return expr;
 }
 
-// Not Equal expression
+void greaterOrEqualRelease(Expression *expr, Scope *s) {
+    GreaterOrEqualExpression *gExpr = (GreaterOrEqualExpression *)expr;
 
+    Expression *left = gExpr->left, *right = gExpr->right;
+    left->release(left, s);
+    right->release(right, s);
+}
+
+// Not Equal expression
 NotEqualExpression * notEqualExprDefault() {
     NotEqualExpression *expr = (NotEqualExpression *)zMalloc(sizeof(NotEqualExpression));
     expr->base.compute = notEqualCompute;
@@ -274,6 +370,15 @@ NotEqualExpression * notEqualExprGen(Expression *left, Expression *right) {
     NOT_EQUAL_EXPR_SET_RIGHT(expr, right);
 
     return expr;
+}
+
+void notEqualExprRelease(Expression *expr, Scope *s) {
+    NotEqualExpression *nExpr = (NotEqualExpression *)expr;
+
+    Expression *left = nExpr->left, *right = nExpr->right;
+
+    left->release(left, s);
+    right->release(right, s);
 }
 
 /* private procedures */

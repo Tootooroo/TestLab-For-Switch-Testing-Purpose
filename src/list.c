@@ -150,7 +150,7 @@ listNode * listSearch(const list *l, const void *key) {
     if (isNull(l) || isNull(key))
         return null;
 
-    listIter iter = listGetIter(l, LITER_FORWARD);
+    listIter iter = listGetIter((list *)l, LITER_FORWARD);
     listNode *node;
 
     while (node = listNext(&iter)) {
@@ -240,6 +240,29 @@ _Status_t listRewind(listIter *iter) {
         iter->node = listGetTail(iter->l);
 
     return OK;
+}
+
+_Bool listIsEqual(list *l, list *r) {
+    listIter iter_l = listGetIter(l, LITER_FORWARD),
+        iter_r = listGetIter(r, LITER_FORWARD);
+
+    listNode *node_l, *node_r;
+    while (true) {
+        node_l = listNext(&iter_l);
+        node_r = listNext(&iter_r);
+
+        if (!node_l || !node_r) break;
+
+        if (l->match(node_l->value, node_r->value))
+            continue;
+        else
+            return false;
+    }
+
+    if (isNull(node_l) && isNull(node_r))
+        return true;
+    else
+        return false;
 }
 
 /* Private functions */
@@ -387,6 +410,9 @@ void list_Basic(void **state) {
     listSetDupMethod(l, int_dup);
 
     y = listDup(l);
+
+    /* Equality */
+    assert_int_equal(listIsEqual(l, y), true);
 
     iter = listGetIter(y, LITER_FORWARD);
     i = 0;

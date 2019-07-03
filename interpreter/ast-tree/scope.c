@@ -40,22 +40,22 @@ Scope * subScopeGenerate(Scope *s) {
 }
 
 _Status_t scopeNewCase(Scope *s, pair *c) {
-    return hashMapAdd(s->cases, pairLeft_s(p), pairRight_o(p));
+    return hashMapAdd(s->cases, PAIR_GET_LEFT(c), PAIR_GET_RIGHT(c));
 }
 
 /* Type of pair is (Identifier, Primitive) */
 _Status_t scopeNewPrimitive(Scope *s, pair *p) {
     // To check that is the identifier be used by an object.
-    if (hashMapSearch(s->objects, pairLeft_s(p))) return ERROR;
+    if (hashMapSearch(s->objects, PAIR_GET_LEFT(p))) return ERROR;
 
-    return hashMapAdd(s->primitives, pairLeft_s(p), pairRight_o(p));
+    return hashMapAdd(s->primitives, PAIR_GET_LEFT(p), PAIR_GET_RIGHT(p));
 }
 
 _Status_t scopeNewObject(Scope *s, pair *p) {
     // To check that is the identifier be used by an primitive.
-    if (hashMapSearch(s->objects, pairLeft_s(p))) return ERROR;
+    if (hashMapSearch(s->objects, PAIR_GET_LEFT(p))) return ERROR;
 
-    return hashMapAdd(s->objects, pairLeft_s(p), pairRight_o(p));
+    return hashMapAdd(s->objects, PAIR_GET_LEFT(p), PAIR_GET_RIGHT(p));
 }
 
 /* Private Procedures */
@@ -97,3 +97,13 @@ private _Bool scopeKeyCmp(void *keyl, void *keyr) {
 private _Status_t scopeValRelease(void *value) { return OK; }
 
 private void * scopeValDup(void *value) { return null; }
+
+#ifdef _AST_TREE_TESTING_
+
+#include "test.h"
+
+void scopeTest(void **state) {
+
+}
+
+#endif /* _AST_TREE_TESTING_ */

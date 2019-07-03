@@ -51,6 +51,9 @@ Object * objDup(Object *orig) {
     return dup;
 }
 
+/* fixme: Need to implement objectRelease() */
+void objectRelease(Object *o) {}
+
 /* Private procedures */
 private uint64_t objHashing(const void *key) {
     uint64_t hashVal = 0, val;

@@ -175,14 +175,17 @@ Variable * varDup(Variable *orig) {
 /* Operators */
 
 /* Operatos of integer */
+
+/* Variable * (*)(Variable *, Variable *, VarOp, VarType) */
 #define VAR_OPS_INT_PRE_CHECK(l, r, ops, type)\
     varOpDefSpaceCheck_Binary(l, r, ops) == false ||\
     varTypeIs(l) != type
 
+/* Variable * (*)(Variable *, Variable *, VarType) */
 #define VAR_OPS_BINARY_INT_COMPUTE(V1, V2, OP) ({\
     Primitive *l_pri = l->p, *r_pri = r->p, *ret_pri;\
     int ret_int = l_pri->val_i OP r_pri->val_i;\
-    ret_pri = primitiveGenerate_i(ret_int);\
+    ret_pri = primitiveGen(&ret_int, PRIMITIVE_TYPE_INT);  \
     varGen(NULL, VAR_PRIMITIVE_INT, ret_pri);\
 })
 
@@ -265,6 +268,10 @@ private Variable * varNotEqualOp(Variable *l, Variable *r) {
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, !=);
 }
 
+/* Operators of string */
+
+/* Operators of ops */
+
 private _Bool varOpDefSpaceCheck_Binary(Variable *l, Variable *r, VarOp op) {
     VarType left_type = varTypeIs(l), right_type = varTypeIs(r);
 
@@ -290,14 +297,81 @@ private VarType  varTypeIs(Variable *v) {
 
 #include "test.h"
 
-void varTest(void *state) {
-    int left_int = 2, right_int = 1;;
-    Variable *left = varGen(NULL, VAR_PRIMITIVE_INT, primitiveGenerate_i(left_int));
-    Variable *right = varGen(NULL, VAR_PRIMITIVE_INT, primitiveGenerate_i(right_int));
+private void varTest_str(void);
+private void varTest_int(void);
 
+void varTest(void **state) {
+    varTest_int();
+}
+
+private void varTest_str(void) {
+
+}
+
+private void varTest_int(void) {
+    int left_int = 2, right_int = 1;;
+    Variable *left = varGen(NULL, VAR_PRIMITIVE_INT, primitiveGen(&left_int, PRIMITIVE_TYPE_INT));
+    Variable *right = varGen(NULL, VAR_PRIMITIVE_INT, primitiveGen(&right_int, PRIMITIVE_TYPE_INT));
+
+    /* Plus */
     Variable *sum = varPlusOp(left, right);
     assert_non_null(sum);
     assert_int_equal(getPrimitive_int(sum->p), 3);
+    varRelease(sum);
+
+    /* Minus */
+    Variable *diff = varMinusOp(left, right);
+    assert_non_null(diff);
+    assert_int_equal(getPrimitive_int(diff->p), 1);
+    varRelease(diff);
+
+    /* Multiplication */
+    Variable *product = varMulOp(left, right);
+    assert_non_null(product);
+    assert_int_equal(getPrimitive_int(product->p), 2);
+    varRelease(product);
+
+    /* Division */
+    Variable *quotient = varDivOp(left, right);
+    assert_non_null(quotient);
+    assert_int_equal(getPrimitive_int(quotient->p), 2);
+    varRelease(quotient);
+
+    /* Equal */
+    Variable *isEqual = varEqualOp(left, right);
+    assert_non_null(isEqual);
+    assert_int_equal(getPrimitive_int(isEqual->p), 0);
+    varRelease(isEqual);
+
+    /* Less than */
+    Variable *lessThan = varLessThanOp(left, right);
+    assert_non_null(lessThan);
+    assert_int_equal(getPrimitive_int(lessThan->p), 0);
+    varRelease(lessThan);
+
+    /* Greater than */
+    Variable *greaterThan = varGreaterThanOp(left, right);
+    assert_non_null(greaterThan);
+    assert_int_equal(getPrimitive_int(greaterThan->p), 1);
+    varRelease(greaterThan);
+
+    /* Less or equal */
+    Variable *lessOrEqual = varLessOrEqualOp(left, right);
+    assert_non_null(lessOrEqual);
+    assert_int_equal(getPrimitive_int(lessOrEqual->p), 0);
+    varRelease(lessOrEqual);
+
+    /* Greater or equal */
+    Variable *greaterOrEqual = varGreaterOrEqualOp(left, right);
+    assert_non_null(greaterOrEqual);
+    assert_int_equal(getPrimitive_int(greaterOrEqual->p), 1);
+    varRelease(greaterOrEqual);
+
+    /* Not Equal */
+    Variable *notEqual = varNotEqualOp(left, right);
+    assert_non_null(notEqual);
+    assert_int_equal(getPrimitive_int(notEqual->p), 1);
+    varRelease(notEqual);
 }
 
 #endif /* _AST_TREE_TESTING_ */

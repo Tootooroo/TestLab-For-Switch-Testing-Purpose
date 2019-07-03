@@ -38,7 +38,8 @@ typedef struct PlusExpression {
 #define PLUS_EXPR_SET_RIGHT(E, R) ((E)->right = (R))
 
 PlusExpression * plusExprDefault();
-PlusExpression * plusStmtGen(Expression *left, Expression *right);
+PlusExpression * plusExprGen(Expression *left, Expression *right);
+void plusExprRelease(Expression *, Scope *);
 
 // Minus Expression
 typedef struct MinusExpression {
@@ -50,8 +51,10 @@ typedef struct MinusExpression {
 #define MINUS_EXPR_SET_LEFT(E, L) ((E)->left = (L))
 #define MINUS_EXPR_SET_RIGHT(E, R) ((E)->right= (R))
 
-MinusExpression * minusStmtDefault();
-MinusExpression * minusStmtGen(Expression *left, Expression *right);
+MinusExpression * minusExprDefault();
+MinusExpression * minusExprGen(Expression *left, Expression *right);
+void minusRelease(Expression *expr, Scope *s);
+
 
 // Multiplication Expression
 typedef struct MulExpression {
@@ -64,7 +67,8 @@ typedef struct MulExpression {
 #define MUL_EXPR_SET_RIGHT(E, R) ((E)->right = (R))
 
 MulExpression * mulStmtDefault();
-MulExpression * mulStmtGen(Expression *left, Expression *right);
+MulExpression * mulExprGen(Expression *left, Expression *right);
+void mulExprRelease(Expression *expr, Scope *s);
 
 // Division expression
 typedef struct DivExpression {
@@ -76,8 +80,9 @@ typedef struct DivExpression {
 #define MUL_EXPR_SET_LEFT(E, L) ((E)->left = (L))
 #define MUL_EPXR_SET_RIGHT(E, R) ((E)->right = (R))
 
-DivExpression * divStmtDefault();
-DivExpression * divStmtGen(Expression *left, Expression *right);
+DivExpression * divExprDefault();
+DivExpression * divExprGen(Expression *left, Expression *right);
+void divExprRelease(Expression *expr, Scope *scope);
 
 // Less than expression
 typedef struct LessThanExpression {
@@ -91,6 +96,7 @@ typedef struct LessThanExpression {
 
 LessThanExpression * lessThanExprDefault();
 LessThanExpression * lessThanExprGen(Expression *left, Expression *right);
+void lessThanExprRelease(Expression *left, Scope *s);
 
 typedef struct GreaterThanExpression {
     Expression base;
@@ -103,6 +109,7 @@ typedef struct GreaterThanExpression {
 
 GreaterThanExpression * greaterThanExprDefault();
 GreaterThanExpression * greaterhanExprGen(Expression *left, Expression *right);
+void greaterThanExprRelease(Expression *, Scope *);
 
 // Equal expression
 typedef struct EqualExpression {
@@ -116,6 +123,7 @@ typedef struct EqualExpression {
 
 EqualExpression * equalExprDefault();
 EqualExpression * equalExprGen(Expression *left, Expression *right);
+void equalExprRelease(Expression *, Scope *);
 
 // Less or equal expression
 typedef struct LessOrEqualExpression {
@@ -129,6 +137,7 @@ typedef struct LessOrEqualExpression {
 
 LessOrEqualExpression * lessOrEqualExprDefault();
 LessOrEqualExpression * lessOrEqualExprGen(Expression *left, Expression *right);
+void lessOrEqualExprRelease(Expression *expr, Scope *s);
 
 // Greater or equal expression
 typedef struct GreaterOrEqualExpression {
@@ -142,6 +151,7 @@ typedef struct GreaterOrEqualExpression {
 
 GreaterOrEqualExpression * greaterOrEqualExprDefault();
 GreaterOrEqualExpression * greaterOrEqualGen(Expression *left, Expression *right);
+void greaterOrEqualRelease(Expression *expr, Scope *s);
 
 // Not Equal expression
 typedef struct NotEqualExpression {
@@ -155,6 +165,7 @@ typedef struct NotEqualExpression {
 
 NotEqualExpression * notEqualExprDefault();
 NotEqualExpression * notEqualExprGen(Expression *left, Expression *right);
+void notEqualExprRelease(Expression *expr, Scope *s);
 
 // Member Select expression
 typedef struct MemberSelectExpression {
@@ -169,6 +180,7 @@ typedef struct MemberSelectExpression {
 
 MemberSelectExpression * memberSelectDefault();
 void memberSelectAppendSub(MemberSelectExpression *, char *);
+void memberSelectRelease(Expression *, Scope *);
 
 // Function call expression
 typedef struct FuncCallExpression {
@@ -186,6 +198,7 @@ typedef struct FuncCallExpression {
 
 FuncCallExpression * funcCallExprDefault();
 FuncCallExpression * funcCallExprGen(char *ident, list *arguments);
+void funcCallRelease(Expression *, Scope *);
 
 // Assignment expression
 typedef struct AssignmentExpression {
@@ -196,8 +209,15 @@ typedef struct AssignmentExpression {
     Expression *r;
 } AssignmentExpression;
 
+#define ASSIGN_GET_LEFT(A) ((A)->l)
+#define ASSIGN_SET_LEFT(A, L) ((A)->l = (L))
+
+#define ASSIGN_GET_RIGHT(A) ((A)->r)
+#define ASSIGN_SET_RIGHT(A, R) ((A)->r = (R))
+
 #define ASSIGN_IS_L_IDENT(A) ()
 #define ASSIGN_IS_L_MEMBER(A) ()
+
 #define ASSIGN_GET_IDENT(A) ()
 #define ASSIGN_GET_MEMBER(A, S) ()
 
@@ -234,14 +254,16 @@ typedef struct IdentExpression {
 
 IdentExpression * identExprDefault();
 IdentExpression * identExprGen(char *);
+void identExprRelease(Expression *expr, Scope *s);
 
 /* Member functions implement as macros */
 
 /* Prototypes */
 
-#ifdef _TEST_LAB_UNIT_TESTING_
+#ifdef _AST_TREE_TESTING_
 
+void exprTest(void **state);
 
-#endif /* _TEST_LAB_UNIT_TESTING_ */
+#endif /* _AST_TREE_TESTING_ */
 
 #endif /* _AST_TREE_EXPRESSION_H_ */
