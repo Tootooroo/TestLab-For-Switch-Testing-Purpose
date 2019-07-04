@@ -14,7 +14,7 @@ private _Bool     opsListMatch(const void *, const void *);
 private void *    opsListDup(void *);
 
 /* Public procedures */
-Primitive * primitiveDefault(void) {
+Primitive * primitiveDefault(primitiveType type) {
     Primitive *p = (Primitive *)zMalloc(sizeof(Primitive));
     return p;
 }

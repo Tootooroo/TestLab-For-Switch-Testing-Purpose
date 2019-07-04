@@ -43,7 +43,7 @@ typedef struct Primitive {
 #define getPrimitive_ops(p) ((p)->ops)
 
 /* Prototypes */
-Primitive * primitiveDefault(void);
+Primitive * primitiveDefault(primitiveType);
 Primitive * primitiveGen(void *, primitiveType);
 Primitive * primitiveDup(Primitive *);
 _Status_t primitiveRelease(Primitive *);
@@ -61,7 +61,7 @@ Ops * opsDup(Ops *);
 _Bool opsIsEqual(Ops *, Ops *);
 _Status_t opsAssign(Ops *, Ops *);
 _Bool opsIsSupportOp(Ops *ops, char *opName);
-_Bool isPrimitiveType(char *);
+int isPrimitiveType(char *);
 
 #define OPS_SET_OP_SET(OP, SET) ((OP)->ops = (SET))
 

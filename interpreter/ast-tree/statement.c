@@ -3,6 +3,7 @@
 #include "statement.h"
 #include "wrapper.h"
 #include "primitive.h"
+#include "string.h"
 
 /* Private Prototypes */
 private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope);
@@ -165,10 +166,10 @@ private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope) {
 }
 
 private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
-    _Bool isPrimitive = false;
+    int primitiveType = false;
     VarDeclStatement *varDeclStmt = (VarDeclStatement *)stmt;
 
-    isPrimitive = isPrimitiveType(VAR_DECL_STMT_TYPE(varDeclStmt));
+    primitiveType = isPrimitiveType(VAR_DECL_STMT_TYPE(varDeclStmt));
 
     list *declPairs = varDeclStmt->varDeclExprs;
     listIter iter = listGetIter(declPairs, LITER_FORWARD);
@@ -180,7 +181,21 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
         pair *p = current->value;
 
         char *varIdent = PAIR_GET_LEFT(p);
+        if (primitiveType != -1) {
+            /* Primitive */
+            pair *pri = pairGen(strdup(varIdent), primitiveDefault(primitiveType), null, null, null);
+            scopeNewPrimitive(scope, pri);
+        } else {
+            /* Object */
+        }
+    }
 
+    // Compute expressions within decl statement.
+    listRewind(&iter);
+
+    while ((current = listNext(&iter)) != null) {
+        /* Only assignment can be reside in decl statement
+         * otherwise error occur. */
     }
 }
 
