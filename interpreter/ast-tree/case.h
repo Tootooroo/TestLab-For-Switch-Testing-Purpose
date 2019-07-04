@@ -5,8 +5,8 @@
 
 #include "list.h"
 #include "type.h"
-#include "statement.h"
 #include "scope.h"
+#include "variable.h"
 
 typedef enum { RET_INT, RET_STR, RET_OBJ } RetType;
 
@@ -30,6 +30,6 @@ typedef struct Func {
 
 /* Prototypes */
 Func * funcGenerate();
-_Status_t funcAppendStatement(Func *c, Statement *s);
+_Status_t funcAppendStatements(Func *c, list *s);
 
 #endif /* _AST_TREE_CASE_H_ */

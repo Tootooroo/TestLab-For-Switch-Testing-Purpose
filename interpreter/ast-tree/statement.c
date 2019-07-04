@@ -2,24 +2,24 @@
 
 #include "statement.h"
 #include "wrapper.h"
+#include "primitive.h"
 
 /* Private Prototypes */
-Private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope);
-Private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope);
-Private StatementTrack objStmtCompute(Statement *stmt, Scope *scope);
-Private StatementTrack importStmtCompute(Statement *stmt, Scope *scope);
-Private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope);
-Private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope);
-Private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope);
+private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope);
+private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope);
+private StatementTrack objStmtCompute(Statement *stmt, Scope *scope);
+private StatementTrack importStmtCompute(Statement *stmt, Scope *scope);
+private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope);
+private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope);
+private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope);
 
 /* Public Procedures */
 
 // Base statement
-Statement statementGenerate(stmtCompoute compute_) {
-    Statement s = {
-        .compute = compute_;
-    };
-    return s;
+Statement statementGenerate(stmtCompute compute) {
+    Statement stmt = { .compute = compute };
+
+    return stmt;
 }
 
 StatementTrack statementCompute_untilReturn(list *listOfStmt, Scope *scope) {
@@ -41,11 +41,11 @@ StatementTrack statementCompute_untilReturn(list *listOfStmt, Scope *scope) {
 }
 
 // If statement
-IfStatement * ifStatementGenerate(Expression expr_, list *true_stmts, list *false_stmts) {
+IfStatement * ifStatementGenerate(Expression *expr, list *true_stmts, list *false_stmts) {
 
     IfStatement *ifStmt = (IfStatement *)zMalloc(sizeof(IfStatement));
     ifStmt->base = statementGenerate(ifStatement_Compute);
-    ifStmt->conditionExpr = expr_;
+    ifStmt->conditionExpr = expr;
     ifStmt->trueStatements = true_stmts;
     ifStmt->falseStatements = false_stmts;
 
@@ -64,7 +64,7 @@ VarDeclStatement * varDeclStmtGenerate(list *expr_) {
 // Object declaration statement */
 ObjectDeclStatement * objDeclStmtDefault() {
     ObjectDeclStatement *obj = (ObjectDeclStatement *)zMalloc(sizeof(ObjectDeclStatement));
-    obj->base.compute = statementGenerate(objStmtCompute);
+    obj->base = statementGenerate(objStmtCompute);
     return obj;
 }
 
@@ -84,14 +84,14 @@ ObjectDeclBody * objBodyGen() {
 }
 
 ObjectDeclItem * objItemGen() {
-    ObjectDeclItem *item = (ObjectDeclBody *)zMalloc(sizeof(ObjectDeclBody));
+    ObjectDeclItem *item = (ObjectDeclItem *)zMalloc(sizeof(ObjectDeclBody));
     return item;
 }
 
 // Import statement
 ImportStatement * importStmtDefault() {
     ImportStatement *iStmt = (ImportStatement *)zMalloc(sizeof(ImportStatement));
-    iStmt->base.compute = statementGenerate(importStmtCompute);
+    iStmt->base = statementGenerate(importStmtCompute);
     return iStmt;
 }
 
@@ -106,7 +106,7 @@ ImportStatement * importStmtGen(list *symbols, char *from) {
 // Return statement
 ReturnStatement * returnStmtDefault() {
     ReturnStatement *rStmt = (ReturnStatement *)zMalloc(sizeof(ReturnStatement));
-    rStmt->base.compute = statementGenerate(returnStmtCompute);
+    rStmt->base = statementGenerate(returnStmtCompute);
 
     return rStmt;
 }
@@ -147,7 +147,7 @@ ExpressionStatement * exprStmtGen(Expression *expr) {
 }
 
 /* Private Procedures */
-Private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope) {
+private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope) {
     StatementTrack st = { .s = stmt, .id = IF_STATEMENT_ID };
 
     list *beComputed;
@@ -164,26 +164,42 @@ Private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope) {
     return st;
 }
 
-Private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
+private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
+    _Bool isPrimitive = false;
+    VarDeclStatement *varDeclStmt = (VarDeclStatement *)stmt;
+
+    isPrimitive = isPrimitiveType(VAR_DECL_STMT_TYPE(varDeclStmt));
+
+    list *declPairs = varDeclStmt->varDeclExprs;
+    listIter iter = listGetIter(declPairs, LITER_FORWARD);
+
+    listNode *current;
+
+    // First place identifier into scope.
+    while ((current = listNext(&iter)) != null) {
+        pair *p = current->value;
+
+        char *varIdent = PAIR_GET_LEFT(p);
+
+    }
+}
+
+private StatementTrack objStmtCompute(Statement *stmt, Scope *scope) {
 
 }
 
-Private StatementTrack objStmtCompute(Statement *stmt, Scope *scope) {
+private StatementTrack importStmtCompute(Statement *stmt, Scope *scope) {
 
 }
 
-Private StatementTrack importStmtCompute(Statement *stmt, Scope *scope) {
+private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope) {
 
 }
 
-Private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope) {
+private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope) {
 
 }
 
-Private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope) {
-
-}
-
-Private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope) {
+private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope) {
 
 }

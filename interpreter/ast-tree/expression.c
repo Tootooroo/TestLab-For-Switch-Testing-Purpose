@@ -175,14 +175,14 @@ void plusExprRelease(Expression *expr, Scope *s) {
 }
 
 // Minus expression
-MinusExpression * minusStmtDefault() {
+MinusExpression * minusExprDefault() {
     MinusExpression *expr = (MinusExpression *)zMalloc(sizeof(MinusExpression));
     expr->base.compute = minusExprCompute;
     return expr;
 }
 
 MinusExpression * minusExprGen(Expression *left, Expression *right) {
-    MinusExpression *expr = minusStmtDefault();
+    MinusExpression *expr = minusExprDefault();
     MINUS_EXPR_SET_LEFT(expr, left);
     MINUS_EXPR_SET_RIGHT(expr, right);
     return expr;
@@ -197,14 +197,14 @@ void minusExprRelease(Expression *expr, Scope *s) {
 }
 
 // Mul expression
-MulExpression * mulStmtDefault() {
+MulExpression * mulExprDefault() {
     MulExpression *mExpr = (MulExpression *)zMalloc(sizeof(MulExpression));
     mExpr->base.compute = mulExprCompute;
     return mExpr;
 }
 
 MulExpression * mulExprGen(Expression *left, Expression *right) {
-    MulExpression *mExpr = mulStmtDefault();
+    MulExpression *mExpr = mulExprDefault();
     MUL_EXPR_SET_LEFT(mExpr, left);
     MUL_EXPR_SET_RIGHT(mExpr, right);
 
@@ -528,12 +528,93 @@ private Variable * notEqualCompute(Expression *expr, Scope *scope) {
                            PAIR_GET_RIGHT(&operands));
 }
 
-#ifdef _TEST_LAB_UNIT_TESTING_
+#ifdef _AST_TREE_TESTING_
 
 #include "test.h"
 
-void exprTesting(void **state) {
+void exprTest(void **state) {
+    ConstantExpression *operand_l = constExprDefault(),
+        *operand_r = constExprDefault();
 
+    constExprSetInt(operand_l, 2);
+    constExprSetInt(operand_r, 1);
+
+    // Plus
+    Expression *plusExpr = (Expression *)plusExprGen((Expression *)operand_l, (Expression *)operand_r);
+    Variable *sum = plusExpr->compute(plusExpr, null);
+
+    assert_int_equal(getPrimitive_int(sum->p), 3);
+    varRelease(sum);
+
+    // Minus
+    Expression *minusExpr = (Expression *)minusExprGen((Expression *)operand_l, (Expression *)operand_r);
+    Variable *diff = minusExpr->compute(minusExpr, null);
+
+    assert_int_equal(getPrimitive_int(diff->p), 1);
+    varRelease(diff);
+
+    // 1 + (2 - 1)
+    Expression *hybrid = (Expression *)plusExprGen((Expression *)operand_l, minusExpr);
+    Variable *v3 = hybrid->compute(hybrid, null);
+
+    assert_int_equal(getPrimitive_int(v3->p), 3);
+    varRelease(v3);
+
+    // Multiplication
+    Expression *mulExpr = (Expression *)mulExprGen((Expression *)operand_l, (Expression *)operand_r);
+    Variable *product = mulExpr->compute(mulExpr, null);
+
+    assert_int_equal(getPrimitive_int(product->p), 2);
+    varRelease(product);
+
+    // Division
+    Expression *divExpr = (Expression *)divExprGen((Expression *)operand_l, (Expression *)operand_r);
+    Variable *quotient = divExpr->compute(divExpr, null);
+
+    assert_int_equal(getPrimitive_int(quotient->p), 2);
+    varRelease(quotient);
+
+    // Less than
+    Expression *lessThanExpr = (Expression *)lessThanExprGen((Expression *)operand_l, (Expression *)operand_r);
+    Variable *isLess = lessThanExpr->compute(lessThanExpr, null);
+
+    assert_int_equal(getPrimitive_int(isLess->p), 0);
+    varRelease(isLess);
+
+    // Greater than
+    Expression *greaterThanExpr = (Expression *)greaterThanExprGen((Expression *)operand_l, (Expression *)operand_r);
+    Variable *isGreater = greaterThanExpr->compute(greaterThanExpr, null);
+
+    assert_int_equal(getPrimitive_int(isGreater->p), 1);
+    varRelease(isGreater);
+
+    // Equal
+    Expression *equalExpr = (Expression *)equalExprGen((Expression *)operand_l, (Expression *)operand_r);
+    Variable *isEqual = equalExpr->compute(equalExpr, null);
+
+    assert_int_equal(getPrimitive_int(isEqual->p), 0);
+    varRelease(isEqual);
+
+    // Less or equal
+    Expression *lessOrEqual = (Expression *)lessOrEqualExprGen((Expression *)operand_l, (Expression *)operand_r);
+    Variable *isLessOrEqual = lessOrEqual->compute(lessOrEqual, null);
+
+    assert_int_equal(getPrimitive_int(isLessOrEqual->p), 0);
+    varRelease(isLessOrEqual);
+
+    // Greater or equal
+    Expression *greaterOrEqual = (Expression *)greaterOrEqualGen((Expression *)operand_l, (Expression *)operand_r);
+    Variable *isGreaterOrEqual = greaterOrEqual->compute(greaterOrEqual, null);
+
+    assert_int_equal(getPrimitive_int(isGreaterOrEqual->p), 1);
+    varRelease(isGreaterOrEqual);
+
+    // Not equal
+    Expression *notEqual = (Expression *)notEqualExprGen((Expression *)operand_l, (Expression *)operand_r);
+    Variable *isNotEqual = notEqual->compute(notEqual, null);
+
+    assert_int_equal(getPrimitive_int(isNotEqual->p), 1);
+    varRelease(isNotEqual);
 }
 
-#endif /* _TEST_LAB_UNIT_TESTING_ */
+#endif /* _AST_TREE_TESTING_ */

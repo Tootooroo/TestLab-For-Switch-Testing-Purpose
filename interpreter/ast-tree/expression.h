@@ -66,7 +66,7 @@ typedef struct MulExpression {
 #define MUL_EXPR_SET_LEFT(E, L) ((E)->left = (L))
 #define MUL_EXPR_SET_RIGHT(E, R) ((E)->right = (R))
 
-MulExpression * mulStmtDefault();
+MulExpression * mulExprDefault();
 MulExpression * mulExprGen(Expression *left, Expression *right);
 void mulExprRelease(Expression *expr, Scope *s);
 
@@ -98,6 +98,7 @@ LessThanExpression * lessThanExprDefault();
 LessThanExpression * lessThanExprGen(Expression *left, Expression *right);
 void lessThanExprRelease(Expression *left, Scope *s);
 
+// Greater than expression
 typedef struct GreaterThanExpression {
     Expression base;
     Expression *left;
