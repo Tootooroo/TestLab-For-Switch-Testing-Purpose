@@ -257,16 +257,20 @@ VAR_DECL :
 
 /* type : Statement */
 FUNC_DECL_STATEMENT :
-    TYPE IDENTIFIER OPEN_PAREN ARGUMENT_LIST CLOSE_PAREN SEMICOLON {
+    TYPE IDENTIFIER OPEN_PAREN PARAMETER_LIST CLOSE_PAREN BIG_BLOCK {
         $$ = funcDeclStmtDefault();
 
         Func *f = funcGenerate();
         FUNC_SET_IDENT(f, $IDENTIFIER);
-        FUNC_SET_STATEMENT_LIST(f, $ARGUMENT_LIST);
         FUNC_SET_RETURN_TYPE(f, $TYPE);
 
-        $$->f = f;
-    };
+    }
+    | TYPE IDENTIFIER OPEN_PAREN CLOSE_PAREN BIG_BLOCK;
+
+PARAMETER_LIST :
+    PARAMETER_LIST COMMA TYPE IDENTIFIER
+    | TYPE IDENTIFIER;
+
 /* type : Statement */
 EXPRESSION_STATEMENT :
     EXPRESSION SEMICOLON {
@@ -392,6 +396,9 @@ MEMBER_SELECTION_ENTITY :
 FUNCTION_CALL_EXPRESSION :
     IDENTIFIER OPEN_PAREN ARGUMENT_LIST CLOSE_PAREN {
         $$ = funcCallExprGen($IDENTIFIER, $ARGUMENT_LIST);
+    }
+    | IDENTIFIER OPEN_PAREN CLOSE_PAREN {
+        $$ = funcCallExprGen($IDENTIFIER, NULL);
     };
 
 /* type : list<Expression> */
@@ -402,9 +409,6 @@ ARGUMENT_LIST :
     | EXPRESSION {
         $$ = listCreate();
         listAppend($$, $EXPRESSION);
-    }
-    | /* empty */ {
-        $$ = NULL;
     };
 
 /* Statement */
@@ -415,8 +419,11 @@ ASSIGNMENT_EXPRESSION :
 
 /* type : list<Statement> */
 BLOCK :
-    OPEN_CURVE_BRACKET STATEMENTS CLOSE_CURVE_BRACKET
+    BIG_BLOCK
     | STATEMENT;
+
+BIG_BLOCK :
+    OPEN_CURVE_BRACKET STATEMENTS CLOSE_CURVE_BRACKET
 
 /* type : Expression */
 CONSTANT_EXPRESSION :
