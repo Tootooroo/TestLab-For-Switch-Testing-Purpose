@@ -12,6 +12,12 @@
 #include "variable.h"
 
 typedef enum {
+    STMT_ERROR_NONE,
+    STMT_ERROR_WARN,
+    STMT_ERROR_ABORT
+} stmtErrorType;
+
+typedef enum {
     IF_STATEMENT_ID,
     RETURN_STATEMENT_ID,
     DECL_STATEMENT_ID,
@@ -21,13 +27,15 @@ typedef enum {
 } StatementID;
 
 typedef struct StatementTrack {
+    /* Error indicator */
+    stmtErrorType error;
     /* pointer reference to the statement which
      * return this track */
     void *s;
     StatementID id;
     /* field v is used to hold value
      * return by a return statement */
-    Variable v;
+    Variable *v;
 } StatementTrack;
 
 /* Base statement structure */
@@ -51,7 +59,7 @@ typedef struct ReturnStatement {
 typedef struct VarDeclStatement {
     Statement base;
     char *type;
-    /* list of pair(identifier, expr) */
+    /* list of pair(identifier, assignmentExpr) */
     list *varDeclExprs;
 } VarDeclStatement;
 
@@ -93,6 +101,7 @@ typedef struct ObjectDeclItem {
     /* 0: Overwrite
      * 1: member */
     int type;
+    /*  */
     pair *item;
 } ObjectDeclItem;
 

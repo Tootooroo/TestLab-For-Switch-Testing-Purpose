@@ -27,6 +27,8 @@ typedef enum {
     VAR_OP_LESS_OR_EQUAL,
     VAR_OP_GREATER_OR_EQUAL,
     VAR_OP_NOT_EQUAL,
+    VAR_OP_ASSIGN,
+    VAR_OP_DOT,
     VAR_OP_NUM
 } VarOp;
 
@@ -60,9 +62,13 @@ typedef struct VarOps {
     Variable * (*lessOrEqual)(Variable *, Variable *);
     Variable * (*greaterOrEqual)(Variable *, Variable *);
     Variable * (*notEqual)(Variable *, Variable *);
+    Variable * (*assign)(Variable *, Variable *);
+    Variable * (*dot)(Variable *, Variable *);
 } VarOps;
 
 /* Member function implement as macros */
+#define VAR_IS_LVAL(V) ((V)->identifier != null)
+
 #define VAR_SET_IDENT(V, I) ((V)->identifier = (I))
 #define VAR_IDENT(V) ((V)->identifier)
 

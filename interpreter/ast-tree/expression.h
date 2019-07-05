@@ -12,7 +12,8 @@ typedef enum {
     EXPR_TYPE_MEMBER_REF,
     EXPR_TYPE_FUNC_CALL,
     EXPR_TYPE_CONSTANT,
-    EXPR_TYPE_IDENTIFIER
+    EXPR_TYPE_IDENTIFIER,
+    EXPR_TYPE_ASSIGN
 } ExprType;
 
 typedef struct Expression {
@@ -172,7 +173,7 @@ void notEqualExprRelease(Expression *expr, Scope *s);
 typedef struct MemberSelectExpression {
     Expression base;
     Expression *head;
-    list *subs;
+    char *member;
 } MemberSelectExpression;
 
 #define MEMBER_SELECT_HEAD(M) ((M)->head)
@@ -194,7 +195,10 @@ typedef struct FuncCallExpression {
     list *arguments;
 } FuncCallExpression;
 
+#define FUNC_CALL_IDENT(F) ((F)->funcIdent)
 #define FUNC_CALL_SET_IDENT(F, I) ((F)->funcIdent = (I))
+
+#define FUNC_CALL_ARGUMENT(F) ((F)->arguments)
 #define FUNC_CALL_SET_ARGUL(F, L) ((F)->arguments = (L))
 
 FuncCallExpression * funcCallExprDefault();

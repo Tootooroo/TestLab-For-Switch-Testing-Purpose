@@ -17,6 +17,9 @@ typedef struct Func {
     list *statements;
     /* Indicate that what type of function will return */
     RetType type;
+    /* Parameters
+     * list<type :: int> */
+    list *parameters;
     /* Note: Every test case will return true or false */
     Variable (*compute)(struct Func *, Scope *);
 } Func;

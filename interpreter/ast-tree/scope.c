@@ -39,6 +39,21 @@ Scope * subScopeGenerate(Scope *s) {
     return sub;
 }
 
+void scopeRelease(Scope *s) {
+    if (s->template) hashMapRelease(s->template);
+    if (s->cases)    hashMapRelease(s->cases);
+    if (s->primitives) hashMapRelease(s->primitives);
+    if (s->objects)  hashMapRelease(s->objects);
+
+    if (s->outer) scopeRelease(s->outer);
+}
+
+Func * scopeGetFunc(Scope *s, char *ident) {
+    if (!s->cases) return null;
+
+    return hashMapSearch(s->cases, ident);
+}
+
 _Status_t scopeNewCase(Scope *s, pair *c) {
     return hashMapAdd(s->cases, PAIR_GET_LEFT(c), PAIR_GET_RIGHT(c));
 }

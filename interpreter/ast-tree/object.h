@@ -6,6 +6,8 @@
 #include "hashMap.h"
 #include "primitive.h"
 
+typedef struct Variable Variable;
+
 typedef enum { MEMBER_PRIMITIVE, MEMBER_OBJECT } MemberType;
 
 typedef struct Object {
@@ -39,7 +41,9 @@ typedef struct Member {
 Object * objDefualt();
 Object * objGen(char *identifier, char *type);
 Object * objDup(Object *);
+Variable * objGetMember(Object *, char *);
 void objectRelease(Object *);
+
 
 
 

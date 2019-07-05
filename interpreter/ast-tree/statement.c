@@ -175,12 +175,13 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
     listIter iter = listGetIter(declPairs, LITER_FORWARD);
 
     listNode *current;
+    pair *currentPair;
 
     // First place identifier into scope.
     while ((current = listNext(&iter)) != null) {
-        pair *p = current->value;
+        currentPair = current->value;
 
-        char *varIdent = PAIR_GET_LEFT(p);
+        char *varIdent = PAIR_GET_LEFT(currentPair);
         if (primitiveType != -1) {
             /* Primitive */
             pair *pri = pairGen(strdup(varIdent), primitiveDefault(primitiveType), null, null, null);
@@ -190,13 +191,35 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
         }
     }
 
-    // Compute expressions within decl statement.
+    StatementTrack st = {
+        .s = stmt,
+        .id = DECL_STATEMENT_ID,
+        .v = null,
+        .error = STMT_ERROR_NONE
+    };
+
     listRewind(&iter);
 
+    // Compute expressions within decl statement.
     while ((current = listNext(&iter)) != null) {
         /* Only assignment can be reside in decl statement
          * otherwise error occur. */
+        currentPair = current->value;
+
+        // Is assignment ?
+        Expression *expr = PAIR_GET_RIGHT(currentPair);
+        if (exprType(expr) != EXPR_TYPE_ASSIGN) {
+            st.error = STMT_ERROR_ABORT;
+            return st;
+        }
+
+        /* Compute the assignment and after computation finish
+         * an initial value will be place into scope. */
+        expr->compute(expr, scope);
     }
+
+    return st;
+
 }
 
 private StatementTrack objStmtCompute(Statement *stmt, Scope *scope) {

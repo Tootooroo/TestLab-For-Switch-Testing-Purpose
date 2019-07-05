@@ -388,12 +388,6 @@ private Variable * constExprCompute(Expression *expr, Scope *scope) {
     return CONSTANT_GET_VAR(cExpr);
 }
 
-private Variable * assignExprCompute(Expression *expr, Scope *scope) {}
-
-private Variable * memberSelectExprCompute(Expression *expr, Scope *scope) {}
-
-private Variable * funcCallExprCompute(Expression *expr, Scope *scope) {}
-
 // Operators
 private Variable * identExprCompute(Expression *expr, Scope *scope) {
     IdentExpression *iExpr = (IdentExpression *)expr;
@@ -427,6 +421,33 @@ private Variable * identExprCompute(Expression *expr, Scope *scope) {
     \
     ret;\
 })
+
+private Variable * memberSelectExprCompute(Expression *expr, Scope *scope) {
+    MemberSelectExpression *mExpr = (MemberSelectExpression *)expr;
+
+    Expression *head = mExpr->head;
+    Variable *var = head->compute(head, scope);
+
+    return VAR_BIN_OP_CALL(var, dot, var, (void *)mExpr->member);
+}
+
+private Variable * funcCallExprCompute(Expression *expr, Scope *scope) {
+    FuncCallExpression *fExpr = (FuncCallExpression *)expr;
+
+    /* First to check is call to function is defined in internal module */
+
+    Func *f = scopeGetFunc(scope, FUNC_CALL_IDENT(fExpr));
+}
+
+private Variable * assignExprCompute(Expression *expr, Scope *scope) {
+    AssignmentExpression *aExpr = (AssignmentExpression *)expr;
+
+    pair operands = VAR_EXTRACT_FROM_EXPR(aExpr->l, aExpr->r, scope);
+
+    return VAR_BIN_OP_CALL((Variable *)PAIR_GET_LEFT(&operands), assign,
+                           PAIR_GET_LEFT(&operands),
+                           PAIR_GET_RIGHT(&operands));
+}
 
 private Variable * plusExprCompute(Expression *expr, Scope *scope) {
     PlusExpression *pExpr = (PlusExpression *)expr;

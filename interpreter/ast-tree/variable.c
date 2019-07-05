@@ -8,10 +8,10 @@
 
 /* Private Variables */
 int opOnTypes[VAR_TYPE_NUM][VAR_OP_NUM] = {
-    /* +, -, *, /, ==, <, >, <=, >=, !=  */
-    {  1, 1, 1, 1,  1, 1, 1,  1,  1,  1 }, /* Integer */
-    {  0, 0, 0, 0,  0, 0, 0,  0,  0,  0 }, /* String */
-    {  0, 0, 0, 0,  0, 0, 0,  0,  0,  0 }, /* OPS */
+    /* +, -, *, /, ==, <, >, <=, >=, !=, =, .  */
+    {  1, 1, 1, 1,  1, 1, 1,  1,  1,  1, 1, 1 }, /* Integer */
+    {  0, 0, 0, 0,  0, 0, 0,  0,  0,  0, 0, 0 }, /* String */
+    {  0, 0, 0, 0,  0, 0, 0,  0,  0,  0, 0, 0 }, /* OPS */
 };
 
 /* Private prototypes */
@@ -30,6 +30,8 @@ private Variable * varGreaterThanOp(Variable *l, Variable *r);
 private Variable * varLessOrEqualOp(Variable *l, Variable *r);
 private Variable * varGreaterOrEqualOp(Variable *l, Variable *r);
 private Variable * varNotEqualOp(Variable *l, Variable *r);
+private Variable * varAssign(Variable *l, Variable *r);
+private Variable * varDot(Variable *l, Variable *r);
 
 /* Private variables */
 private VarOps primitiveOps_integer = {
@@ -52,7 +54,11 @@ private VarOps primitiveOps_integer = {
     /* Greater or equal */
     varGreaterOrEqualOp,
     /* Not euqal */
-    varNotEqualOp
+    varNotEqualOp,
+    /* Assign */
+    varAssign,
+    /* Dot */
+    varDot
 };
 
 /* fixme: give defined to operators of string type */
@@ -77,6 +83,10 @@ private VarOps primitiveOps_string = {
     NULL,
     /* Not euqal */
     NULL,
+    /* Assign */
+    NULL,
+    /* Dot */
+    NULL
 };
 
 /* fixme: give defined to operators of object type */
@@ -101,6 +111,10 @@ private VarOps objectOps = {
     NULL,
     /* Not euqal */
     NULL,
+    /* Assign */
+    NULL,
+    /* Dot */
+    NULL
 };
 
 /* Public procedures */
@@ -268,10 +282,27 @@ private Variable * varNotEqualOp(Variable *l, Variable *r) {
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, !=);
 }
 
+private Variable * varAssign(Variable *l, Variable *r) {
+    // Only left-value can be assigned.
+    if (!VAR_IS_LVAL(l)) return null;
+    if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_ASSIGN, VAR_PRIMITIVE_INT))
+        return NULL;
+
+    return VAR_OPS_BINARY_INT_COMPUTE(l, r, =);
+}
+
+/* Requires(Object(l), String(r)) */
+private Variable * varDot(Variable *l, Variable *r) {
+    char *member = (char *)r;
+
+    if (!VAR_IS_OBJECT(l)) return NULL;
+
+    return objGetMember(l->o, member);
+}
+
 /* Operators of string */
 
 /* Operators of ops */
-
 private _Bool varOpDefSpaceCheck_Binary(Variable *l, Variable *r, VarOp op) {
     VarType left_type = varTypeIs(l), right_type = varTypeIs(r);
 

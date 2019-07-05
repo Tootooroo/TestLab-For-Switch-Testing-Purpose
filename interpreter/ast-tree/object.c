@@ -14,7 +14,7 @@ private _Bool objKeyCmp(void *keyl, void *keyr);
 private _Status_t objValRelease(void *val);
 private void * objValDup(void *val);
 
-    /* Private variables */
+/* Private variables */
 hashMapType obj = {
     .hashing = objHashing,
     .keyRelease = objKeyRelease,
@@ -51,8 +51,16 @@ Object * objDup(Object *orig) {
     return dup;
 }
 
+Variable * objGetMember(Object *o, char *member) {
+    return hashMapSearch(o->members, (void *)member);
+}
+
 /* fixme: Need to implement objectRelease() */
-void objectRelease(Object *o) {}
+void objectRelease(Object *o) {
+    if (o->objectType) free(o->objectType);
+    if (o->identifier) free(o->identifier);
+    if (o->members)    hashMapRelease(o->members);
+}
 
 /* Private procedures */
 private uint64_t objHashing(const void *key) {

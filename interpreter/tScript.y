@@ -50,11 +50,11 @@
 %type   <statement>     EXPRESSION_STATEMENT
 %type   <statement>     IF_STATEMENT_WITH_ELSE
 
-%type   <statement>     BLOCK IF_BLOCK
+%type   <list_>         BLOCK IF_BLOCK BIG_BLOCK
 %type   <str>           OBJECT_INHERITENCE
 
 %type   <integer>       DECL_QUALIFIER
-%type   <integer>       TYPE
+%type   <str>       TYPE
 
 /* Expression */
 %type   <expression>    EXPRESSION
@@ -79,8 +79,9 @@
 %type   <objDeclBody>   OBJECT_DEF
 %type   <objDeclItem>   OBJECT_DEF_ITEM
 %type   <list_>         IMPORT_LIST
-%type   <list_>         ARGUMENT_LIST
+%type   <list_>         ARGUMENT_LIST PARAMETER_LIST
 %type   <expression>    MEMBER_SELECTION_ENTITY
+%type   <str>       PARAMETER
 
 %code top { }
 
@@ -158,6 +159,7 @@ OBJECT_DECL_STATEMENT :
         }
         $$->members = $OBJECT_DEF.newMembers;
     };
+
 /* type : char * */
 OBJECT_INHERITENCE:
     BELONG IDENTIFIER {
@@ -263,13 +265,26 @@ FUNC_DECL_STATEMENT :
         Func *f = funcGenerate();
         FUNC_SET_IDENT(f, $IDENTIFIER);
         FUNC_SET_RETURN_TYPE(f, $TYPE);
+    }
+    | TYPE IDENTIFIER OPEN_PAREN CLOSE_PAREN BIG_BLOCK {
+
+    };
+
+/* type : list<type :: int> */
+PARAMETER_LIST :
+    PARAMETER_LIST COMMA PARAMETER {
 
     }
-    | TYPE IDENTIFIER OPEN_PAREN CLOSE_PAREN BIG_BLOCK;
+    | PARAMETER {
 
-PARAMETER_LIST :
-    PARAMETER_LIST COMMA TYPE IDENTIFIER
-    | TYPE IDENTIFIER;
+      };
+PARAMETER :
+    TYPE IDENTIFIER {
+
+    }
+    | TYPE {
+
+    };
 
 /* type : Statement */
 EXPRESSION_STATEMENT :
@@ -420,10 +435,16 @@ ASSIGNMENT_EXPRESSION :
 /* type : list<Statement> */
 BLOCK :
     BIG_BLOCK
-    | STATEMENT;
+    | STATEMENT {
+        $$ = listCreate();
+        listAppend($$, $STATEMENT);
+    };
 
+/* type : list<Statement> */
 BIG_BLOCK :
-    OPEN_CURVE_BRACKET STATEMENTS CLOSE_CURVE_BRACKET
+    OPEN_CURVE_BRACKET STATEMENTS CLOSE_CURVE_BRACKET {
+        $$ = $STATEMENTS;
+    };
 
 /* type : Expression */
 CONSTANT_EXPRESSION :
