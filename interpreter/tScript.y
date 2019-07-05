@@ -402,7 +402,8 @@ ARGUMENT_LIST :
     | EXPRESSION {
         $$ = listCreate();
         listAppend($$, $EXPRESSION);
-    } /* empty */ {
+    }
+    | /* empty */ {
         $$ = NULL;
     };
 
