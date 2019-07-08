@@ -111,7 +111,7 @@ typedef StatementTrack (*stmtCompute)(struct Statement *, Scope *);
 /* Member function implement as macros */
 
 /* StatementTrack (*)(Statement *, Scope *) */
-#define STATEMENT_COMPUTE(S, SCOPE) ((S)->compute((S), (SCOPE))
+#define STATEMENT_COMPUTE(S, SCOPE) ((S)->compute((S), (SCOPE)))
 /* StatementID (*)(Statement *) */
 #define STATEMENT_TYPE(S) ({ (S)->type; })
 /* void (*)(Statement *, StatementID) */

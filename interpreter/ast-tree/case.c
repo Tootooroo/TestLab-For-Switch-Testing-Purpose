@@ -2,11 +2,12 @@
 
 #include "wrapper.h"
 #include "case.h"
+#include "statement.h"
 
 #define FUNC_SET_COMPUTE_ROUTINE(C, COMPUTE) ((C)->compute = COMPUTE)
 
 /* Private prototypes */
-Variable __funcComputing(Func *c, Scope *s);
+private Variable * __funcComputing(Func *c, Scope *s);
 
 /* Public procedures */
 Func * funcGenerate() {
@@ -24,10 +25,10 @@ _Status_t caseAppendStatement(Func *c, Statement *s) {
 }
 
 /* Private procedures */
-Variable __funcComputing(Func *c, Scope *s) {
-    if (FUNC_IS_EMPTY_FUNC(c)) return false;
+private Variable * __funcComputing(Func *c, Scope *s) {
+    if (FUNC_IS_EMPTY_FUNC(c)) return null;
 
-    Variable v;
+    Variable *v;
     StatementTrack st;
     Scope *localScope = subScopeGenerate(s);
 

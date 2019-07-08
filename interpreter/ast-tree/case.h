@@ -16,12 +16,12 @@ typedef struct Func {
     /* Statements within the test case */
     list *statements;
     /* Indicate that what type of function will return */
-    RetType type;
+    char *type;
     /* Parameters
      * list<type :: int> */
     list *parameters;
     /* Note: Every test case will return true or false */
-    Variable (*compute)(struct Func *, Scope *);
+    Variable * (*compute)(struct Func *, Scope *);
 } Func;
 
 /* Member function implemented as macros */
@@ -30,6 +30,8 @@ typedef struct Func {
 #define FUNC_SET_STATEMENT_LIST(F, L) ((F)->statements = (L))
 #define FUNC_SET_RETURN_TYPE(F, R) ((F)->type = R)
 #define FUNC_COMPUTING(F, S) ((F)->compute(F, S))
+#define FUNC_SET_STATEMENTS(F, S) ((F)->statements = (S))
+#define FUNC_SET_PARAMETER_LIST(F, P) ((F)->parameters = (P))
 
 /* Prototypes */
 Func * funcGenerate();

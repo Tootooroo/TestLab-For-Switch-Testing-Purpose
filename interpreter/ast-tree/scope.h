@@ -17,7 +17,7 @@ typedef struct Scope {
      * type of hashMap : hashMap<String, Object>*/
     hashMap *template;
     /* hashMap of cases */
-    hashMap *cases;
+    hashMap *functions;
     hashMap *primitives;
     hashMap *objects;
 
@@ -26,11 +26,11 @@ typedef struct Scope {
 } Scope;
 
 /* Member functions implement as macros */
-#define scopeGetCase(s, f) (hashMapSearch(s->cases, (void *)f))
+#define scopeGetFunc(s, f) (hashMapSearch(s->functions, (void *)f))
 #define scopeGetPrimitive(s, p) (hashMapSearch(s->primitives, (void *)p))
 #define scopeGetObject(s, o) (hashMapSearch(s->objects, (void *)o))
 
-#define isCasesExists(s, f) (scopeGetCase(s,f) != null)
+#define isFuncExists(s, f) (scopeGetFunc(s,f) != null)
 #define isPrimitiveExists(s, p) (scopeGetPrimitive(s, p) != null)
 #define isObjectExists(s, o) (scopeGetObject(s, o) != null)
 
@@ -39,10 +39,11 @@ Scope * scopeGenerate();
 Scope * subScopeGenerate(Scope *);
 void scopeRelease(Scope *);
 
-Func * scopeGetFunc(Scope *, char *);
-
-_Status_t scopeNewCase(Scope *, pair *);
+/* pair<identifier, Func> */
+_Status_t scopeNewFunc(Scope *, pair *);
+/* pair<identifier, Primitive */
 _Status_t scopeNewPrimitive(Scope *, pair *);
+/* pair<identifier, Object> */
 _Status_t scopeNewObject(Scope *, pair *);
 
 #ifdef _AST_TREE_TESTING_

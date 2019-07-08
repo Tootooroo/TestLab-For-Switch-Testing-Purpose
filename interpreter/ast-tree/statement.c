@@ -4,6 +4,9 @@
 #include "wrapper.h"
 #include "primitive.h"
 #include "string.h"
+#include "scope.h"
+#include "pair.h"
+#include "list.h"
 
 /* Private Prototypes */
 private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope);
@@ -13,6 +16,8 @@ private StatementTrack importStmtCompute(Statement *stmt, Scope *scope);
 private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope);
 private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope);
 private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope);
+
+#define STrack_Default() { .error = STMT_ERROR_NONE, .s = null, id = 0, v = null }
 
 /* Public Procedures */
 
@@ -222,20 +227,32 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
 
 }
 
+// Create a object template and store into Scope
 private StatementTrack objStmtCompute(Statement *stmt, Scope *scope) {
+    ObjectDeclStatement *oStmt = (ObjectDeclStatement *)stmt;
 
 }
 
-private StatementTrack importStmtCompute(Statement *stmt, Scope *scope) {
-
-}
+private StatementTrack importStmtCompute(Statement *stmt, Scope *scope) {}
 
 private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope) {
 
 }
 
 private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope) {
+    StatementTrack st = {
+        .error = STMT_ERROR_NONE,
+        .s = stmt,
+        .id = FUNC_DECL_STATEMENT_ID,
+        .v = null
+    };
+    FuncDeclStatement *fStmt = (FuncDeclStatement *)stmt;
 
+    Func *f = fStmt->f;
+
+    scopeNewFunc(scope, pairGen(strdup(f->identifier), f, null, null, null));
+
+    return st;
 }
 
 private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope) {

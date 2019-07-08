@@ -265,9 +265,21 @@ FUNC_DECL_STATEMENT :
         Func *f = funcGenerate();
         FUNC_SET_IDENT(f, $IDENTIFIER);
         FUNC_SET_RETURN_TYPE(f, $TYPE);
+        FUNC_SET_STATMENT_LIST(f, $BIG_BLOCK);
+        FUNC_SET_PARAMETER_LIST(f, $PARAMETER_LIST);
+
+        $$->f = f;
     }
     | TYPE IDENTIFIER OPEN_PAREN CLOSE_PAREN BIG_BLOCK {
+        $$ = funcDeclStmtDefault();
 
+        Func *f = funcGenerate();
+        FUNC_SET_IDENT(f, $IDENTIFIER);
+        FUNC_SET_RETURN_TYPE(f, $TYPE);
+        FUNC_SET_STATEMENT_LIST(f, $BIG_BLOCK);
+        FUNC_SET_STATEMENT_LIST(f, null);
+
+        $$->f = f;
     };
 
 /* type : list<type :: int> */
