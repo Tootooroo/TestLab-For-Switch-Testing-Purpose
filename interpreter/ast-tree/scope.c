@@ -48,7 +48,7 @@ void scopeRelease(Scope *s) {
     if (s->outer) scopeRelease(s->outer);
 }
 
-_Status_t scopeNewCase(Scope *s, pair *c) {
+_Status_t scopeNewFunc(Scope *s, pair *c) {
     return hashMapAdd(s->functions, PAIR_GET_LEFT(c), PAIR_GET_RIGHT(c));
 }
 
@@ -67,6 +67,24 @@ _Status_t scopeNewObject(Scope *s, pair *p) {
     if (s->primitives && hashMapSearch(s->primitives, PAIR_GET_LEFT(p))) return ERROR;
 
     return hashMapAdd(s->objects, PAIR_GET_LEFT(p), PAIR_GET_RIGHT(p));
+}
+
+Func * scopeGetFunc(Scope *s, char *ident) {
+    if (!s->functions) return NULL;
+
+    return hashMapSearch(s->functions, (void *)ident);
+}
+
+Variable * scopeGetPrimitive(Scope *s, char *ident) {
+    if (!s->primitives) return NULL;
+
+    return hashMapSearch(s->primitives, (void *)ident);
+}
+
+Variable * scopeGetObject(Scope *s, char *ident) {
+    if (!s->objects) return NULL;
+
+    return hashMapSearch(s->objects, (void *)ident);
 }
 
 /* Private Procedures */
