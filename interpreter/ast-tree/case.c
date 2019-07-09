@@ -24,20 +24,25 @@ _Status_t caseAppendStatement(Func *c, Statement *s) {
     return OK;
 }
 
-/* Private procedures */
+/* Should provide release method to list. */
+_Status_t funcAppendStatements(Func *f, Statement *s) {
+    if (!f->statements) f->statements = listCreate();
+    return listAppend(f->statements, s);
+}
+
+/* Private procedures
+ * This procedure always be called by function call expression
+ * compute procedure, local scope is deal with by this procedure. */
 private Variable * __funcComputing(Func *c, Scope *s) {
     if (FUNC_IS_EMPTY_FUNC(c)) return null;
 
     Variable *v;
     StatementTrack st;
-    Scope *localScope = subScopeGenerate(s);
 
-    st = statementCompute_untilReturn(c->statements, localScope);
+    st = statementCompute_untilReturn(c->statements, s);
 
     if (st.id == RETURN_STATEMENT_ID) {
         v = st.v;
-        scopeRelease(localScope);
-
         return v;
     } else {
         /* Every test case should have a bool return value to indicate whether

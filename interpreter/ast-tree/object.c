@@ -36,7 +36,6 @@ Object * objGen(char *identifier, char *type) {
 
     OBJ_SET_IDENTIFIER(o, identifier);
     OBJ_SET_TYPE(o, type);
-    o->members = hashMapCreate(&obj);
 
     return o;
 }
@@ -46,20 +45,21 @@ Object * objDup(Object *orig) {
 
     OBJ_SET_IDENTIFIER(dup, OBJ_IDENTIFIER(orig));
     OBJ_SET_TYPE(dup, OBJ_TYPE(orig));
-    OBJ_SET_MEMBERS(dup, hashMapDup(OBJ_MEMBERS(orig)));
+    OBJ_SET_MEMBERS(dup, listDup(orig->members));
 
     return dup;
 }
 
 Variable * objGetMember(Object *o, char *member) {
-    return hashMapSearch(o->members, (void *)member);
+    listNode *node = listSearch(o->members, member);
+    return (Variable *)node->value;
 }
 
 /* fixme: Need to implement objectRelease() */
 void objectRelease(Object *o) {
     if (o->objectType) free(o->objectType);
     if (o->identifier) free(o->identifier);
-    if (o->members)    hashMapRelease(o->members);
+    if (o->members)    listRelease(o->members);
 }
 
 /* Private procedures */
@@ -84,7 +84,10 @@ private void *objKeyDup(void *key) {
 }
 
 private _Bool objKeyCmp(void *keyl, void *keyr) {
-    return strCompare((char *)keyl, (char *)keyr);
+    Variable *var = (Variable *)keyl;
+    char *str = (char *)keyr;
+
+    return strCompare(var->identifier, str);
 }
 
 private _Status_t objValRelease(void *val) {

@@ -282,14 +282,16 @@ FUNC_DECL_STATEMENT :
         $$->f = f;
     };
 
-/* type : list<type :: int> */
+/* type : list<ident, type> */
 PARAMETER_LIST :
     PARAMETER_LIST COMMA PARAMETER {
 
     }
     | PARAMETER {
 
-      };
+    };
+
+/* type : pair<ident, type> */
 PARAMETER :
     TYPE IDENTIFIER {
 

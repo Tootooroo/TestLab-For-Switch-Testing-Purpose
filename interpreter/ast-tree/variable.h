@@ -96,6 +96,9 @@ Variable * varGen(char *ident, VarType type, void *value);
 void varRelease(Variable *);
 Variable * varDup(Variable *);
 
+// Misc
+_Bool varIdentCmp(Variable *, char *);
+
 #ifdef _AST_TREE_TESTING_
 
 void varTest(void **state);

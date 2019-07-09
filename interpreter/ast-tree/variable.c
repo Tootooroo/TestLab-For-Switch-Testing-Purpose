@@ -58,7 +58,7 @@ private VarOps primitiveOps_integer = {
     /* Assign */
     varAssign,
     /* Dot */
-    varDot
+    NULL,
 };
 
 /* fixme: give defined to operators of string type */
@@ -114,7 +114,7 @@ private VarOps objectOps = {
     /* Assign */
     NULL,
     /* Dot */
-    NULL
+    varDot
 };
 
 /* Public procedures */
@@ -182,6 +182,11 @@ Variable * varDup(Variable *orig) {
         /* Object */
         VAR_SET_OBJECT(dup, objDup(orig->o));
     }
+    return dup;
+}
+
+_Bool varIdentCmp(Variable *v, char *ident) {
+    return strCompare(VAR_IDENT(v), ident);
 }
 
 /* Private procedures */

@@ -17,7 +17,7 @@ private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope);
 private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope);
 private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope);
 
-#define STrack_Default() { .error = STMT_ERROR_NONE, .s = null, id = 0, v = null }
+#define STrack_Default() { .error = STMT_ERROR_NONE, .s = null, .id = 0, .v = null }
 
 /* Public Procedures */
 
@@ -231,30 +231,74 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
 private StatementTrack objStmtCompute(Statement *stmt, Scope *scope) {
     ObjectDeclStatement *oStmt = (ObjectDeclStatement *)stmt;
 
+    Object *obj = objGen(null, strdup(oStmt->objectType));
+    OBJ_SET_MEMBERS(obj, oStmt->members);
+
+    StatementTrack st = STrack_Default();
+    ST_SET_REL_STMT(&st, stmt);
+    ST_SET_STMT_TYPE(&st, DECL_STATEMENT_ID);
+
+    return st;
 }
 
 private StatementTrack importStmtCompute(Statement *stmt, Scope *scope) {}
 
 private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope) {
+    StatementTrack st = STrack_Default();
+    ReturnStatement *rStmt = (ReturnStatement *)stmt;
 
+    Expression *expr = rStmt->expr;
+
+    ST_SET_RET_VAR(&st, expr->compute(expr, scope));
+    ST_SET_REL_STMT(&st, stmt);
+    ST_SET_STMT_TYPE(&st, RETURN_STATEMENT_ID);
+
+    return st;
 }
 
 private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope) {
-    StatementTrack st = {
-        .error = STMT_ERROR_NONE,
-        .s = stmt,
-        .id = FUNC_DECL_STATEMENT_ID,
-        .v = null
-    };
+    StatementTrack st = STrack_Default();
     FuncDeclStatement *fStmt = (FuncDeclStatement *)stmt;
 
     Func *f = fStmt->f;
 
     scopeNewFunc(scope, pairGen(strdup(f->identifier), f, null, null, null));
 
+    ST_SET_REL_STMT(&st, stmt);
+    ST_SET_STMT_TYPE(&st, FUNC_DECL_STATEMENT_ID);
+
     return st;
 }
 
 private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope) {
+    StatementTrack st = STrack_Default();
+
+    ST_SET_REL_STMT(&st, stmt);
+    ST_SET_STMT_TYPE(&st, EXPR_STATEMENT_ID);
+
+    Expression *expr = ((ExpressionStatement *)stmt)->expr;
+
+    ST_SET_RET_VAR(&st, expr->compute(expr, scope));
+
+    if (!ST_RET_VAR(&st))
+        ST_SET_ERROR(&st, STMT_ERROR_ABORT);
+
+    return st;
+}
+
+#ifdef _AST_TREE_TESTING_
+
+void stmtTest(void **state) {
+    funcDeclStmtTest();
+    exprStmtTest();
+}
+
+void funcDeclStmtTest(void) {
 
 }
+
+void exprStmtTest(void) {
+
+}
+
+#endif /* _AST_TREE_TESTING_ */

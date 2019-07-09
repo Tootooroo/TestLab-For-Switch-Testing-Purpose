@@ -178,6 +178,8 @@ typedef struct MemberSelectExpression {
 
 #define MEMBER_SELECT_HEAD(M) ((M)->head)
 #define MEMBER_SELECT_SET_HEAD(M, H) ((M)->head = (H))
+
+#define MEMBER_SELECT_SET_SUBS(M, MEM) ((M)->member = (MEM))
 #define MEMBER_SELECT_SUBS(M) ((M)->subs)
 
 MemberSelectExpression * memberSelectDefault();
@@ -188,10 +190,7 @@ void memberSelectRelease(Expression *, Scope *);
 typedef struct FuncCallExpression {
     Expression base;
     char *funcIdent;
-    /* list of argument's names
-     * compute procedure will
-     * search these arguments in
-     * current scope. */
+    /* list<Expression, type> */
     list *arguments;
 } FuncCallExpression;
 

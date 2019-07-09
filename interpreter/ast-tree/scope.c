@@ -16,7 +16,7 @@ private _Status_t scopeValRelease(void *value);
 private void * scopeValDup(void *value);
 
 /* Private Variable */
-hashMapType scopeTypePrimitive = {
+private hashMapType scopeTypeVar = {
     scopeHashing,
     scopeKeyRelease,
     scopeKeyDup,
@@ -41,34 +41,30 @@ Scope * subScopeGenerate(Scope *s) {
 
 void scopeRelease(Scope *s) {
     if (s->template) hashMapRelease(s->template);
-    if (s->cases)    hashMapRelease(s->cases);
+    if (s->functions)    hashMapRelease(s->functions);
     if (s->primitives) hashMapRelease(s->primitives);
     if (s->objects)  hashMapRelease(s->objects);
 
     if (s->outer) scopeRelease(s->outer);
 }
 
-Func * scopeGetFunc(Scope *s, char *ident) {
-    if (!s->cases) return null;
-
-    return hashMapSearch(s->cases, ident);
-}
-
 _Status_t scopeNewCase(Scope *s, pair *c) {
-    return hashMapAdd(s->cases, PAIR_GET_LEFT(c), PAIR_GET_RIGHT(c));
+    return hashMapAdd(s->functions, PAIR_GET_LEFT(c), PAIR_GET_RIGHT(c));
 }
 
 /* Type of pair is (Identifier, Primitive) */
 _Status_t scopeNewPrimitive(Scope *s, pair *p) {
+    if (!s->primitives) s->primitives = hashMapCreate(&scopeTypeVar);
     // To check that is the identifier be used by an object.
-    if (hashMapSearch(s->objects, PAIR_GET_LEFT(p))) return ERROR;
+    if (s->objects && hashMapSearch(s->objects, PAIR_GET_LEFT(p))) return ERROR;
 
     return hashMapAdd(s->primitives, PAIR_GET_LEFT(p), PAIR_GET_RIGHT(p));
 }
 
 _Status_t scopeNewObject(Scope *s, pair *p) {
+    if (!s->objects) s->objects = hashMapCreate(&scopeTypeVar);
     // To check that is the identifier be used by an primitive.
-    if (hashMapSearch(s->objects, PAIR_GET_LEFT(p))) return ERROR;
+    if (s->primitives && hashMapSearch(s->primitives, PAIR_GET_LEFT(p))) return ERROR;
 
     return hashMapAdd(s->objects, PAIR_GET_LEFT(p), PAIR_GET_RIGHT(p));
 }
@@ -79,7 +75,7 @@ private uint64_t scopeHashing(const void *key) {
     char *key_str = (char *)key;
     char *current = key_str;
 
-    while ((val = *current) != '\n') {
+    while ((val = *current) != '\0') {
         hashVal += val;
         ++current;
     }
@@ -101,17 +97,18 @@ private void *scopeKeyDup(void *key) {
 private _Bool scopeKeyCmp(void *keyl, void *keyr) {
     char *keyl_str = keyl, *keyr_str = keyr;
 
-    int keyl_len = strlen(keyl_str),
-        keyr_len = strlen(keyr_str);
+    return strCompare(keyl_str, keyr_str);
 
-    if (keyl_len != keyr_len) return false;
-
-    return !strncmp(keyl_str, keyr_str, keyl_len);
 }
 
-private _Status_t scopeValRelease(void *value) { return OK; }
+private _Status_t scopeValRelease(void *value) {
 
-private void * scopeValDup(void *value) { return null; }
+    return OK;
+}
+
+private void * scopeValDup(void *value) {
+    return null;
+}
 
 #ifdef _AST_TREE_TESTING_
 

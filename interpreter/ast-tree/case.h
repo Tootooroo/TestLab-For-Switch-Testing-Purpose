@@ -8,6 +8,8 @@
 #include "scope.h"
 #include "variable.h"
 
+typedef struct Statement Statement;
+
 typedef enum { RET_INT, RET_STR, RET_OBJ } RetType;
 
 typedef struct Func {
@@ -18,7 +20,7 @@ typedef struct Func {
     /* Indicate that what type of function will return */
     char *type;
     /* Parameters
-     * list<type :: int> */
+     * list<ident, type> */
     list *parameters;
     /* Note: Every test case will return true or false */
     Variable * (*compute)(struct Func *, Scope *);
@@ -35,6 +37,6 @@ typedef struct Func {
 
 /* Prototypes */
 Func * funcGenerate();
-_Status_t funcAppendStatements(Func *c, list *s);
+_Status_t funcAppendStatements(Func *c, Statement *s);
 
 #endif /* _AST_TREE_CASE_H_ */

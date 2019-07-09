@@ -1,5 +1,4 @@
 /* statement.h */
-
 #ifndef _AST_TREE_STATEMENT_H_
 #define _AST_TREE_STATEMENT_H_
 
@@ -37,6 +36,18 @@ typedef struct StatementTrack {
      * return by a return statement */
     Variable *v;
 } StatementTrack;
+
+#define ST_SET_REL_STMT(ST, STMT) (((ST)->s = (STMT)))
+#define ST_REL_STMT(ST) (((ST)->s))
+
+#define ST_SET_STMT_TYPE(ST, T) ((ST)->id = (T))
+#define ST_STMT_TYPE(ST) ((ST)->id)
+
+#define ST_SET_ERROR(ST, E) ((ST)->error = (E))
+#define ST_ERROR_TYPE(ST) ((ST)->error)
+
+#define ST_SET_RET_VAR(ST, V) ((ST)->v = (V))
+#define ST_RET_VAR(ST) ((ST)->v)
 
 /* Base statement structure */
 typedef struct Statement {
@@ -184,5 +195,11 @@ FuncDeclStatement * funcDeclStmtGen(Func *);
 
 ExpressionStatement * exprStmtDefault();
 ExpressionStatement * exprStmtGen(Expression *expr);
+
+#ifdef _AST_TREE_TESTING_
+
+void stmtTest(void **state);
+
+#endif /* _AST_TREE_TESTING_ */
 
 #endif /* _AST_TREE_STATEMENT_H_ */

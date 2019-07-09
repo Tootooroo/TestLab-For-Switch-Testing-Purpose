@@ -15,8 +15,8 @@ typedef struct Object {
     char *objectType;
     /* identifier of an entity of a objectType */
     char *identifier;
-    /* hashMap<Variable> */
-    hashMap *members;
+    /* list<Variable> */
+    list *members;
 } Object;
 
 typedef struct Member {
@@ -43,8 +43,5 @@ Object * objGen(char *identifier, char *type);
 Object * objDup(Object *);
 Variable * objGetMember(Object *, char *);
 void objectRelease(Object *);
-
-
-
 
 #endif /* _AST_TREE_OBJECT_H_ */

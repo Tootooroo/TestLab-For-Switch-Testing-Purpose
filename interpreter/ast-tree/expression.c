@@ -1,8 +1,10 @@
 /* epression.c */
 
+#include "statement.h"
 #include "expression.h"
 #include "wrapper.h"
 #include "string.h"
+#include "case.h"
 
 /* private prototypes */
 private Variable * constExprCompute(Expression *, Scope *);
@@ -89,21 +91,12 @@ MemberSelectExpression * memberSelectDefault() {
     return mExpr;
 }
 
-void memberSelectAppendSub(MemberSelectExpression *expr, char *sub) {
-    if (expr->subs == null)
-        expr->subs = listCreate();
-
-    listAppend(expr->subs, sub);
-}
-
 void memberSelectRelease(Expression *expr, Scope *scope) {
     MemberSelectExpression *mExpr = (MemberSelectExpression *)expr;
 
     Expression *head = mExpr->head;
     if (head) head->release(head, scope);
-
-    list *l = mExpr->subs;
-    if (l) listRelease(l);
+    if (mExpr->member) free(mExpr->member);
 }
 
 // Function call expression
@@ -394,18 +387,15 @@ private Variable * identExprCompute(Expression *expr, Scope *scope) {
 
     char *ident = iExpr->ident;
 
-    Primitive *p = scopeGetPrimitive(scope, ident);
-    if (p) {
-        if (isPrimitive_int(p))
-            return varGen(strdup(ident), VAR_PRIMITIVE_INT, p);
-        else if (isPrimitive_str(p))
-            return varGen(strdup(ident), VAR_PRIMITIVE_STR, p);
-        else if (isPrimitive_ops(p))
-            return varGen(strdup(ident), VAR_PRIMITIVE_OPS, p);
+    if (scope->primitives) {
+        Variable *p = scopeGetPrimitive(scope, ident);
+        if (p) return p;
     }
 
-    Object *o = scopeGetObject(scope, ident);
-    if (o) return varGen(strdup(ident), VAR_OBJECT, o);
+    if (scope->objects) {
+        Variable *o = scopeGetObject(scope, ident);
+        if (o) return o;
+    }
 
     // Can not find the identifer in the current scope.
     return NULL;
@@ -428,15 +418,97 @@ private Variable * memberSelectExprCompute(Expression *expr, Scope *scope) {
     Expression *head = mExpr->head;
     Variable *var = head->compute(head, scope);
 
+    if (!VAR_IS_OBJECT(var)) return NULL;
+
     return VAR_BIN_OP_CALL(var, dot, var, (void *)mExpr->member);
 }
 
 private Variable * funcCallExprCompute(Expression *expr, Scope *scope) {
     FuncCallExpression *fExpr = (FuncCallExpression *)expr;
 
-    /* First to check is call to function is defined in internal module */
+    /* Generate a local scope */
+    Scope *subScope = subScopeGenerate(scope);
 
-    Func *f = scopeGetFunc(scope, FUNC_CALL_IDENT(fExpr));
+    Func *f = scopeGetFunc(subScope, FUNC_CALL_IDENT(fExpr));
+
+    /* Argument check */
+    list *parameters = f->parameters;
+
+    list *arguments = FUNC_CALL_ARGUMENT(fExpr);
+
+    /* Parameters is without exists which means parameters is empty */
+    if (parameters == NULL) {
+        /* Arguments list should be null too */
+        if (arguments == NULL)
+            goto CALL_TO_PROC;
+        else {
+            scopeRelease(subScope);
+            return NULL;
+        }
+    }
+
+    listIter par_iter = listGetIter(parameters, LITER_FORWARD),
+        arg_iter = listGetIter(arguments, LITER_FORWARD);
+
+    listNode *par, *arg;
+
+    while (true) {
+        par = listNext(&par_iter);
+        arg = listNext(&arg_iter);
+
+        if (par == NULL || arg == NULL) break;
+
+        pair *par_pair = par->value, *arg_pair = arg->value;
+
+        if (strCompare(PAIR_GET_RIGHT(par_pair), PAIR_GET_RIGHT(arg_pair))) {
+            /* Match */
+            continue;
+        } else {
+            /* Mismatch */
+            scopeRelease(subScope);
+            return null;
+        }
+    }
+
+    /* Mismatch cause number of parameters and arguments is different. */
+    if (par != arg) return NULL;
+
+    /* Push arguments into local scope */
+    listRewind(&par_iter);
+    listRewind(&arg_iter);
+
+    while (true) {
+        par = listNext(&par_iter);
+        arg = listNext(&arg_iter);
+
+        if (par == NULL || arg == NULL) break;
+
+        pair *par_pair = par->value, *arg_pair = arg->value;
+
+        Expression *expr = PAIR_GET_LEFT(arg_pair);
+        Variable *argVar = expr->compute(expr, subScope);
+
+        pair *argPair_;
+        if (VAR_IS_PRIMITIVE(argVar)) {
+            argPair_ = pairGen(PAIR_GET_LEFT(par_pair), argVar->p, NULL, NULL, NULL);
+            scopeNewPrimitive(subScope, argPair_);
+        } else if (VAR_IS_OBJECT(argVar)) {
+            argPair_ = pairGen(PAIR_GET_LEFT(par_pair), argVar->o, NULL, NULL, NULL);
+            scopeNewObject(subScope, argPair_);
+        }
+    }
+
+    /* First to check is call to function is defined in internal module
+     * fixme: function call to internal module */
+CALL_TO_PROC:
+    /* Then search function in upper scope */
+    if (isNull(f)) {
+        scopeRelease(subScope);
+        return NULL;
+    }
+
+    scopeRelease(subScope);
+    return f->compute(f, subScope);
 }
 
 private Variable * assignExprCompute(Expression *expr, Scope *scope) {
@@ -553,6 +625,10 @@ private Variable * notEqualCompute(Expression *expr, Scope *scope) {
 
 #include "test.h"
 
+void identTest(void);
+void memberSelectTest(void);
+void funcCallTest(void);
+
 void exprTest(void **state) {
     ConstantExpression *operand_l = constExprDefault(),
         *operand_r = constExprDefault();
@@ -636,6 +712,80 @@ void exprTest(void **state) {
 
     assert_int_equal(getPrimitive_int(isNotEqual->p), 1);
     varRelease(isNotEqual);
+
+    // Identifier
+    identTest();
+
+    // Member
+    memberSelectTest();
+
+    // Function call
+    funcCallTest();
+}
+
+void identTest(void) {
+    Scope *scope = scopeGenerate();
+
+    int a = 0;
+    Primitive *pri = primitiveGen(&a, PRIMITIVE_TYPE_INT);
+
+    Variable *pri_var = varGen(strdup("INT_VAR"), VAR_PRIMITIVE_INT, pri);
+    scopeNewPrimitive(scope, pairGen(strdup("INT_VAR"), pri_var, NULL, NULL, NULL));
+
+    Expression *iExpr = (Expression *)identExprGen("INT_VAR");
+    Variable *v = iExpr->compute(iExpr, scope);
+
+    assert_non_null(v);
+    assert_int_equal(getPrimitive_int(v->p), 0);
+}
+
+void memberSelectTest(void) {
+    Scope *scope = scopeGenerate();
+    MemberSelectExpression *mExpr = memberSelectDefault();
+
+    int a = 0;
+    Object *obj = objGen(strdup("AA"), strdup("AType"));
+    Variable *member_pri = varGen("aa", VAR_PRIMITIVE_INT, primitiveGen(&a, PRIMITIVE_TYPE_INT));
+
+    list *members = listCreate();
+
+    listSetDupMethod(members, varDup);
+    listSetMatchMethod(members, varIdentCmp);
+    listSetReleaseMethod(members, varRelease);
+
+    listAppend(members, member_pri);
+
+    OBJ_SET_MEMBERS(obj, members);
+
+    scopeNewObject(scope, pairGen(strdup("AA"), varGen(strdup("AA"), VAR_OBJECT, obj), NULL, NULL, NULL));
+
+    MEMBER_SELECT_SET_SUBS(mExpr, "aa");
+    MEMBER_SELECT_SET_HEAD(mExpr, (Expression *)identExprGen("AA"));
+
+    Variable *v = ((Expression *)mExpr)->compute((Expression *)mExpr, scope);
+    assert_non_null(v);
+    assert_int_equal(getPrimitive_int(v->p), 0);
+}
+
+void funcCallTest(void) {
+    Scope *scope = scopeGenerate();
+
+    /* Without arguments */
+    FuncCallExpression *fExpr = funcCallExprGen(strdup("f"), NULL);
+
+    Func *f_def = funcGenerate();
+
+    Expression *left = (Expression *)constExprDefault(),
+        *right = (Expression *)constExprDefault();
+    constExprSetInt((ConstantExpression *)left, 1);
+    constExprSetInt((ConstantExpression *)right, 2);
+
+    Statement *stmt = (ReturnStatement *)returnStmtGen(plusExprGen(left, right));
+
+    funcAppendStatements(f_def, stmt);
+
+    Expression *base = (Expression *)fExpr;
+    base->compute(base, scope);
 }
 
 #endif /* _AST_TREE_TESTING_ */

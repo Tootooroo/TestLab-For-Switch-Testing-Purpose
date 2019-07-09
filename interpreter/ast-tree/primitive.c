@@ -116,6 +116,17 @@ _Bool primitiveIsEqual(Primitive *l, Primitive *r) {
     return true;
 }
 
+int isPrimitiveType(char *typeStr) {
+    if (strCompare(typeStr, "Int"))
+        return PRIMITIVE_TYPE_INT;
+    else if (strCompare(typeStr, "String"))
+        return PRIMITIVE_TYPE_STR;
+    else if (strCompare(typeStr, "Ops"))
+        return PRIMITIVE_TYPE_OPS;
+    else
+        return -1;
+}
+
 // Ops procedures
 Ops * opsDefault() {
     Ops *p = (Ops *)zMalloc(sizeof(Ops));
@@ -228,6 +239,10 @@ private void * opsListDup(void *orig) {
 
 #include "test.h"
 
+void primitiveInteger_Test(void);
+void primitiveString_Test(void);
+void primitiveOps_Test(void);
+
 void primitiveTest(void **state) {
     primitiveInteger_Test();
     primitiveString_Test();
@@ -246,7 +261,7 @@ void primitiveInteger_Test(void) {
     assert_int_equal(primitiveIsEqual(p1, p2), true);
 
     /* Assign */
-    Primitive *p3 = primitiveDefault();
+    Primitive *p3 = primitiveDefault(PRIMITIVE_TYPE_INT);
     primitiveAssign(p3, p1);
     assert_int_equal(primitiveIsEqual(p1, p3), true);
 }
@@ -263,7 +278,7 @@ void primitiveString_Test(void) {
     assert_int_equal(primitiveIsEqual(p1, p2), true);
 
     /* Assign */
-    Primitive *p3 = primitiveDefault();
+    Primitive *p3 = primitiveDefault(PRIMITIVE_TYPE_STR);
     primitiveAssign(p3, p1);
     assert_int_equal(primitiveIsEqual(p1, p3), true);
 }
@@ -283,7 +298,7 @@ void primitiveOps_Test(void) {
     assert_int_equal(primitiveIsEqual(p1, p2), true);
 
     /* Asign */
-    Primitive *p3 = primitiveDefault();
+    Primitive *p3 = primitiveDefault(PRIMITIVE_TYPE_OPS);
     primitiveAssign(p3, p1);
     assert_int_equal(primitiveIsEqual(p1, p3), true);
 }
