@@ -45,8 +45,9 @@ private Variable * __funcComputing(Func *c, Scope *s) {
         v = st.v;
         return v;
     } else {
-        /* Every test case should have a bool return value to indicate whether
-        * the test case is running success */
+        /* Every test case should must a
+         * return value to indicate whether
+         * the test case is running success */
         abortWithMsg("Can't found return in a test case");
     }
 }

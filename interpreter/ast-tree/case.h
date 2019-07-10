@@ -24,6 +24,9 @@ typedef struct Func {
     list *parameters;
     /* Note: Every test case will return true or false */
     Variable * (*compute)(struct Func *, Scope *);
+    /* Scope of function, this scope is determine while
+     * functions define. */
+    Scope *outer;
 } Func;
 
 /* Member function implemented as macros */

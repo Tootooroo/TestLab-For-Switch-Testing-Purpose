@@ -33,7 +33,14 @@ private Variable * varNotEqualOp(Variable *l, Variable *r);
 private Variable * varAssign(Variable *l, Variable *r);
 private Variable * varDot(Variable *l, Variable *r);
 
+// Inner Operations
+private Variable * varPrimitivePass(Variable *l, Scope *s, char *ident);
+
 /* Private variables */
+private VarInnerOps primitiveInnerOps = {
+    varPrimitivePass
+};
+
 private VarOps primitiveOps_integer = {
     /* Plus */
     varPlusOp,
@@ -123,7 +130,8 @@ Variable varDefault_Empty() {
         .identifier = null,
         .type = VAR_EMPTY,
         .o = null,
-        .ops = null
+        .ops = null,
+        .iOps = null
     };
 
     return var;
@@ -136,6 +144,7 @@ Variable * varDefault() {
     var->type = VAR_EMPTY;
     var->o = null;
     var->ops = null;
+    var->iOps = null;
 
     return var;
 }
@@ -148,9 +157,11 @@ Variable * varGen(char *ident, VarType type, void *value) {
     if (type == VAR_PRIMITIVE_INT) {
         var->p = (Primitive *)value;
         var->ops = &primitiveOps_integer;
+        var->iOps = &primitiveInnerOps;
     } else if (type == VAR_PRIMITIVE_STR) {
         var->p = (Primitive *)value;
         var->ops = &primitiveOps_string;
+        var->iOps = &primitiveInnerOps;
     } else if (type == VAR_OBJECT) {
         var->o = (Object *)value;
         var->ops = &objectOps;
@@ -174,6 +185,9 @@ Variable * varDup(Variable *orig) {
 
     VAR_SET_IDENT(dup, strdup(VAR_IDENT(orig)));
     VAR_SET_TYPE(dup, VAR_TYPE(orig));
+
+    dup->ops = orig->ops;
+    dup->iOps = orig->iOps;
 
     if (VAR_IS_PRIMITIVE(orig)) {
         /* Primitive */
@@ -294,6 +308,16 @@ private Variable * varAssign(Variable *l, Variable *r) {
         return NULL;
 
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, =);
+}
+
+private Variable * varPrimitivePass(Variable *l, Scope *s, char *ident) {
+    Variable *dup = varDup(l);
+    VAR_SET_IDENT(dup, ident);
+
+    pair *p = pairGen(strdup(ident), l, NULL, NULL, NULL);
+    scopeNewPrimitive(s, p);
+
+    return dup;
 }
 
 /* Requires(Object(l), String(r)) */

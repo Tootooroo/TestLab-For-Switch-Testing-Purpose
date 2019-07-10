@@ -49,6 +49,7 @@ typedef struct Variable {
 
     // Operators
     struct VarOps *ops;
+    struct VarInnerOps *iOps;
 } Variable;
 
 typedef struct VarOps {
@@ -65,6 +66,17 @@ typedef struct VarOps {
     Variable * (*assign)(Variable *, Variable *);
     Variable * (*dot)(Variable *, Variable *);
 } VarOps;
+
+typedef struct VarInnerOps {
+    /* Copy variable itself into a scope
+     * this action is different depend on
+     * variable type, primitive type will
+     * copy completly into a scope which
+     * means its call by value, and object
+     * is copy the Variable part only, wh-
+     * ich means its call by reference. */
+    Variable * (*pass)(Variable *, Scope *, char *ident);
+} VarInnerOps;
 
 /* Member function implement as macros */
 #define VAR_IS_LVAL(V) ((V)->identifier != null)

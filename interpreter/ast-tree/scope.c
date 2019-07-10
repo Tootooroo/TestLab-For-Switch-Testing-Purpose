@@ -15,6 +15,10 @@ private _Bool scopeKeyCmp(void *keyl, void *keyr);
 private _Status_t scopeValRelease(void *value);
 private void * scopeValDup(void *value);
 
+private _Bool scopeIsPrimitiveType(char *type);
+private _Bool scopeIsObjectType(char *type, Scope *s);
+
+
 /* Private Variable */
 private hashMapType scopeTypeVar = {
     scopeHashing,
@@ -23,6 +27,15 @@ private hashMapType scopeTypeVar = {
     scopeKeyCmp,
     scopeValRelease,
     scopeValDup
+};
+
+private hashMapType scopeTypeFun = {
+    scopeHashing,
+    scopeKeyRelease,
+    scopeKeyDup,
+    scopeKeyCmp,
+    NULL,
+    NULL
 };
 
 /* Public Procedures */
@@ -46,9 +59,12 @@ void scopeRelease(Scope *s) {
     if (s->objects)  hashMapRelease(s->objects);
 
     if (s->outer) scopeRelease(s->outer);
+
+    free(s);
 }
 
 _Status_t scopeNewFunc(Scope *s, pair *c) {
+    if (!s->functions) s->functions = hashMapCreate(&scopeTypeVar);
     return hashMapAdd(s->functions, PAIR_GET_LEFT(c), PAIR_GET_RIGHT(c));
 }
 
@@ -70,24 +86,90 @@ _Status_t scopeNewObject(Scope *s, pair *p) {
 }
 
 Func * scopeGetFunc(Scope *s, char *ident) {
-    if (!s->functions) return NULL;
+    Func *f = NULL;
 
-    return hashMapSearch(s->functions, (void *)ident);
+    if (!s->functions) goto UPPER_SCOPE;
+
+    f = hashMapSearch(s->functions, (void *)ident);
+
+UPPER_SCOPE:
+    while (!f) {
+        /* Recursive to search upper scope */
+        s = s->outer;
+        if (isNull(s)) break;
+
+        f = hashMapSearch(s->functions, (void *)ident);
+    }
+
+    return f;
 }
 
 Variable * scopeGetPrimitive(Scope *s, char *ident) {
-    if (!s->primitives) return NULL;
+    Variable *v = NULL;
 
-    return hashMapSearch(s->primitives, (void *)ident);
+    if (!s->primitives) goto UPPER_SCOPE;
+    v = hashMapSearch(s->primitives, (void *)ident);
+
+UPPER_SCOPE:
+    while (!v) {
+        /* Recursive search to upper scope */
+        s = s->outer;
+        if (isNull(s)) break;
+
+        v = hashMapSearch(s->primitives, (void *)ident);
+    }
+
+    return v;
 }
 
 Variable * scopeGetObject(Scope *s, char *ident) {
-    if (!s->objects) return NULL;
+    Variable *v = NULL;
 
-    return hashMapSearch(s->objects, (void *)ident);
+    if (!s->objects) goto UPPER_SCOPE;
+    v = hashMapSearch(s->objects, (void *)ident);
+
+UPPER_SCOPE:
+    while (!v) {
+        /* Recursive search to upper scope */
+        s = s->outer;
+        if (isNull(s)) break;
+
+        v = hashMapSearch(s->objects, (void *)ident);
+    }
+
+    return v;
+}
+
+_Bool scopeIsValidType(char *type, Scope *s) {
+    return scopeIsPrimitiveType(type) || scopeIsObjectType(type, s);
 }
 
 /* Private Procedures */
+private _Bool scopeIsPrimitiveType(char *type) {
+    _Bool isPrimitive =
+        strCompare(type, "Int") ||
+        strCompare(type, "String") ||
+        strCompare(type, "Ops");
+    return isPrimitive;
+}
+
+private _Bool scopeIsObjectType(char *type, Scope *s) {
+    /* Search the type in template of scope */
+    void *e = NULL;
+
+    if (!s->template) goto UPPER;
+    e = hashMapSearch(s->template, (void *)type);
+
+ UPPER:
+    while (!e) {
+        s = s->outer;
+        if (!s) break;
+
+        e = hashMapSearch(s->template, (void *)type);
+    }
+    return e;
+}
+
 private uint64_t scopeHashing(const void *key) {
     uint64_t hashVal = 0, val;
     char *key_str = (char *)key;
@@ -125,6 +207,14 @@ private _Status_t scopeValRelease(void *value) {
 }
 
 private void * scopeValDup(void *value) {
+    return null;
+}
+
+private _Status_t scopeFunRelease(void *value) {
+    return OK;
+}
+
+private void * scopeFunDup(void *value) {
     return null;
 }
 
