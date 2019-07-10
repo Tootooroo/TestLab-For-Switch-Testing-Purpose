@@ -183,7 +183,10 @@ void varRelease(Variable *v) {
 Variable * varDup(Variable *orig) {
     Variable *dup = varDefault();
 
-    VAR_SET_IDENT(dup, strdup(VAR_IDENT(orig)));
+    // Variable's identifier maybe null
+    if (VAR_IDENT(orig))
+        VAR_SET_IDENT(dup, strdup(VAR_IDENT(orig)));
+
     VAR_SET_TYPE(dup, VAR_TYPE(orig));
 
     dup->ops = orig->ops;

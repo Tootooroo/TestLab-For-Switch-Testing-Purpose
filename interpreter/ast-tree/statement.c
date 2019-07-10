@@ -288,17 +288,55 @@ private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope) {
 
 #ifdef _AST_TREE_TESTING_
 
+#include "test.h"
+#include "expression.h"
+
 void stmtTest(void **state) {
     funcDeclStmtTest();
     exprStmtTest();
 }
 
 void funcDeclStmtTest(void) {
+    Scope *scope = scopeGenerate();
 
+    FuncDeclStatement *fStmt = funcDeclStmtDefault();
+
+    Func *f = funcGenerate();
+
+    f->outer = scopeGenerate();
+    FUNC_SET_IDENT(f, strdup("f"));
+    FUNC_SET_RETURN_TYPE(f, "Int");
+
+    list * parameters = listCreate();
+    listAppend(parameters, pairGen(strdup("a"), strdup("Int"), NULL, NULL, NULL));
+    FUNC_SET_PARAMETER_LIST(f, parameters);
+
+    Expression *right = constExprDefault();
+    constExprSetInt(right, 1);
+    Statement *stmt = (ReturnStatement *)returnStmtGen(plusExprGen(identExprGen(strdup("a")), right));
+    funcAppendStatements(f, stmt);
+
+    FUNC_DECL_STMT_SET_FUNC(fStmt, f);
+
+    Statement *baseStmt = (Statement *)fStmt;
+    baseStmt->compute(baseStmt, scope);
+
+    // Try to call expression we just define.
+    list *arguments = listCreate();
+    FuncCallExpression *fExpr = (FuncCallExpression *)funcCallExprGen(strdup("f"), arguments);
+
+    Expression *constExpr = (Expression *)constExprDefault();
+    constExprSetInt(constExpr, 2);
+    listAppend(arguments, pairGen(constExpr, "Int", NULL, NULL, NULL));
+
+    Expression *baseExpr = (Expression *)fExpr;
+
+    Variable *v = baseExpr->compute(baseExpr, scope);
+
+    assert_non_null(v);
+    assert_int_equal(getPrimitive_int(v->p), 3);
 }
 
-void exprStmtTest(void) {
-
-}
+void exprStmtTest(void) {}
 
 #endif /* _AST_TREE_TESTING_ */
