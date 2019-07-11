@@ -85,6 +85,11 @@ _Status_t scopeNewObject(Scope *s, pair *p) {
     return hashMapAdd(s->objects, PAIR_GET_LEFT(p), PAIR_GET_RIGHT(p));
 }
 
+_Status_t scopeNewTemplate(Scope *s, pair *p) {
+    if (!s->template) s->template = hashMapCreate(&scopeTypeVar);
+    return hashMapAdd(s->template, PAIR_GET_LEFT(p), PAIR_GET_RIGHT(p));
+}
+
 Func * scopeGetFunc(Scope *s, char *ident) {
     Func *f = NULL;
 
@@ -138,6 +143,23 @@ UPPER_SCOPE:
     }
 
     return v;
+}
+
+Template * scopeGetTemplate(Scope *s, char *ident) {
+    Template *t = NULL;
+
+    if (!s->template) goto UPPER;
+    t = hashMapSearch(s->template, (void *)ident);
+UPPER:
+    while (!t) {
+        /* Recursive search to upper scope */
+        s = s->outer;
+        if (isNull(s)) break;
+
+        t = hashMapSearch(s->template, (void *)ident);
+    }
+
+    return t;
 }
 
 _Bool scopeIsValidType(char *type, Scope *s) {

@@ -59,9 +59,10 @@ IfStatement * ifStatementGenerate(Expression *expr, list *true_stmts, list *fals
 }
 
 // Variable declaration statement
-VarDeclStatement * varDeclStmtGenerate(list *expr_) {
+VarDeclStatement * varDeclStmtGenerate(char *type, list *expr_) {
     VarDeclStatement *varStmt = (VarDeclStatement *)zMalloc(sizeof(VarDeclStatement));
     varStmt->base = statementGenerate(varDeclStmtCompute);
+    varStmt->type = type;
     varStmt->varDeclExprs = expr_;
 
     return varStmt;
@@ -189,8 +190,20 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
         char *varIdent = PAIR_GET_LEFT(currentPair);
         if (primitiveType != -1) {
             /* Primitive */
-            pair *pri = pairGen(strdup(varIdent), primitiveDefault(primitiveType), null, null, null);
-            scopeNewPrimitive(scope, pri);
+            Variable *v = null;
+
+            switch (primitiveType) {
+                case PRIMITIVE_TYPE_INT:
+                    v = varGen(strdup(varIdent), VAR_PRIMITIVE_INT,
+                            primitiveDefault(PRIMITIVE_TYPE_INT));
+                    break;
+                case PRIMITIVE_TYPE_STR:
+                    v = varGen(strdup(varIdent), VAR_PRIMITIVE_STR,
+                            primitiveDefault(PRIMITIVE_TYPE_STR));
+                    break;
+            }
+
+            scopeNewPrimitive(scope, pairGen(strdup(varIdent), v, null, null, null));
         } else {
             /* Object */
         }
@@ -231,8 +244,19 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
 private StatementTrack objStmtCompute(Statement *stmt, Scope *scope) {
     ObjectDeclStatement *oStmt = (ObjectDeclStatement *)stmt;
 
-    Object *obj = objGen(null, strdup(oStmt->objectType));
-    OBJ_SET_MEMBERS(obj, oStmt->members);
+    Template *new = templateGen(null, strdup(oStmt->objectType));
+
+    // Is parent exists ?
+    if (oStmt->parent) {
+        Template *t = scopeGetTemplate(scope, oStmt->parent);
+
+        if (t->members) {
+            new->members = listDup(t->members);
+        }
+
+        if (oStmt->members) listJoin(new->members, oStmt->members);
+    } else
+        OBJ_SET_MEMBERS(new, oStmt->members);
 
     StatementTrack st = STrack_Default();
     ST_SET_REL_STMT(&st, stmt);
@@ -294,6 +318,33 @@ private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope) {
 void stmtTest(void **state) {
     funcDeclStmtTest();
     exprStmtTest();
+    varDeclStmtTest();
+}
+
+void objDeclStmtTest(void) {
+    Scope *scope = scopeGenerate();
+}
+
+void varDeclStmtTest(void) {
+    Scope *scope = scopeGenerate();
+
+    list *declExprs = listCreate();
+    VarDeclStatement *varStmt = varDeclStmtGenerate(strdup("Int"), declExprs);
+
+    Expression *numExpr = constExprDefault();
+    constExprSetInt(numExpr, 1);
+    Expression *assignExpr = assignExprGen(identExprGen(strdup("a")), numExpr);
+    listAppend(declExprs, pairGen(strdup("a"), assignExpr, NULL, NULL, NULL));
+
+    Statement *baseStmt = (Statement *)varStmt;
+
+    baseStmt->compute(baseStmt, scope);
+
+    Expression *iExpr = identExprGen(strdup("a"));
+    Variable *v = iExpr->compute(iExpr, scope);
+
+    assert_non_null(v);
+    assert_int_equal(getPrimitive_int(v->p), 1);
 }
 
 void funcDeclStmtTest(void) {
@@ -337,6 +388,8 @@ void funcDeclStmtTest(void) {
     assert_int_equal(getPrimitive_int(v->p), 3);
 }
 
-void exprStmtTest(void) {}
+void exprStmtTest(void) {
+
+}
 
 #endif /* _AST_TREE_TESTING_ */

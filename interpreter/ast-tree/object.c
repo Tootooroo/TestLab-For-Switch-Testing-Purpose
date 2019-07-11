@@ -62,6 +62,38 @@ void objectRelease(Object *o) {
     if (o->members)    listRelease(o->members);
 }
 
+// Template
+Template * templateDefault() {
+    return objDefault();
+}
+
+Template * templateGen(char *identifier, char *type) {
+    return objGen(identifier, type);
+}
+
+Template * templateDup(Template *t) {
+    return objDup(t);
+}
+
+Variable * templateGetMember(Template *t, char *ident) {
+    return objGetMember(t, ident);
+}
+
+void templateRelease(Template *t) {
+    objectRelease(t);
+}
+
+// Misc
+_Bool objTypeCmp(Object *o1, Object *o2) {
+    return strCompare(o1->objectType, o2->objectType);
+}
+
+Object * template2Object(Template *t) {
+    Object *orig = (Object *)t, *dup = objDup(orig);
+
+    return dup;
+}
+
 /* Private procedures */
 private uint64_t objHashing(const void *key) {
     uint64_t hashVal = 0, val;

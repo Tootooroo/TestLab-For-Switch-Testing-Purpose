@@ -97,9 +97,6 @@ _Status_t listJoin(list *l, list *r) {
     status = listNodeCancate(listNodeTail(l->node), r->node);
     if (status == ERROR)
         return ERROR;
-    status = listRelease(r);
-    if (status == ERROR)
-        return ERROR;
 
     return OK;
 }

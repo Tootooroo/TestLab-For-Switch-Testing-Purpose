@@ -27,6 +27,8 @@ typedef struct Member {
     };
 } Member;
 
+typedef Object Template;
+
 /* Member function implement as macros */
 #define OBJ_IDENTIFIER(O) ((O)->identifier)
 #define OBJ_SET_IDENTIFIER(O, N) ((O)->identifier = (N))
@@ -43,5 +45,15 @@ Object * objGen(char *identifier, char *type);
 Object * objDup(Object *);
 Variable * objGetMember(Object *, char *);
 void objectRelease(Object *);
+
+Template * templateDefault();
+Template * templateGen(char *identifier, char *type);
+Template * templateDup(Template *);
+Variable * templateGetMember(Template *, char *);
+void templateRelease(Template *);
+
+// Misc
+_Bool objTypeCmp(Object *, Object *);
+Object * template2Object(Template *);
 
 #endif /* _AST_TREE_OBJECT_H_ */

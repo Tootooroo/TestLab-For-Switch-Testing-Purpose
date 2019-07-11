@@ -70,6 +70,8 @@ AssignmentExpression * assignExprDefault() {
 
 AssignmentExpression * assignExprGen(Expression *left, Expression *right) {
     AssignmentExpression *aExpr = assignExprDefault();
+
+    exprSetType((Expression *)aExpr, EXPR_TYPE_ASSIGN);
     ASSIGN_SET_LEFT(aExpr, left);
     ASSIGN_SET_RIGHT(aExpr, right);
 
@@ -502,6 +504,12 @@ CALL_TO_PROC:
     }
 
     Variable *ret = f->compute(f, subScope);
+
+    // Return type checking
+    if (varIsType(ret, FUNC_RETURN_TYPE(f)) == false) {
+        return null;
+    }
+
     scopeRelease(subScope);
 
     return ret;
@@ -772,6 +780,7 @@ void funcCallTest(void) {
     Func *f_def = funcGenerate();
     f_def->outer = scopeGenerate();
     FUNC_SET_IDENT(f_def, strdup("f"));
+    FUNC_SET_RETURN_TYPE(f_def, strdup("Int"));
 
     Expression *left = (Expression *)constExprDefault(),
         *right = (Expression *)constExprDefault();
@@ -796,6 +805,7 @@ void funcCallTest(void) {
     Func *f_def_arg = funcGenerate();
     f_def_arg->outer = scopeGenerate();
     FUNC_SET_IDENT(f_def_arg, strdup("f_arg"));
+    FUNC_SET_RETURN_TYPE(f_def_arg, strdup("Int"));
 
     list *parameters = listCreate();
     listAppend(parameters, pairGen("a", "Int", NULL, NULL, NULL));

@@ -14,6 +14,12 @@ int opOnTypes[VAR_TYPE_NUM][VAR_OP_NUM] = {
     {  0, 0, 0, 0,  0, 0, 0,  0,  0,  0, 0, 0 }, /* OPS */
 };
 
+char *varPriTypesTable[VAR_OBJECT] = {
+    "Int",
+    "String",
+    "Ops"
+};
+
 /* Private prototypes */
 private _Bool varOpDefSpaceCheck_Binary(Variable *l, Variable *r, VarOp op);
 private _Bool varSupportCheck(Variable *, VarOp);
@@ -202,8 +208,32 @@ Variable * varDup(Variable *orig) {
     return dup;
 }
 
+// Misc
 _Bool varIdentCmp(Variable *v, char *ident) {
     return strCompare(VAR_IDENT(v), ident);
+}
+
+_Bool varTypeCmp(Variable *v1, Variable *v2) {
+    if (VAR_IS_PRIMITIVE(v1)) {
+        if (v1->type != v2->type)
+            return false;
+        else
+            return true;
+    } else if (VAR_IS_OBJECT(v1)) {
+        return objTypeCmp(v1->o, v2->o);
+    }
+
+    return false;
+}
+
+_Bool varIsType(Variable *v, char *type) {
+    if (VAR_IS_PRIMITIVE(v)) {
+        return strCompare(varPriTypesTable[varTypeIs(v)], type);
+    } else if (VAR_IS_OBJECT(v)) {
+        return strCompare(v->o->objectType, type);
+    }
+
+    return false;
 }
 
 /* Private procedures */

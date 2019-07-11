@@ -10,10 +10,10 @@
 typedef enum {
     VAR_EMPTY = 4,
     VAR_PRIMITIVE_INT = 0,
-    VAR_PRIMITIVE_STR = 1,
-    VAR_PRIMITIVE_OPS = 2,
-    VAR_OBJECT = 3,
-    VAR_TYPE_NUM = 3
+    VAR_PRIMITIVE_STR,
+    VAR_PRIMITIVE_OPS,
+    VAR_OBJECT,
+    VAR_TYPE_NUM
 } VarType;
 
 typedef enum {
@@ -110,6 +110,8 @@ Variable * varDup(Variable *);
 
 // Misc
 _Bool varIdentCmp(Variable *, char *);
+_Bool varTypeCmp(Variable *, Variable *);
+_Bool varIsType(Variable *, char *);
 
 #ifdef _AST_TREE_TESTING_
 

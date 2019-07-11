@@ -160,7 +160,7 @@ IfStatement * ifStatementGenerate(Expression *expr, list *true_stmts, list *fals
 
 /* Parameters:
  * expr_ - list of expressions in a variable declaration statement */
-VarDeclStatement * varDeclStmtGenerate(list *expr_);
+VarDeclStatement * varDeclStmtGenerate(char *type, list *expr_);
 
 /* Object declaration statement */
 ObjectDeclStatement * objDeclStmtDefault();
