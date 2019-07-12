@@ -7,6 +7,7 @@
 #include "scope.h"
 #include "pair.h"
 #include "list.h"
+#include "expression.h"
 
 /* Private Prototypes */
 private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope);
@@ -59,13 +60,23 @@ IfStatement * ifStatementGenerate(Expression *expr, list *true_stmts, list *fals
 }
 
 // Variable declaration statement
-VarDeclStatement * varDeclStmtGenerate(char *type, list *expr_) {
+VarDeclStatement * varDeclStmtGenerate(char *type) {
     VarDeclStatement *varStmt = (VarDeclStatement *)zMalloc(sizeof(VarDeclStatement));
     varStmt->base = statementGenerate(varDeclStmtCompute);
     varStmt->type = type;
-    varStmt->varDeclExprs = expr_;
+    varStmt->varDeclExprs = null;
 
     return varStmt;
+}
+
+/* pair<identifier, assignmentExpr> */
+_Status_t varDeclAddExpr(VarDeclStatement *stmt, Expression *expr) {
+    if (!stmt->varDeclExprs) stmt->varDeclExprs = listCreate();
+
+    AssignmentExpression *aExpr = (AssignmentExpression *)expr;
+
+    pair *p = pairGen(strdup(), void *right, void *, void *, void *);
+    return listAppend(stmt->varDeclExprs, p);
 }
 
 // Object declaration statement */
@@ -328,13 +339,11 @@ void objDeclStmtTest(void) {
 void varDeclStmtTest(void) {
     Scope *scope = scopeGenerate();
 
-    list *declExprs = listCreate();
-    VarDeclStatement *varStmt = varDeclStmtGenerate(strdup("Int"), declExprs);
+    VarDeclStatement *varStmt = varDeclStmtGenerate(strdup("Int"));
 
-    Expression *numExpr = constExprDefault();
-    constExprSetInt(numExpr, 1);
-    Expression *assignExpr = assignExprGen(identExprGen(strdup("a")), numExpr);
-    listAppend(declExprs, pairGen(strdup("a"), assignExpr, NULL, NULL, NULL));
+    int a = 1;
+    Expression *assignExpr = assignExprGen(identExprGen(strdup("a")), constExprGen(&a, PRIMITIVE_TYPE_INT));
+    varDeclAddExpr(varStmt, assignExpr);
 
     Statement *baseStmt = (Statement *)varStmt;
 

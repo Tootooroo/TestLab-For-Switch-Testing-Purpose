@@ -33,6 +33,8 @@ int str2Num(char *str) {
 _Bool strCompare(char *left, char *right) {
     size_t len_left, len_right;
 
+    if (isNull(left) || isNull(right)) return false;
+
     len_left = strlen(left);
     len_right = strlen(right);
 

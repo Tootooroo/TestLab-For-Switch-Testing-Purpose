@@ -35,6 +35,26 @@ ConstantExpression * constExprDefault() {
     return expr;
 }
 
+ConstantExpression * constExprGen(void *value, primitiveType type) {
+    ConstantExpression *expr = constExprDefault();
+
+    switch (type) {
+    case PRIMITIVE_TYPE_INT:
+        expr->constant_var = varGen(NULL, VAR_PRIMITIVE_INT,
+                                    primitiveGen(value, PRIMITIVE_TYPE_INT));
+        break;
+    case PRIMITIVE_TYPE_STR:
+        expr->constant_var = varGen(NULL, VAR_PRIMITIVE_STR,
+                                    primitiveGen(value, PRIMITIVE_TYPE_STR));
+        break;
+    case PRIMITIVE_TYPE_OPS:
+        break;
+    default:
+        break;
+    }
+    return expr;
+}
+
 _Status_t constExprSetInt(ConstantExpression *expr, int num) {
     Primitive *int_pri = primitiveGen(&num, PRIMITIVE_TYPE_INT);
     Variable *var = varGen(NULL, VAR_PRIMITIVE_INT, int_pri);

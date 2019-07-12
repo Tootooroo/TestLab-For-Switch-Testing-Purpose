@@ -187,11 +187,16 @@ void memberSelectAppendSub(MemberSelectExpression *, char *);
 void memberSelectRelease(Expression *, Scope *);
 
 // Function call expression
+typedef struct Arguments {
+    int num;
+    /* list<Expression, type> */
+    list *parameters;
+} Arguments;
+
 typedef struct FuncCallExpression {
     Expression base;
     char *funcIdent;
-    /* list<Expression, type> */
-    list *arguments;
+    Arguments *args;
 } FuncCallExpression;
 
 #define FUNC_CALL_IDENT(F) ((F)->funcIdent)
@@ -243,6 +248,7 @@ typedef struct ConstantExpression {
 #define CONSTANT_GET_VAR(C) ((C)->constant_var)
 
 ConstantExpression * constExprDefault();
+ConstantExpression * constExprGen(void *value, primitiveType type);
 _Status_t constExprSetInt(ConstantExpression *expr, int num);
 _Status_t constExprSetStr(ConstantExpression *expr, char *str);
 void constExprRelease(ConstantExpression *expr, Scope *scope);
