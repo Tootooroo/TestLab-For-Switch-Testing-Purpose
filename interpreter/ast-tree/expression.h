@@ -5,6 +5,7 @@
 
 #include "variable.h"
 #include "scope.h"
+#include "parameter.h"
 
 typedef enum {
     EXPR_TYPE_ARITHEMETIC,
@@ -187,12 +188,6 @@ void memberSelectAppendSub(MemberSelectExpression *, char *);
 void memberSelectRelease(Expression *, Scope *);
 
 // Function call expression
-typedef struct Arguments {
-    int num;
-    /* list<Expression, type> */
-    list *parameters;
-} Arguments;
-
 typedef struct FuncCallExpression {
     Expression base;
     char *funcIdent;

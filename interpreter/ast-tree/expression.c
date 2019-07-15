@@ -645,7 +645,7 @@ private Variable * notEqualCompute(Expression *expr, Scope *scope) {
                            PAIR_GET_RIGHT(&operands));
 }
 
-#ifdef _AST_TREE_TESTING_
+#if 0
 
 #include "test.h"
 

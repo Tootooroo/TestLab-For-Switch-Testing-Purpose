@@ -1,5 +1,3 @@
-/* Case.h */
-
 #ifndef _AST_TREE_CASE_H_
 #define _AST_TREE_CASE_H_
 
@@ -8,18 +6,11 @@
 #include "scope.h"
 #include "variable.h"
 #include "pair.h"
+#include "parameter.h"
 
 typedef struct Statement Statement;
 
 typedef enum { RET_INT, RET_STR, RET_OBJ } RetType;
-
-typedef pair Parameter;
-
-typedef struct Parameters {
-    int num;
-    /* list<ident, type> */
-    list *parameters;
-} Parameters;
 
 typedef struct Func {
     /* Identifier of the case */
@@ -54,37 +45,30 @@ typedef struct Func {
 #define FUNC_SET_ENV(F, E) ((F)->outer = (E))
 #define FUNC_ENV(F) ((F)->outer)
 
-#define PARAM_TYPE(P) ((char *)PAIR_GET_RIGHT(P))
-#define PARAM_SET_TYPE(P, T) (PAIR_SET_RIGHT(P, T))
-
-#define PARAM_IDENT(P) ((char *)PAIR_GET_LEFT(P))
-#define PARAM_SET_IDENT(P, I) (PAIR_SET_LEFT(P, I))
+#define FUNC_PARAMETERS(F) ((F)->params)
 
 /* Prototypes */
 Func * funcGenerate();
 Func * funcGen(Parameters *);
+void funcRelease(Func *);
 
 /* Procedure to add parameter call with the first
  * parameter before the second */
 _Status_t funcAddParam(Func *, Parameter *);
+Parameter * funcGetParamByName(Func *, char *);
+/* If you want to get first parameter give i = 1, second
+ * parameter give i = 2 and so on. */
+Parameter * funcGetParamByPos(Func *, int i);
+
 
 /* Procedure to append statement to function, the statement
  * append earlier will be executed earlier. */
 _Status_t funcAppendStatements(Func *c, Statement *s);
 
-/* Generate an empty parameters */
-Parameters * paramsGen();
+#ifdef _AST_TREE_TESTING_
 
-/* Procedure to add parameter call with the first
- * parameter before the second */
-_Status_t paramsAdd(Parameters *, Parameter *);
+void funcTest(void **state);
 
-Parameter * paramsGetByName(Parameters *, char *ident);
-
-/* If you want to get first parameter give i = 1, second
- * parameter give i = 2 and so on. */
-Parameter * paramsGetByPos(Parameters *p, int i);
-
-Parameter * paramGen(char *ident, char *type);
+#endif /* _AST_TREE_TESTING_ */
 
 #endif /* _AST_TREE_CASE_H_ */

@@ -187,7 +187,7 @@ listIter listGetIter(list *l, LITER_DIR dir) {
     return iter;
 }
 
-listIter listISuccessor(listIter i) {
+listIter listSuccessor(listIter i) {
     if (!listIsIterValid(i)) {
         /* Iterator is invalid. In this case
          * return iterator immediatly. Validity
@@ -200,7 +200,7 @@ listIter listISuccessor(listIter i) {
     return i;
 }
 
-listIter listIPredecessor(listIter i) {
+listIter listPredecessor(listIter i) {
     if (!listIsIterValid(i)) {
         return i;
     }

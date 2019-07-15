@@ -19,6 +19,14 @@ Func * funcGenerate() {
     FUNC_SET_COMPUTE_ROUTINE(c, __funcComputing);
     return c;
 }
+
+void funcReleae(Func *f) {
+    if (FUNC_IDENT(f)) free(FUNC_IDENT(f));
+    if (FUNC_STATEMENT_LIST(f)) listRelease(FUNC_STATEMENT_LIST(f));
+    if (FUNC_RETURN_TYPE(f)) free(FUNC_RETURN_TYPE(f));
+    if (FUNC_PARAMETERS(f)) paramsRelease(FUNC_PARAMETERS(f));
+}
+
 /* Procedure to add parameter call with the first
  * parameter before the second */
 _Status_t funcAddParam(Func *f, Parameter *p) {
@@ -28,10 +36,30 @@ _Status_t funcAddParam(Func *f, Parameter *p) {
     return OK;
 }
 
+Parameter *funcGetParamByName(Func *f, char *ident) {
+    if (!f->params) return null;
+    return paramsGetByName(f->params, ident);
+}
+
+/* If you want to get first parameter give i = 1, second
+ * parameter give i = 2 and so on. */
+Parameter * funcGetParamByPos(Func *f, int i) {
+    if (!f->params) return null;
+    return paramsGetByPos(f->params, i);
+}
+
+
 Parameters * paramsGen() {
     Parameters *p = (Parameters *)zMalloc(sizeof(Parameters));
 
     return p;
+}
+
+void paramsRelease(Parameters *p) {
+    if (p->parameters)
+        listRelease(p->parameters);
+
+    free(p);
 }
 
 /* Procedure to add parameter call with the first
@@ -47,7 +75,9 @@ _Status_t paramsAdd(Parameters *params, Parameter *param) {
         params->parameters = l;
     }
 
+    listAppend(params->parameters, param);
     params->num++;
+
     return OK;
 }
 
@@ -80,6 +110,11 @@ Parameter * paramGen(char *ident, char *type) {
     return p;
 }
 
+void paramRelease(Parameter *p) {
+    if (PARAM_IDENT(p)) free(PARAM_IDENT(p));
+    if (PARAM_TYPE(p)) free(PARAM_TYPE(p));
+}
+
 /* Procedure to append statement to function, the statement
  * append earlier will be executed earlier. */
 _Status_t funcAppendStatement(Func *c, Statement *s) {
@@ -96,8 +131,9 @@ _Status_t funcAppendStatements(Func *f, Statement *s) {
     return listAppend(f->statements, s);
 }
 
-/* Private procedures
- * This procedure always be called by function call expression
+/* Private procedures */
+
+/* This procedure always be called by function call expression
  * compute procedure, local scope is deal with by this procedure. */
 private Variable * __funcComputing(Func *c, Scope *s) {
     if (FUNC_IS_EMPTY_FUNC(c)) return null;
@@ -129,9 +165,9 @@ private _Status_t __paramsRelease(void *v) {
 }
 
 private _Bool __paramsMatcher(const void *v1, const void *v2) {
-    Parameter *p1 = (Parameter *)v1, *p2 = (Parameter *)v2;
+    Parameter *p1 = (Parameter *)v1;
 
-    return strCompare(PARAM_TYPE(p1), PARAM_TYPE(p2));
+    return strCompare(PARAM_IDENT(p1), (char *)v2);
 }
 
 private void * __paramsDup(void *v) {
@@ -139,4 +175,17 @@ private void * __paramsDup(void *v) {
 
     dup = paramGen(strdup(PARAM_IDENT(orig)),
                    strdup(PARAM_TYPE(orig)));
+
+    return dup;
 }
+
+#ifdef _AST_TREE_TESTING_
+
+void funcTest(void **state) {
+    Func *f = funcGenerate();
+
+    int a = 1;
+    funcAppendStatement(f, returnStmtGen(constExprGen(&a, PRIMITIVE_TYPE_INT)));
+}
+
+#endif /* _AST_TREE_TESTING_ */
