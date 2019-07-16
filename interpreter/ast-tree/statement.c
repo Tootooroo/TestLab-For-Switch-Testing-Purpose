@@ -73,9 +73,19 @@ VarDeclStatement * varDeclStmtGenerate(char *type) {
 _Status_t varDeclAddExpr(VarDeclStatement *stmt, Expression *expr) {
     if (!stmt->varDeclExprs) stmt->varDeclExprs = listCreate();
 
-    AssignmentExpression *aExpr = (AssignmentExpression *)expr;
+    char *ident;
+    if (exprType(expr) == EXPR_TYPE_ASSIGN) {
+        AssignmentExpression *aExpr = (AssignmentExpression *)expr;
+        IdentExpression *identExpr = (IdentExpression *)aExpr->l;
+        ident = IDENT_EXPR_GET(identExpr);
+    } else if (exprType(expr) == EXPR_TYPE_IDENTIFIER) {
+        IdentExpression *iExpr = (IdentExpression *)expr;
+        ident = IDENT_EXPR_GET(iExpr);
+    } else {
+        return ERROR;
+    }
 
-    pair *p = pairGen(strdup(), void *right, void *, void *, void *);
+    pair *p = pairGen(strdup(ident), expr, NULL, NULL, NULL);
     return listAppend(stmt->varDeclExprs, p);
 }
 
@@ -369,7 +379,7 @@ void funcDeclStmtTest(void) {
 
     list * parameters = listCreate();
     listAppend(parameters, pairGen(strdup("a"), strdup("Int"), NULL, NULL, NULL));
-    FUNC_SET_PARAMETER_LIST(f, parameters);
+    //FUNC_SET_PARAMETER_LIST(f, parameters);
 
     Expression *right = constExprDefault();
     constExprSetInt(right, 1);

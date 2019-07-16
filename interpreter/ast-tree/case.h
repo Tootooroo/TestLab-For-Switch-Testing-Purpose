@@ -49,7 +49,7 @@ typedef struct Func {
 
 /* Prototypes */
 Func * funcGenerate();
-Func * funcGen(Parameters *);
+Func * funcGen(char *ident, char *type, Parameters *, Scope *s);
 void funcRelease(Func *);
 
 /* Procedure to add parameter call with the first

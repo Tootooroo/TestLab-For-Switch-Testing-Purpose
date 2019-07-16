@@ -3,39 +3,52 @@
 
 #include "pair.h"
 #include "list.h"
+#include "scope.h"
 
 typedef struct Expression Expression;
 
-typedef pair Parameter;
-typedef pair Argument;
+typedef struct Parameter {
+    /* pair<ident, type> */
+    pair *p;
+    Scope *outer;
+} Parameter;
+
+typedef struct Argument {
+    /* pair<Expression> */
+    Expression *expr;
+    Scope *outer;
+} Argument;
 
 typedef struct Parameters {
     int num;
-    /* list<ident, type> */
+    /* list<Parameter :: pair<ident, type> */
     list *parameters;
 } Parameters;
 
 typedef struct Arguments {
     int num;
-    /* list<Expression, type> */
+    /* list<Argument :: pair<Expression> */
     list *arguments;
 } Arguments;
 
 /* Member function implemented as macros */
 
 // Parameter
-#define PARAM_TYPE(P) ((char *)PAIR_GET_RIGHT(P))
-#define PARAM_SET_TYPE(P, T) (PAIR_SET_RIGHT(P, T))
+#define PARAM_TYPE(P) ((char *)PAIR_GET_RIGHT((P)->p))
+#define PARAM_SET_TYPE(P, T) (PAIR_SET_RIGHT((P)->p, T))
 
-#define PARAM_IDENT(P) ((char *)PAIR_GET_LEFT(P))
-#define PARAM_SET_IDENT(P, I) (PAIR_SET_LEFT(P, I))
+#define PARAM_IDENT(P) ((char *)PAIR_GET_LEFT((P)->p))
+#define PARAM_SET_IDENT(P, I) (PAIR_SET_LEFT((P)->p, I))
+
+#define PARAM_NUM(P) ((P)->num)
+#define PARAM_NUM_PLUS(P) ((P)->num++)
 
 // Argument
-#define ARGU_TYPE(A) ((char *)PAIR_GET_RIGHT(A))
-#define ARGU_SET_TYPE(A, T) (PAIR_SET_RIGHT(A, T))
+#define ARGU_EXPR(A) ((A)->expr)
+#define ARGU_SET_EXPR(A, E) ((A)->expr = (E))
 
-#define ARGU_EXPR(A) ((char I)PAIR_GET_LEFT(A))
-#define ARGU_SET_EXPR(A, E) (PAIR_GET_LEFT(A, E))
+#define ARGU_NUM(A) ((A)->num)
+#define ARGU_NUM_PLUS(A) ((A)->num++)
 
 /* Prototypes */
 
@@ -65,7 +78,12 @@ _Status_t argusAdd(Arguments *, Argument *);
  * parameter give i = 2 and so on. */
 Argument * argusGetByPos(Arguments *, int i);
 
-Argument * arguGen(Expression *expr, char *type);
+Argument * arguGen(Expression *expr);
+
+/* Push argument into a scope this procedure is for the purpose
+ * of easily to store arguments into scope. The reason to pass
+ * parameters is give the availibility of type checking. */
+_Status_t argusStore(Arguments *, Parameters *, Scope *);
 
 #ifdef _AST_TREE_TESTING_
 

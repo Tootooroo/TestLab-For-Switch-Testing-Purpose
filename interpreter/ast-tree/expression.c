@@ -5,6 +5,7 @@
 #include "wrapper.h"
 #include "string.h"
 #include "case.h"
+#include "parameter.h"
 
 /* private prototypes */
 private Variable * constExprCompute(Expression *, Scope *);
@@ -131,7 +132,7 @@ FuncCallExpression * funcCallExprDefault() {
 FuncCallExpression * funcCallExprGen(char *ident, list *arguments) {
     FuncCallExpression *f = funcCallExprDefault();
     f->funcIdent = ident;
-    f->arguments = arguments;
+    f->args = argusGen();
 
     return f;
 }
@@ -140,8 +141,15 @@ void funcCallRelease(Expression *expr, Scope *s) {
     FuncCallExpression *fExpr = (FuncCallExpression *)expr;
 
     free(fExpr->funcIdent);
+    argusRelease(fExpr->args);
+}
 
-    listRelease(fExpr->arguments);
+_Status_t funcCallAddArg(Expression *expr, Argument *arg) {
+    FuncCallExpression *fExpr = (FuncCallExpression *)expr;
+
+    argusAdd(fExpr->args, arg);
+
+    return OK;
 }
 
 // Identifier expression
@@ -444,85 +452,25 @@ private Variable * memberSelectExprCompute(Expression *expr, Scope *scope) {
 private Variable * funcCallExprCompute(Expression *expr, Scope *scope) {
     FuncCallExpression *fExpr = (FuncCallExpression *)expr;
 
-    /* Generate a local scope */
-    Func *f = scopeGetFunc(scope, FUNC_CALL_IDENT(fExpr));
-    Scope *subScope = subScopeGenerate(f->outer);
-
-    list *parameters = f->parameters;
-    list *arguments = FUNC_CALL_ARGUMENT(fExpr);
-
-    /* Argument check */
-
-    /* Parameters is without exists which means parameters is empty */
-    if (parameters == NULL) {
-        /* Arguments list should be null too */
-        if (arguments == NULL)
-            goto CALL_TO_PROC;
-        else {
-            scopeRelease(subScope);
-            return NULL;
-        }
-    } else {
-        /* Mismatch between paramters and arguments */
-        if (arguments == NULL) {
-            scopeRelease(subScope);
-            return NULL;
-        }
-    }
-
-    listIter par_iter = listGetIter(parameters, LITER_FORWARD),
-        arg_iter = listGetIter(arguments, LITER_FORWARD);
-
-    listNode *par, *arg;
-
-    while (true) {
-        par = listNext(&par_iter);
-        arg = listNext(&arg_iter);
-
-        if (par == NULL || arg == NULL) break;
-
-        pair *par_pair = par->value, *arg_pair = arg->value;
-
-        if (strCompare(PAIR_GET_RIGHT(par_pair), PAIR_GET_RIGHT(arg_pair))) {
-            /* Match */
-            continue;
-        } else {
-            /* Mismatch */
-            scopeRelease(subScope);
-            return null;
-        }
-    }
-
-    /* Mismatch cause number of parameters and arguments is different. */
-    if (par != arg) return NULL;
-
-    /* Push arguments into local scope */
-    listRewind(&par_iter);
-    listRewind(&arg_iter);
-
-    while (true) {
-        par = listNext(&par_iter);
-        arg = listNext(&arg_iter);
-
-        if (par == NULL) break;
-
-        pair *par_pair = par->value, *arg_pair = arg->value;
-
-        Expression *expr = PAIR_GET_LEFT(arg_pair);
-        Variable *argVar = expr->compute(expr, subScope);
-
-        argVar->iOps->pass(argVar, subScope, strdup(PAIR_GET_LEFT(par_pair)));
-    }
+    Func *f;
 
     /* First to check is call to function is defined in internal module
      * fixme: function call to internal module */
-CALL_TO_PROC:
-    /* Then search function in upper scope */
-    if (isNull(f)) {
-        scopeRelease(subScope);
-        return NULL;
-    }
 
+    /* Find definition of funtion in current or upper scope; */
+    f = scopeGetFunc(scope, FUNC_CALL_IDENT(fExpr));
+    if (isNull(f)) return NULL;
+
+    /* Generate a local scope */
+    Scope *subScope = subScopeGenerate(f->outer);
+
+    Parameters *parameters = f->params;
+    Arguments *arguments = FUNC_CALL_ARGUMENT(fExpr);
+
+    /* Deal with arguments */
+    argusStore(arguments, parameters, subScope);
+
+    /* Find definition of funtion in current or upper scope; */
     Variable *ret = f->compute(f, subScope);
 
     // Return type checking
@@ -645,7 +593,7 @@ private Variable * notEqualCompute(Expression *expr, Scope *scope) {
                            PAIR_GET_RIGHT(&operands));
 }
 
-#if 0
+#ifdef _AST_TREE_TESTING_
 
 #include "test.h"
 
@@ -797,18 +745,11 @@ void funcCallTest(void) {
     /* Without arguments */
     FuncCallExpression *fExpr = funcCallExprGen(strdup("f"), NULL);
 
-    Func *f_def = funcGenerate();
-    f_def->outer = scopeGenerate();
-    FUNC_SET_IDENT(f_def, strdup("f"));
-    FUNC_SET_RETURN_TYPE(f_def, strdup("Int"));
+    Func *f_def = funcGen(strdup("f"), strdup("Int"), NULL, NULL);
 
-    Expression *left = (Expression *)constExprDefault(),
-        *right = (Expression *)constExprDefault();
-    constExprSetInt((ConstantExpression *)left, 1);
-    constExprSetInt((ConstantExpression *)right, 2);
-
-    Statement *stmt = (ReturnStatement *)returnStmtGen(plusExprGen(left, right));
-
+    int a = 1, b = 2;
+    Statement *stmt = (Statement *)returnStmtGen(plusExprGen(constExprGen(&a, PRIMITIVE_TYPE_INT),
+                                                             constExprGen(&b, PRIMITIVE_TYPE_INT)));
     funcAppendStatements(f_def, stmt);
     scopeNewFunc(scope, pairGen(strdup("f"), f_def, NULL, NULL, NULL));
 
@@ -821,43 +762,30 @@ void funcCallTest(void) {
     /* With arguments */
     Scope *s_arg = scopeGenerate();
 
-    // Function definition
-    Func *f_def_arg = funcGenerate();
-    f_def_arg->outer = scopeGenerate();
-    FUNC_SET_IDENT(f_def_arg, strdup("f_arg"));
-    FUNC_SET_RETURN_TYPE(f_def_arg, strdup("Int"));
+    // Define function
+    Func *f_def_arg = funcGen(strdup("f_arg"), strdup("Int"), NULL, NULL);
+    funcAddParam(f_def_arg, paramGen(strdup("a"), strdup("Int")));
 
-    list *parameters = listCreate();
-    listAppend(parameters, pairGen("a", "Int", NULL, NULL, NULL));
-    FUNC_SET_PARAMETER_LIST(f_def_arg, parameters);
-
-    left = (Expression *)identExprGen(strdup("a_int"));
-    right = (Expression *)constExprDefault();
-    constExprSetInt((ConstantExpression *)right, 1);
-
-    stmt = (ReturnStatement *)returnStmtGen(plusExprGen(left, right));
-
+    int a_ = 1;
+    stmt = (Statement *)returnStmtGen(plusExprGen(identExprGen(strdup("a_int")),
+                                                  constExprGen(&a_, PRIMITIVE_TYPE_INT)));
     funcAppendStatements(f_def_arg, stmt);
-
     scopeNewFunc(s_arg, pairGen(strdup("f_arg"), f_def_arg, NULL, NULL, NULL));
 
     int a_int = 1;
-    scopeNewPrimitive(f_def_arg->outer,
-                      pairGen(strdup("a_int"), varGen(strdup("a_int"), VAR_PRIMITIVE_INT,
-                                              primitiveGen(&a_int, PRIMITIVE_TYPE_INT)), NULL, NULL, NULL));
+    Variable *var_ = varGen(strdup("a_int"), VAR_PRIMITIVE_INT, primitiveGen(&a_int, PRIMITIVE_TYPE_INT));
+    scopeNewPrimitive(f_def_arg->outer, pairGen(strdup("a_int"), var_, NULL, NULL, NULL));
 
     // Function call expression
     FuncCallExpression *fExpr_arg = funcCallExprGen(strdup("f_arg"), NULL);
-    list *arguments = listCreate();
-
-    listAppend(arguments, pairGen(identExprGen(strdup("a_int")), "Int", NULL, NULL, NULL));
-    FUNC_CALL_SET_ARGUL(fExpr_arg, arguments);
+    funcCallAddArg((Expression *)fExpr_arg, arguGen(identExprGen(strdup("a_int"))));
 
     base = (Expression *)fExpr_arg;
     v = base->compute(base, s_arg);
 
     assert_non_null(v);
     assert_int_equal(getPrimitive_int(v->p), 2);
+
 }
 
 #endif /* _AST_TREE_TESTING_ */

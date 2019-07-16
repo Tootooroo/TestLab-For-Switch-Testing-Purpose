@@ -197,12 +197,13 @@ typedef struct FuncCallExpression {
 #define FUNC_CALL_IDENT(F) ((F)->funcIdent)
 #define FUNC_CALL_SET_IDENT(F, I) ((F)->funcIdent = (I))
 
-#define FUNC_CALL_ARGUMENT(F) ((F)->arguments)
+#define FUNC_CALL_ARGUMENT(F) ((F)->args)
 #define FUNC_CALL_SET_ARGUL(F, L) ((F)->arguments = (L))
 
 FuncCallExpression * funcCallExprDefault();
 FuncCallExpression * funcCallExprGen(char *ident, list *arguments);
 void funcCallRelease(Expression *, Scope *);
+_Status_t funcCallAddArg(Expression *, Argument *);
 
 // Assignment expression
 typedef struct AssignmentExpression {

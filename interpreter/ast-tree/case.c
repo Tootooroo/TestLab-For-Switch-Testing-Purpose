@@ -16,8 +16,29 @@ private void * __paramsDup(void *);
 /* Public procedures */
 Func * funcGenerate() {
     Func *c = (Func *)zMalloc(sizeof(Func));
+
     FUNC_SET_COMPUTE_ROUTINE(c, __funcComputing);
+
     return c;
+}
+
+Func * funcGen(char *ident, char *type, Parameters *params, Scope *s) {
+    Func *f_def = funcGenerate();
+
+    FUNC_SET_IDENT(f_def, ident);
+    FUNC_SET_RETURN_TYPE(f_def, type);
+
+    if (s)
+        f_def->outer = s;
+    else
+        f_def->outer = scopeGenerate();
+
+    if (params)
+        f_def->params = params;
+    else
+        f_def->params = paramsGen();
+
+    return f_def;
 }
 
 void funcReleae(Func *f) {
@@ -46,73 +67,6 @@ Parameter *funcGetParamByName(Func *f, char *ident) {
 Parameter * funcGetParamByPos(Func *f, int i) {
     if (!f->params) return null;
     return paramsGetByPos(f->params, i);
-}
-
-
-Parameters * paramsGen() {
-    Parameters *p = (Parameters *)zMalloc(sizeof(Parameters));
-
-    return p;
-}
-
-void paramsRelease(Parameters *p) {
-    if (p->parameters)
-        listRelease(p->parameters);
-
-    free(p);
-}
-
-/* Procedure to add parameter call with the first
- * parameter before the second */
-_Status_t paramsAdd(Parameters *params, Parameter *param) {
-    if (!params->parameters) {
-        list *l = listCreate();
-
-        listSetDupMethod(l, __paramsDup);
-        listSetMatchMethod(l, __paramsMatcher);
-        listSetReleaseMethod(l, __paramsRelease);
-
-        params->parameters = l;
-    }
-
-    listAppend(params->parameters, param);
-    params->num++;
-
-    return OK;
-}
-
-Parameter * paramsGetByName(Parameters *p, char *ident) {
-    if (!p->parameters) return null;
-
-    listNode *node =  listSearch(p->parameters, ident);
-
-    return (Parameter *)node->value;
-}
-
-Parameter * paramsGetByPos(Parameters *p, int pos) {
-    if (!p->parameters || p->num < pos) return null;
-
-    listIter iter = listGetIter(p->parameters, LITER_FORWARD);
-
-    while (--pos) {
-        iter = listSuccessor(iter);
-    }
-
-    return (Parameter*)iter.node->value;
-}
-
-Parameter * paramGen(char *ident, char *type) {
-    Parameter *p = (Parameter *)zMalloc(sizeof(Parameter));
-
-    PARAM_SET_IDENT(p, ident);
-    PARAM_SET_TYPE(p, type);
-
-    return p;
-}
-
-void paramRelease(Parameter *p) {
-    if (PARAM_IDENT(p)) free(PARAM_IDENT(p));
-    if (PARAM_TYPE(p)) free(PARAM_TYPE(p));
 }
 
 /* Procedure to append statement to function, the statement

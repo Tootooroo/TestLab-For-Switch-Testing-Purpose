@@ -37,5 +37,10 @@ typedef unsigned int _Index_t;
 #define errorMsg(msg, args...) fprintf(stderr, msg, ##args)
 #define abortWithMsg(msg, args...) ({ errorMsg(msg, ##args); exit(1); })
 
+#define container_of(ptr, ConType, member) ({\
+        const typeof( ((ConType *)(0))->member) *__mptr = ptr;\
+        (ConType *)((char *)__mptr - offsetof(ConType, member));\
+})
+
 #endif /* _TEST_LAB_TYPE_ */
 
