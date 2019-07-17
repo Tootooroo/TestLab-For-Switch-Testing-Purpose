@@ -58,7 +58,9 @@ _Status_t   listSort(list *l);
 list *      listDup(const list *l);
 listNode *  listSearch(const list *, const void *key);
 listNode *  listPrev(listIter *);
+void     *  listPrev_v(listIter *);
 listNode *  listNext(listIter *);
+void     *  listNext_v(listIter *);
 _Status_t   listRewind(listIter *);
 _Bool       listIsEqual(list *l, list *r);
 

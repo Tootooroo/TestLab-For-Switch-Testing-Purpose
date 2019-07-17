@@ -20,7 +20,7 @@ typedef struct Scope {
     hashMap *template;
     /* Map<ident, function> */
     hashMap *functions;
-    /* Map<ident, primitive> */
+    /* Map<ident, Variable> */
     hashMap *primitives;
     /* Map<ident, Template> */
     hashMap *objects;
@@ -32,6 +32,7 @@ typedef struct Scope {
 #define isFuncExists(s, f) (scopeGetFunc(s,f) != null)
 #define isPrimitiveExists(s, p) (scopeGetPrimitive(s, p) != null)
 #define isObjectExists(s, o) (scopeGetObject(s, o) != null)
+#define isTemplateExists(s, t) (scopeGetTemplate(s, t) != NULL)
 
 /* Prototypes */
 Scope * scopeGenerate();

@@ -89,12 +89,18 @@ _Status_t listPush(list *l, void *value) {
     return OK;
 }
 
+/* fixme: Join while situation that list l is an empty list */
 _Status_t listJoin(list *l, list *r) {
     if (isNull(l) || isNull(r))
         return ERROR;
 
-    _Status_t status;
-    status = listNodeCancate(listNodeTail(l->node), r->node);
+    _Status_t status = OK;
+
+    if (listNodeTail(l->node) != NULL)
+        status = listNodeCancate(listNodeTail(l->node), r->node);
+    else
+        l->node = r->node;
+
     if (status == ERROR)
         return ERROR;
 
@@ -210,6 +216,29 @@ listIter listPredecessor(listIter i) {
     return i;
 }
 
+listNode * listPrev(listIter *iter) {
+    if (isNull(iter))
+        return null;
+
+    listNode *current = iter->node;
+    listNode *node = current;
+
+    if (iter->dir == LITER_FORWARD)
+        node = listNodePrev(node);
+    else
+        node = listNodeNext(node);
+
+    iter->node = node;
+
+    return current;
+}
+
+void * listPrev_v(listIter *iter) {
+    listNode *node = listPrev(iter);
+    if (node) return node->value;
+    return null;
+}
+
 listNode * listNext(listIter *iter) {
     if (isNull(iter))
        return null;
@@ -225,6 +254,12 @@ listNode * listNext(listIter *iter) {
     iter->node = node;
 
     return current;
+}
+
+void * listNext_v(listIter *iter) {
+    listNode *node = listNext(iter);
+    if (node) return node->value;
+    return null;
 }
 
 _Status_t listRewind(listIter *iter) {

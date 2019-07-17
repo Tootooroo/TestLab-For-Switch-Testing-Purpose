@@ -107,6 +107,7 @@ Variable * varDefault();
 Variable * varGen(char *ident, VarType type, void *value);
 void varRelease(Variable *);
 Variable * varDup(Variable *);
+_Status_t varAssign_(Variable *l, Variable *r);
 
 // Misc
 _Bool varIdentCmp(Variable *, char *);

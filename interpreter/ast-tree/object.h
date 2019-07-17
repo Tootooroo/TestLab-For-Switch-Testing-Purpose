@@ -39,6 +39,12 @@ typedef Object Template;
 #define OBJ_MEMBERS(O) ((O)->members)
 #define OBJ_SET_MEMBERS(O, M) ((O)->members = (M))
 
+#define TEMPLATE_TYPE(T) ((T)->objectType)
+#define TEMPLATE_SET_TYPE(T, TYPE) ((T)->objectType = (TYPE))
+
+#define TEMPLATE_MEMBERS(T) ((T)->members)
+#define TEMPLATE_SET_MEMBERS(T, M) ((T)->members = (M))
+
 /* Prototypes */
 Object * objDefualt();
 Object * objGen(char *identifier, char *type);
@@ -47,8 +53,10 @@ Variable * objGetMember(Object *, char *);
 void objectRelease(Object *);
 
 Template * templateDefault();
-Template * templateGen(char *identifier, char *type);
+Template * templateGen(char *type);
 Template * templateDup(Template *);
+_Status_t templateAddMember(Template *, Variable *);
+_Status_t templateAddMembers(Template *, list *);
 Variable * templateGetMember(Template *, char *);
 void templateRelease(Template *);
 

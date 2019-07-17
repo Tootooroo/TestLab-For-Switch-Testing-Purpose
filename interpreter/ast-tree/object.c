@@ -1,5 +1,4 @@
 /* object.c */
-
 #include "object.h"
 #include "wrapper.h"
 #include "hashMap.h"
@@ -13,6 +12,9 @@ private void * objKeyDup(void *key);
 private _Bool objKeyCmp(void *keyl, void *keyr);
 private _Status_t objValRelease(void *val);
 private void * objValDup(void *val);
+private _Status_t __memberRelease(void *);
+private _Bool __memberMatch(const void *, const void *);
+private void * __memberDup(void *);
 
 /* Private variables */
 hashMapType obj = {
@@ -67,8 +69,8 @@ Template * templateDefault() {
     return objDefault();
 }
 
-Template * templateGen(char *identifier, char *type) {
-    return objGen(identifier, type);
+Template * templateGen(char *type) {
+    return objGen(NULL, type);
 }
 
 Template * templateDup(Template *t) {
@@ -77,6 +79,42 @@ Template * templateDup(Template *t) {
 
 Variable * templateGetMember(Template *t, char *ident) {
     return objGetMember(t, ident);
+}
+
+_Status_t templateAddMember(Template *t, Variable *var) {
+    list *member = t->members;
+
+    if (isNull(member)) {
+        member = listCreate();
+
+        listSetReleaseMethod(member, __memberRelease);
+        listSetMatchMethod(member, __memberMatch);
+        listSetDupMethod(member, __memberDup);
+
+        t->members = member;
+    }
+
+    listAppend(member, var);
+
+    return OK;
+}
+
+_Status_t templateAddMembers(Template *t, list *vars) {
+    list *member = t->members;
+
+    if (isNull(member)) {
+        member = listCreate();
+
+        listSetReleaseMethod(member, __memberRelease);
+        listSetMatchMethod(member, __memberMatch);
+        listSetDupMethod(member, __memberDup);
+
+        t->members = member;
+    }
+
+    listJoin(member, vars);
+
+    return OK;
 }
 
 void templateRelease(Template *t) {
@@ -89,9 +127,9 @@ _Bool objTypeCmp(Object *o1, Object *o2) {
 }
 
 Object * template2Object(Template *t) {
-    Object *orig = (Object *)t, *dup = objDup(orig);
+    Object *orig = (Object *)t;
 
-    return dup;
+    return templateDup(orig);
 }
 
 /* Private procedures */
@@ -130,6 +168,23 @@ private _Status_t objValRelease(void *val) {
 
 /* fixme: Before that you should implement duplication of
  * variable. */
-private void * objValDup(void *val) {
+private void * objValDup( void *val) {
     return varDup(val);
+}
+
+private _Status_t __memberRelease(void *m) {
+    Variable *var = (Variable *)m;
+
+    varRelease(var);
+    return OK;
+}
+
+private _Bool __memberMatch(const void *m, const void *name) {
+    Variable *var = (Variable *)m;
+
+    return varIdentCmp(var, (char *)name);
+}
+
+private void * __memberDup(void *var) {
+    return varDup(var);
 }

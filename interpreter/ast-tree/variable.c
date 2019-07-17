@@ -208,6 +208,38 @@ Variable * varDup(Variable *orig) {
     return dup;
 }
 
+_Status_t varAssign_(Variable *l, Variable *r) {
+    /* Clear l's content */
+    l->iOps = null;
+    l->ops = null;
+
+    if (l->type == VAR_OBJECT) {
+        objectRelease(l->o);
+    } else {
+        /* Primitive */
+        primitiveRelease(l->p);
+    }
+
+    if (l->identifier) free(l->identifier);
+
+    /* Assign from r to l */
+    l->iOps = r->iOps;
+    l->ops = r->ops;
+    l->type = r->type;
+    if (r->identifier)
+        l->identifier = strdup(r->identifier);
+    else
+        l->identifier = null;
+
+    if (r->type == VAR_OBJECT) {
+        l->o = objDup(r->o);
+    } else {
+        l->p = primitiveDup(r->p);
+    }
+
+    return OK;
+}
+
 // Misc
 _Bool varIdentCmp(Variable *v, char *ident) {
     return strCompare(VAR_IDENT(v), ident);
@@ -334,6 +366,7 @@ private Variable * varNotEqualOp(Variable *l, Variable *r) {
     return VAR_OPS_BINARY_INT_COMPUTE(l, r, !=);
 }
 
+/* fixme: variable assign should also change value of variable l */
 private Variable * varAssign(Variable *l, Variable *r) {
     // Only left-value can be assigned.
     if (!VAR_IS_LVAL(l)) return null;
@@ -347,7 +380,7 @@ private Variable * varPrimitivePass(Variable *l, Scope *s, char *ident) {
     Variable *dup = varDup(l);
     VAR_SET_IDENT(dup, ident);
 
-    pair *p = pairGen(strdup(ident), l, NULL, NULL, NULL);
+    pair *p = pairGen(strdup(ident), l);
     scopeNewPrimitive(s, p);
 
     return dup;

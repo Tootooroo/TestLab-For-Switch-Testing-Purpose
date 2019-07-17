@@ -201,7 +201,7 @@ typedef struct FuncCallExpression {
 #define FUNC_CALL_SET_ARGUL(F, L) ((F)->arguments = (L))
 
 FuncCallExpression * funcCallExprDefault();
-FuncCallExpression * funcCallExprGen(char *ident, list *arguments);
+FuncCallExpression * funcCallExprGen(char *ident, Arguments *arguments);
 void funcCallRelease(Expression *, Scope *);
 _Status_t funcCallAddArg(Expression *, Argument *);
 

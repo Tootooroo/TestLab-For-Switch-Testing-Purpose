@@ -2,8 +2,9 @@
 
 #include "program.h"
 #include "wrapper.h"
+#include "statement.h"
 
-Program * programGenerate(Statement *stmts) {
+Program * programGenerate(list *stmts) {
     Program *p = (Program *)zMalloc(sizeof(Program));
 
     PROGRAM_SET_STMTS(p, stmts);
@@ -14,5 +15,6 @@ Program * programGenerate(Statement *stmts) {
 
 void programCompute(Program *p) {
     Scope *s = scopeGenerate();
-    statementCompute_untilReturn(p->state, s);
+
+    statementCompute_untilReturn(PROGRAM_GET_STMTS(p), s);
 }

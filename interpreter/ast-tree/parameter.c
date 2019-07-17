@@ -81,7 +81,7 @@ Parameter * paramsGetByPos(Parameters *p, int pos) {
 
 Parameter * paramGen(char *ident, char *type) {
     Parameter *p = (Parameter *)zMalloc(sizeof(Parameter));
-    p->p = pairGen(null, null, null, null, null);
+    p->p = pairGen(null, null);
 
     PARAM_SET_IDENT(p, ident);
     PARAM_SET_TYPE(p, type);

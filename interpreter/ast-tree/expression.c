@@ -129,10 +129,13 @@ FuncCallExpression * funcCallExprDefault() {
     return f;
 }
 
-FuncCallExpression * funcCallExprGen(char *ident, list *arguments) {
+FuncCallExpression * funcCallExprGen(char *ident, Arguments *arguments) {
     FuncCallExpression *f = funcCallExprDefault();
     f->funcIdent = ident;
-    f->args = argusGen();
+    if (arguments)
+        f->args = arguments;
+    else
+        f->args = argusGen();
 
     return f;
 }
@@ -702,7 +705,7 @@ void identTest(void) {
     Primitive *pri = primitiveGen(&a, PRIMITIVE_TYPE_INT);
 
     Variable *pri_var = varGen(strdup("INT_VAR"), VAR_PRIMITIVE_INT, pri);
-    scopeNewPrimitive(scope, pairGen(strdup("INT_VAR"), pri_var, NULL, NULL, NULL));
+    scopeNewPrimitive(scope, pairGen_M(strdup("INT_VAR"), pri_var, NULL, NULL, NULL));
 
     Expression *iExpr = (Expression *)identExprGen("INT_VAR");
     Variable *v = iExpr->compute(iExpr, scope);
@@ -729,7 +732,7 @@ void memberSelectTest(void) {
 
     OBJ_SET_MEMBERS(obj, members);
 
-    scopeNewObject(scope, pairGen(strdup("AA"), varGen(strdup("AA"), VAR_OBJECT, obj), NULL, NULL, NULL));
+    scopeNewObject(scope, pairGen_M(strdup("AA"), varGen(strdup("AA"), VAR_OBJECT, obj), NULL, NULL, NULL));
 
     MEMBER_SELECT_SET_SUBS(mExpr, "aa");
     MEMBER_SELECT_SET_HEAD(mExpr, (Expression *)identExprGen("AA"));
@@ -751,7 +754,7 @@ void funcCallTest(void) {
     Statement *stmt = (Statement *)returnStmtGen(plusExprGen(constExprGen(&a, PRIMITIVE_TYPE_INT),
                                                              constExprGen(&b, PRIMITIVE_TYPE_INT)));
     funcAppendStatements(f_def, stmt);
-    scopeNewFunc(scope, pairGen(strdup("f"), f_def, NULL, NULL, NULL));
+    scopeNewFunc(scope, pairGen(strdup("f"), f_def));
 
     Expression *base = (Expression *)fExpr;
     Variable *v = base->compute(base, scope);
@@ -770,11 +773,12 @@ void funcCallTest(void) {
     stmt = (Statement *)returnStmtGen(plusExprGen(identExprGen(strdup("a_int")),
                                                   constExprGen(&a_, PRIMITIVE_TYPE_INT)));
     funcAppendStatements(f_def_arg, stmt);
-    scopeNewFunc(s_arg, pairGen(strdup("f_arg"), f_def_arg, NULL, NULL, NULL));
+    scopeNewFunc(s_arg, pairGen(strdup("f_arg"), f_def_arg));
 
     int a_int = 1;
-    Variable *var_ = varGen(strdup("a_int"), VAR_PRIMITIVE_INT, primitiveGen(&a_int, PRIMITIVE_TYPE_INT));
-    scopeNewPrimitive(f_def_arg->outer, pairGen(strdup("a_int"), var_, NULL, NULL, NULL));
+    Variable *var_ = varGen(strdup("a_int"), VAR_PRIMITIVE_INT,
+                            primitiveGen(&a_int, PRIMITIVE_TYPE_INT));
+    scopeNewPrimitive(f_def_arg->outer, pairGen(strdup("a_int"), var_));
 
     // Function call expression
     FuncCallExpression *fExpr_arg = funcCallExprGen(strdup("f_arg"), NULL);

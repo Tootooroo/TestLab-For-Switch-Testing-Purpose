@@ -19,6 +19,8 @@ private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope);
 private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope);
 
 #define STrack_Default() { .error = STMT_ERROR_NONE, .s = null, .id = 0, .v = null }
+#define STrack_GEN(STMT_REF, STMT_TYPE, STMT_RET)\
+    { .error = STMT_ERROR_NONE, .s = (STMT_REF), .id = (STMT_TYPE), .v = (STMT_RET) }
 
 /* Public Procedures */
 
@@ -85,7 +87,7 @@ _Status_t varDeclAddExpr(VarDeclStatement *stmt, Expression *expr) {
         return ERROR;
     }
 
-    pair *p = pairGen(strdup(ident), expr, NULL, NULL, NULL);
+    pair *p = pairGen(strdup(ident), expr);
     return listAppend(stmt->varDeclExprs, p);
 }
 
@@ -114,6 +116,18 @@ ObjectDeclBody * objBodyGen() {
 ObjectDeclItem * objItemGen() {
     ObjectDeclItem *item = (ObjectDeclItem *)zMalloc(sizeof(ObjectDeclBody));
     return item;
+}
+
+_Status_t objAddMember(ObjectDeclStatement *obj, pair *member) {
+    list *members = obj->members;
+
+    return listAppend(members, member);
+}
+
+_Status_t objAddOverWrite(ObjectDeclStatement *obj, pair *overWrite) {
+    list *overWrites = obj->overWrites;
+
+    return listAppend(overWrites, overWrite);
 }
 
 // Import statement
@@ -193,6 +207,8 @@ private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope) {
 }
 
 private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
+    StatementTrack st = STrack_GEN(stmt, DECL_STATEMENT_ID, NULL);
+
     int primitiveType = false;
     VarDeclStatement *varDeclStmt = (VarDeclStatement *)stmt;
 
@@ -224,18 +240,15 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
                     break;
             }
 
-            scopeNewPrimitive(scope, pairGen(strdup(varIdent), v, null, null, null));
+            scopeNewPrimitive(scope, pairGen(strdup(varIdent), v));
         } else {
             /* Object */
+            Template *t = scopeGetTemplate(scope, VAR_DECL_STMT_TYPE(varDeclStmt));
+            Variable *var_o = varGen(strdup(varIdent), VAR_OBJECT, template2Object(t));
+
+            scopeNewObject(scope, pairGen(strdup(varIdent), var_o));
         }
     }
-
-    StatementTrack st = {
-        .s = stmt,
-        .id = DECL_STATEMENT_ID,
-        .v = null,
-        .error = STMT_ERROR_NONE
-    };
 
     listRewind(&iter);
 
@@ -263,25 +276,43 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
 
 // Create a object template and store into Scope
 private StatementTrack objStmtCompute(Statement *stmt, Scope *scope) {
+    StatementTrack st = STrack_GEN(stmt, DECL_STATEMENT_ID, null);
+
     ObjectDeclStatement *oStmt = (ObjectDeclStatement *)stmt;
 
-    Template *new = templateGen(null, strdup(oStmt->objectType));
+    Template *new = templateGen(strdup(oStmt->objectType));
 
     // Is parent exists ?
     if (oStmt->parent) {
         Template *t = scopeGetTemplate(scope, oStmt->parent);
-
-        if (t->members) {
-            new->members = listDup(t->members);
+        if (isNull(t)) {
+            ST_SET_ERROR(&st, STMT_ERROR_ABORT);
+            return st;
         }
 
-        if (oStmt->members) listJoin(new->members, oStmt->members);
-    } else
-        OBJ_SET_MEMBERS(new, oStmt->members);
+        if (t->members) {
+            /* Copy members from parent template */
+            new->members = listDup(t->members);
+            /* Initialize members inherit from parent */
+            if (oStmt->overWrites) {
+                listIter iter = listGetIter(oStmt->overWrites, LITER_FORWARD);
 
-    StatementTrack st = STrack_Default();
-    ST_SET_REL_STMT(&st, stmt);
-    ST_SET_STMT_TYPE(&st, DECL_STATEMENT_ID);
+                pair *overW_pair;
+                list *members = new->members;
+                Variable *var;
+
+                while ((overW_pair = (pair *)listNext_v(&iter))) {
+                    var = (Variable *)listSearch(members, PAIR_GET_LEFT(overW_pair));
+                    varAssign_(var, PAIR_GET_RIGHT(overW_pair));
+                }
+            }
+        }
+    }
+
+    if (oStmt->members) templateAddMembers(new, oStmt->members);
+
+    /* Store into current scope */
+    scopeNewTemplate(scope, pairGen(strdup(TEMPLATE_TYPE(new)), new));
 
     return st;
 }
@@ -307,7 +338,7 @@ private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope) {
 
     Func *f = fStmt->f;
 
-    scopeNewFunc(scope, pairGen(strdup(f->identifier), f, null, null, null));
+    scopeNewFunc(scope, pairGen(strdup(f->identifier), f));
 
     ST_SET_REL_STMT(&st, stmt);
     ST_SET_STMT_TYPE(&st, FUNC_DECL_STATEMENT_ID);
@@ -344,6 +375,21 @@ void stmtTest(void **state) {
 
 void objDeclStmtTest(void) {
     Scope *scope = scopeGenerate();
+
+    // Object declaration
+    ObjectDeclStatement *objStmt = objDeclStmtGen(strdup("AA"), NULL, NULL, NULL);
+
+    int a = 1;
+    int b = 2;
+
+    objAddMember(objStmt, pairGen(strdup("a"), varGen(strdup("a"), VAR_PRIMITIVE_INT, &a)));
+    objAddMember(objStmt, pairGen(strdup("b"), varGen(strdup("b"), VAR_PRIMITIVE_INT, &b)));
+
+    Statement *base = (Statement *)objStmt;
+
+    base->compute(base, scope);
+
+    // Declare an variable with object type.
 }
 
 void varDeclStmtTest(void) {
@@ -371,19 +417,12 @@ void funcDeclStmtTest(void) {
 
     FuncDeclStatement *fStmt = funcDeclStmtDefault();
 
-    Func *f = funcGenerate();
+    Func *f = funcGen(strdup("f"), "Int", NULL, scopeGenerate());
+    funcAddParam(f, paramGen(strdup("a"), strdup("Int")));
 
-    f->outer = scopeGenerate();
-    FUNC_SET_IDENT(f, strdup("f"));
-    FUNC_SET_RETURN_TYPE(f, "Int");
-
-    list * parameters = listCreate();
-    listAppend(parameters, pairGen(strdup("a"), strdup("Int"), NULL, NULL, NULL));
-    //FUNC_SET_PARAMETER_LIST(f, parameters);
-
-    Expression *right = constExprDefault();
-    constExprSetInt(right, 1);
-    Statement *stmt = (ReturnStatement *)returnStmtGen(plusExprGen(identExprGen(strdup("a")), right));
+    int b = 1;
+    Statement *stmt = (ReturnStatement *)returnStmtGen(plusExprGen(identExprGen(strdup("a")),
+                                                                   constExprGen(&b, PRIMITIVE_TYPE_INT)));
     funcAppendStatements(f, stmt);
 
     FUNC_DECL_STMT_SET_FUNC(fStmt, f);
@@ -392,12 +431,10 @@ void funcDeclStmtTest(void) {
     baseStmt->compute(baseStmt, scope);
 
     // Try to call expression we just define.
-    list *arguments = listCreate();
-    FuncCallExpression *fExpr = (FuncCallExpression *)funcCallExprGen(strdup("f"), arguments);
+    FuncCallExpression *fExpr = (FuncCallExpression *)funcCallExprGen(strdup("f"), NULL);
 
-    Expression *constExpr = (Expression *)constExprDefault();
-    constExprSetInt(constExpr, 2);
-    listAppend(arguments, pairGen(constExpr, "Int", NULL, NULL, NULL));
+    int c = 2;
+    funcCallAddArg(fExpr, arguGen(constExprGen(&c, PRIMITIVE_TYPE_INT)));
 
     Expression *baseExpr = (Expression *)fExpr;
 
@@ -407,8 +444,7 @@ void funcDeclStmtTest(void) {
     assert_int_equal(getPrimitive_int(v->p), 3);
 }
 
-void exprStmtTest(void) {
-
-}
+// fixme: Do expression statement test
+void exprStmtTest(void) {}
 
 #endif /* _AST_TREE_TESTING_ */

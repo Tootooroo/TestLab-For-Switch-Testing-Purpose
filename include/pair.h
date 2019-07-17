@@ -38,7 +38,8 @@ typedef struct pair {
 
 /* Prototypes */
 pair * pairDefault(void *dupMethod, void *releaseMethod, void *cmpMethod);
-pair * pairGen(void *left, void *right, void *, void *, void *);
+pair * pairGen_M(void *left, void *right, void *, void *, void *);
+pair * pairGen(void *left, void *right);
 pair * pairGen_Integer(int left, int right, void *dupMethod, void *releasemethod, void *cmpMethod);
 
 #ifdef _TEST_LAB_UNIT_TESTING_

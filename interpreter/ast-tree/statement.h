@@ -55,6 +55,23 @@ typedef struct Statement {
     StatementTrack (*compute)(struct Statement *, Scope *);
 } Statement;
 
+/* Type alias */
+typedef StatementTrack (*stmtCompute)(struct Statement *, Scope *);
+
+/* Member function implement as macros */
+/* StatementTrack (*)(Statement *, Scope *) */
+#define STATEMENT_COMPUTE(S, SCOPE) ((S)->compute((S), (SCOPE)))
+/* StatementID (*)(Statement *) */
+#define STATEMENT_TYPE(S) ({ (S)->type; })
+/* void (*)(Statement *, StatementID) */
+#define STATEMENT_SET_TYPE(S, T) ((S)->type = (T))
+
+/* Prototypes */
+Statement statementGenerate(stmtCompute compute);
+/* Computing a list of statments until a return statement is computed. */
+StatementTrack statementCompute_untilReturn(list *listOfStmt, Scope *);
+
+/* If statements */
 typedef struct IfStatement {
     Statement base;
     Expression *conditionExpr;
@@ -62,11 +79,33 @@ typedef struct IfStatement {
     list *falseStatements;
 } IfStatement;
 
+/* Expression * (*)(IfStatement *, Expression *) */
+#define IF_STMT_SET_COND(S, COND_EXPR) ((S)->conditionExpr = (COND_EXPR))
+/* list * (*)(IfStatement *, list *) */
+#define IF_STMT_SET_TRUE_STMTS(S, STMTS) ((S)->trueStatements = (STMTS))
+/* list * (*)(IfStatement *, list *) */
+#define IF_STMT_SET_FALSE_STMTS(S, STMTS) ((S)->falseStatements = (STMTS))
+
+/* Parameters:
+ * compute_ - Procedure to compute if statement.
+ * expr_ - condition expression
+ * true_stmts - Will be computed if expr is true
+ * false_stmts - Will be computed if expr is false */
+IfStatement * ifStatementGenerate(Expression *expr, list *true_stmts, list *false_stmts);
+
+/* Return statement */
 typedef struct ReturnStatement {
     Statement base;
     Expression *expr;
 } ReturnStatement;
 
+/* Expression * (*)(ReturnStatement *, Expression *) */
+#define RET_STMT_SET_EXPR(S, E) ((S)->expr = (E))
+
+ReturnStatement * returnStmtDefault();
+ReturnStatement * returnStmtGen(Expression *expr);
+
+/* Variable declaration statement */
 typedef struct VarDeclStatement {
     Statement base;
     char *type;
@@ -74,11 +113,32 @@ typedef struct VarDeclStatement {
     list *varDeclExprs;
 } VarDeclStatement;
 
+/* char * (*)(VarDeclStatement *) */
+#define VAR_DECL_STMT_TYPE(V_D_STMT) ((V_D_STMT)->type)
+/* char * (*)(VarDeclStatement *, char *) */
+#define VAR_DECL_STMT_SET_TYPE(V_D_STMT, T) ((V_D_STMT)->type = T)
+/* list * (*)(VarDeclStatement *, list *) */
+#define VAR_DECL_STMT_SET_EXPRS(V_D_STMT, EXPRS) ((V_D_STMT)->varDeclExprs = (EXPRS))
+
+/* Parameters:
+ * expr_ - list of expressions in a variable declaration statement */
+VarDeclStatement * varDeclStmtGenerate(char *type);
+_Status_t varDeclAddExpr(VarDeclStatement *, Expression *);
+
+
+/* Function declaration statement */
 typedef struct FuncDeclStatement {
     Statement base;
     Func *f;
 } FuncDeclStatement;
 
+/* Func * (*)(FuncDeclStatement *, Func *) */
+#define FUNC_DECL_STMT_SET_FUNC(S, F) ((S)->f = (F))
+
+FuncDeclStatement * funcDeclStmtDefault();
+FuncDeclStatement * funcDeclStmtGen(Func *);
+
+/* Import statement */
 typedef struct ImportStatement {
     Statement base;
     /* list<char *> */
@@ -87,12 +147,22 @@ typedef struct ImportStatement {
     char *from;
 } ImportStatement;
 
-// Expression statement
+ImportStatement * importStmtDefault();
+ImportStatement * importStmtGen(list *symbols, char *from);
+
+/* Expression statement */
 typedef struct ExpressionStatement {
     Statement base;
     Expression *expr;
 } ExpressionStatement;
 
+/* Expression * (*)(ExpressionStatement *, Expression *) */
+#define EXPR_STMT_SET_EXPR(ES, E) ((ES)->expr = (E))
+
+ExpressionStatement * exprStmtDefault();
+ExpressionStatement * exprStmtGen(Expression *expr);
+
+/* Object declaration statement */
 typedef struct ObjectDeclStatement {
     Statement base;
     char *objectType;
@@ -116,86 +186,12 @@ typedef struct ObjectDeclItem {
     pair *item;
 } ObjectDeclItem;
 
-/* Type alias */
-typedef StatementTrack (*stmtCompute)(struct Statement *, Scope *);
-
-/* Member function implement as macros */
-
-/* StatementTrack (*)(Statement *, Scope *) */
-#define STATEMENT_COMPUTE(S, SCOPE) ((S)->compute((S), (SCOPE)))
-/* StatementID (*)(Statement *) */
-#define STATEMENT_TYPE(S) ({ (S)->type; })
-/* void (*)(Statement *, StatementID) */
-#define STATEMENT_SET_TYPE(S, T) ((S)->type = (T))
-
-/* Prototypes */
-Statement statementGenerate(stmtCompute compute);
-/* Computing a list of statments until a return statement is computed. */
-StatementTrack statementCompute_untilReturn(list *listOfStmt, Scope *);
-
-/* If statement */
-
-/* Expression * (*)(IfStatement *, Expression *) */
-#define IF_STMT_SET_COND(S, COND_EXPR) ((S)->conditionExpr = (COND_EXPR))
-/* list * (*)(IfStatement *, list *) */
-#define IF_STMT_SET_TRUE_STMTS(S, STMTS) ((S)->trueStatements = (STMTS))
-/* list * (*)(IfStatement *, list *) */
-#define IF_STMT_SET_FALSE_STMTS(S, STMTS) ((S)->falseStatements = (STMTS))
-
-/* Parameters:
- * compute_ - Procedure to compute if statement.
- * expr_ - condition expression
- * true_stmts - Will be computed if expr is true
- * false_stmts - Will be computed if expr is false */
-IfStatement * ifStatementGenerate(Expression *expr, list *true_stmts, list *false_stmts);
-
-/* Variable declaration statement */
-
-/* char * (*)(VarDeclStatement *) */
-#define VAR_DECL_STMT_TYPE(V_D_STMT) ((V_D_STMT)->type)
-/* char * (*)(VarDeclStatement *, char *) */
-#define VAR_DECL_STMT_SET_TYPE(V_D_STMT, T) ((V_D_STMT)->type = T)
-/* list * (*)(VarDeclStatement *, list *) */
-#define VAR_DECL_STMT_SET_EXPRS(V_D_STMT, EXPRS) ((V_D_STMT)->varDeclExprs = (EXPRS))
-
-/* Parameters:
- * expr_ - list of expressions in a variable declaration statement */
-VarDeclStatement * varDeclStmtGenerate(char *type);
-_Status_t varDeclAddExpr(VarDeclStatement *, Expression *);
-
-/* Object declaration statement */
 ObjectDeclStatement * objDeclStmtDefault();
 ObjectDeclStatement * objDeclStmtGen(char *objType, list *members, char *parent, list *overWrites);
 ObjectDeclBody * objBodyGen();
 ObjectDeclItem * objItemGen();
-
-/* Import statement */
-ImportStatement * importStmtDefault();
-ImportStatement * importStmtGen(list *symbols, char *from);
-
-/* Return statement */
-
-/* Expression * (*)(ReturnStatement *, Expression *) */
-#define RET_STMT_SET_EXPR(S, E) ((S)->expr = (E))
-
-ReturnStatement * returnStmtDefault();
-ReturnStatement * returnStmtGen(Expression *expr);
-
-/* Function declaration statement */
-
-/* Func * (*)(FuncDeclStatement *, Func *) */
-#define FUNC_DECL_STMT_SET_FUNC(S, F) ((S)->f = (F))
-
-FuncDeclStatement * funcDeclStmtDefault();
-FuncDeclStatement * funcDeclStmtGen(Func *);
-
-/* Expression statement */
-
-/* Expression * (*)(ExpressionStatement *, Expression *) */
-#define EXPR_STMT_SET_EXPR(ES, E) ((ES)->expr = (E))
-
-ExpressionStatement * exprStmtDefault();
-ExpressionStatement * exprStmtGen(Expression *expr);
+_Status_t objAddMember(ObjectDeclStatement *obj, pair *member);
+_Status_t objAddOverWrite(ObjectDeclStatement *obj, pair *overWrite);
 
 #ifdef _AST_TREE_TESTING_
 

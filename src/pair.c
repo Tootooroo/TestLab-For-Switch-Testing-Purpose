@@ -14,8 +14,17 @@ pair * pairDefault(void *dupMethod, void *releaseMethod, void *cmpMethod) {
     return p;
 }
 
-pair * pairGen(void *left, void *right, void *dupMethod, void *releaseMethod, void *cmpMethod) {
+pair * pairGen_M(void *left, void *right, void *dupMethod, void *releaseMethod, void *cmpMethod) {
     pair *p = pairDefault(dupMethod, releaseMethod, cmpMethod);
+
+    PAIR_SET_LEFT(p, left);
+    PAIR_SET_RIGHT(p, right);
+
+    return p;
+}
+
+pair * pairGen(void *left, void *right) {
+    pair *p = pairDefault(NULL, NULL, NULL);
 
     PAIR_SET_LEFT(p, left);
     PAIR_SET_RIGHT(p, right);
