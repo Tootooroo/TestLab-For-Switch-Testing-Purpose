@@ -227,6 +227,7 @@ private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope) {
     st = statementCompute_untilReturn(beComputed, subScope);
 
     varRelease(var);
+    scopeRelease(subScope);
 
     return st;
 }
