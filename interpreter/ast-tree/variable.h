@@ -113,6 +113,8 @@ _Status_t varAssign_(Variable *l, Variable *r);
 _Bool varIdentCmp(Variable *, char *);
 _Bool varTypeCmp(Variable *, Variable *);
 _Bool varIsType(Variable *, char *);
+_Bool varIsTrue(Variable *);
+
 
 #ifdef _AST_TREE_TESTING_
 

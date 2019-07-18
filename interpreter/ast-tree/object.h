@@ -49,6 +49,8 @@ typedef Object Template;
 Object * objDefualt();
 Object * objGen(char *identifier, char *type);
 Object * objDup(Object *);
+_Status_t objDefAddMember(Object *, Variable *);
+_Status_t objDefAddmembers(Object *, list *);
 Variable * objGetMember(Object *, char *);
 void objectRelease(Object *);
 

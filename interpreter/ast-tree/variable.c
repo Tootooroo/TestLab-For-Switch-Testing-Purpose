@@ -170,6 +170,7 @@ Variable * varGen(char *ident, VarType type, void *value) {
         var->iOps = &primitiveInnerOps;
     } else if (type == VAR_OBJECT) {
         var->o = (Object *)value;
+        OBJ_SET_IDENTIFIER(var->o, strdup(ident));
         var->ops = &objectOps;
     }
     return var;
@@ -266,6 +267,22 @@ _Bool varIsType(Variable *v, char *type) {
     }
 
     return false;
+}
+
+_Bool varIsTrue(Variable *var) {
+    if (varTypeIs(var) == VAR_PRIMITIVE_INT) {
+        if (getPrimitive_int(var->p) == 0 )
+            return false;
+        else
+            return true;
+    } else if (varTypeIs(var) == VAR_PRIMITIVE_STR) {
+        if (getPrimitive_str(var->p) == NULL)
+            return false;
+        else
+            return true;
+    } else {
+        abortWithMsg("Require boolean value");
+    }
 }
 
 /* Private procedures */

@@ -59,12 +59,13 @@ typedef struct Statement {
 typedef StatementTrack (*stmtCompute)(struct Statement *, Scope *);
 
 /* Member function implement as macros */
+#define STATEMENT_2_BASE(S) ((Statement *)(S))
 /* StatementTrack (*)(Statement *, Scope *) */
-#define STATEMENT_COMPUTE(S, SCOPE) ((S)->compute((S), (SCOPE)))
+#define STATEMENT_COMPUTE(S, SCOPE) (STATEMENT_2_BASE(S)->compute(STATEMENT_2_BASE(S), (SCOPE)))
 /* StatementID (*)(Statement *) */
-#define STATEMENT_TYPE(S) ({ (S)->type; })
+#define STATEMENT_TYPE(S) ({ STATEMENT_2_BASE(S)->type; })
 /* void (*)(Statement *, StatementID) */
-#define STATEMENT_SET_TYPE(S, T) ((S)->type = (T))
+#define STATEMENT_SET_TYPE(S, T) (STATEMENT_2_BASE(S)->type = (T))
 
 /* Prototypes */
 Statement statementGenerate(stmtCompute compute);
@@ -167,9 +168,9 @@ typedef struct ObjectDeclStatement {
     Statement base;
     char *objectType;
     char *parent;
-    /* list of pair(parent's member, value) */
+    /* list of pair(parent's member, variable) */
     list *overWrites;
-    /* list of pair(member name, type name) */
+    /* list of pair(member name, variable) */
     list *members;
 } ObjectDeclStatement;
 

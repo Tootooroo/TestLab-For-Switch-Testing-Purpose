@@ -45,11 +45,48 @@ Object * objGen(char *identifier, char *type) {
 Object * objDup(Object *orig) {
     Object *dup = objDefault();
 
-    OBJ_SET_IDENTIFIER(dup, OBJ_IDENTIFIER(orig));
+    if (OBJ_IDENTIFIER(orig))
+        OBJ_SET_IDENTIFIER(dup, OBJ_IDENTIFIER(orig));
     OBJ_SET_TYPE(dup, OBJ_TYPE(orig));
     OBJ_SET_MEMBERS(dup, listDup(orig->members));
 
     return dup;
+}
+
+_Status_t objDefAddmember(Object *o, Variable *member) {
+    list *members = OBJ_MEMBERS(o);
+
+    if (!members) {
+        members = listCreate();
+
+        listSetReleaseMethod(members, __memberRelease);
+        listSetMatchMethod(members, __memberMatch);
+        listSetDupMethod(members, __memberDup);
+
+        OBJ_SET_MEMBERS(o, members);
+    }
+
+    listAppend(members, member);
+
+    return OK;
+}
+
+_Status_t objDefAddMembers(Object *o, list *members) {
+    list *member_list = OBJ_MEMBERS(o);
+
+    if (!member_list) {
+        member_list = listCreate();
+
+        listSetReleaseMethod(member_list, __memberRelease);
+        listSetMatchMethod(member_list, __memberMatch);
+        listSetDupMethod(member_list, __memberDup);
+
+        OBJ_SET_MEMBERS(o, member_list);
+    }
+
+    listJoin(member_list, members);
+
+    return OK;
 }
 
 Variable * objGetMember(Object *o, char *member) {

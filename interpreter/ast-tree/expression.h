@@ -24,10 +24,11 @@ typedef struct Expression {
 } Expression;
 
 /* Member function implement as macros */
-#define exprType(E) ((E)->type)
-#define exprSetType(E, T) ((E)->type = (T))
-#define exprCompute(E, S) ((E)->compute(E, S))
-#define exprRelease(E, S) ((E)->release(E, S))
+#define EXPR_2_BASE(E) ((Expression *)(E))
+#define exprType(E) (EXPR_2_BASE(E)->type)
+#define exprSetType(E, T) (EXPR_2_BASE(E)->type = (T))
+#define exprCompute(E, S) (EXPR_2_BASE(E)->compute(EXPR_2_BASE(E), S))
+#define exprRelease(E, S) (EXPR_2_BASE(E)->release(EXPR_2_BASE(E), S))
 
 // Plus Expression
 typedef struct PlusExpression {
@@ -184,7 +185,7 @@ typedef struct MemberSelectExpression {
 #define MEMBER_SELECT_SUBS(M) ((M)->subs)
 
 MemberSelectExpression * memberSelectDefault();
-void memberSelectAppendSub(MemberSelectExpression *, char *);
+MemberSelectExpression * memberSelectGen(Expression *objName, char *member);
 void memberSelectRelease(Expression *, Scope *);
 
 // Function call expression

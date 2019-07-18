@@ -31,7 +31,9 @@ private Variable * notEqualCompute(Expression *expr, Scope *scope);
 // Constant expression
 ConstantExpression * constExprDefault() {
     ConstantExpression *expr = (ConstantExpression *)zMalloc(sizeof(ConstantExpression));
+
     expr->base.compute = constExprCompute;
+    exprSetType(expr, EXPR_TYPE_CONSTANT);
 
     return expr;
 }
@@ -84,7 +86,9 @@ void constExprRelease(ConstantExpression *expr, Scope *scope) {
 // Asignment expression
 AssignmentExpression * assignExprDefault() {
     AssignmentExpression *aExpr = (AssignmentExpression *)zMalloc(sizeof(AssignmentExpression));
+
     aExpr->base.compute = assignExprCompute;
+    exprSetType(aExpr, EXPR_TYPE_ASSIGN);
 
     return aExpr;
 }
@@ -92,7 +96,6 @@ AssignmentExpression * assignExprDefault() {
 AssignmentExpression * assignExprGen(Expression *left, Expression *right) {
     AssignmentExpression *aExpr = assignExprDefault();
 
-    exprSetType((Expression *)aExpr, EXPR_TYPE_ASSIGN);
     ASSIGN_SET_LEFT(aExpr, left);
     ASSIGN_SET_RIGHT(aExpr, right);
 
@@ -109,7 +112,18 @@ void assignExprRelease(Expression *expr, Scope *scope) {
 // Member select expression
 MemberSelectExpression * memberSelectDefault() {
     MemberSelectExpression *mExpr = (MemberSelectExpression *)zMalloc(sizeof(MemberSelectExpression));
+
     mExpr->base.compute = memberSelectExprCompute;
+    exprSetType(mExpr, EXPR_TYPE_MEMBER_REF);
+
+    return mExpr;
+}
+
+MemberSelectExpression * memberSelectGen(Expression *objName, char *member) {
+    MemberSelectExpression *mExpr = memberSelectDefault();
+
+    MEMBER_SELECT_SET_HEAD(mExpr, objName);
+    MEMBER_SELECT_SET_SUBS(mExpr, member);
 
     return mExpr;
 }
@@ -125,7 +139,10 @@ void memberSelectRelease(Expression *expr, Scope *scope) {
 // Function call expression
 FuncCallExpression * funcCallExprDefault() {
     FuncCallExpression *f = (FuncCallExpression *)zMalloc(sizeof(FuncCallExpression));
+
     f->base.compute = funcCallExprCompute;
+    exprSetType(f, EXPR_TYPE_FUNC_CALL);
+
     return f;
 }
 
@@ -158,7 +175,9 @@ _Status_t funcCallAddArg(Expression *expr, Argument *arg) {
 // Identifier expression
 IdentExpression * identExprDefault() {
     IdentExpression *iExpr = (IdentExpression *)zMalloc(sizeof(IdentExpression));
+
     iExpr->base.compute = identExprCompute;
+    exprSetType(iExpr, EXPR_TYPE_IDENTIFIER);
 
     return iExpr;
 }
@@ -180,6 +199,7 @@ void identExprRelease(Expression *expr, Scope *s) {
 PlusExpression * plusExprDefault() {
     PlusExpression *expr = (PlusExpression *)zMalloc(sizeof(PlusExpression));
     expr->base.compute = plusExprCompute;
+
     return expr;
 }
 
@@ -271,6 +291,7 @@ void divExprRelease(Expression *expr, Scope *s) {
 LessThanExpression * lessThanExprDefault() {
     LessThanExpression *lExpr = (LessThanExpression *)zMalloc(sizeof(LessThanExpression));
     lExpr->base.compute = lessThanExprCompute;
+    exprSetType(lExpr, EXPR_TYPE_ORDER);
     return lExpr;
 }
 
@@ -294,6 +315,7 @@ void lessThanExprRelease(Expression *expr, Scope *s) {
 GreaterThanExpression * greaterThanExprDefault() {
     GreaterThanExpression *gExpr = (GreaterThanExpression *)zMalloc(sizeof(GreaterThanExpression));
     gExpr->base.compute = greaterThanExprCompute;
+    exprSetType(gExpr, EXPR_TYPE_ORDER);
     return gExpr;
 }
 
@@ -316,6 +338,7 @@ void greaterThanExprRelease(Expression *expr, Scope *s) {
 EqualExpression * equalExprDefault() {
     EqualExpression *expr = (EqualExpression *)zMalloc(sizeof(EqualExpression));
     expr->base.compute = equalExprCompute;
+    exprSetType(expr, EXPR_TYPE_ORDER);
 
     return expr;
 }
@@ -340,6 +363,7 @@ void equalExprRelease(Expression *expr, Scope *s) {
 LessOrEqualExpression * lessOrEqualExprDefault() {
     LessOrEqualExpression *expr = (LessOrEqualExpression *)zMalloc(sizeof(LessOrEqualExpression));
     expr->base.compute = lessOrEqualExprCompute;
+    exprSetType(expr, EXPR_TYPE_ORDER);
     return expr;
 }
 
@@ -363,6 +387,7 @@ void lessOrEqualExprRelease(Expression *expr, Scope *s) {
 GreaterOrEqualExpression * greaterOrEqualExprDefault() {
     GreaterOrEqualExpression *expr = (GreaterOrEqualExpression *)zMalloc(sizeof(GreaterOrEqualExpression));
     expr->base.compute = greaterOrEqualCompute;
+    exprSetType(expr, EXPR_TYPE_ORDER);
     return expr;
 }
 
@@ -386,6 +411,7 @@ void greaterOrEqualRelease(Expression *expr, Scope *s) {
 NotEqualExpression * notEqualExprDefault() {
     NotEqualExpression *expr = (NotEqualExpression *)zMalloc(sizeof(NotEqualExpression));
     expr->base.compute = notEqualCompute;
+    exprSetType(expr, EXPR_TYPE_ORDER);
     return expr;
 }
 

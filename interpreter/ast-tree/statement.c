@@ -18,6 +18,10 @@ private StatementTrack returnStmtCompute(Statement *stmt, Scope *scope);
 private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope);
 private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope);
 
+private _Status_t __objDeclMemberRelease(void *);
+private _Bool __objDeclMemberMatch(const void *m, const void *name);
+private void * __objDeclMemberDup(void *);
+
 #define STrack_Default() { .error = STMT_ERROR_NONE, .s = null, .id = 0, .v = null }
 #define STrack_GEN(STMT_REF, STMT_TYPE, STMT_RET)\
     { .error = STMT_ERROR_NONE, .s = (STMT_REF), .id = (STMT_TYPE), .v = (STMT_RET) }
@@ -79,7 +83,11 @@ _Status_t varDeclAddExpr(VarDeclStatement *stmt, Expression *expr) {
     if (exprType(expr) == EXPR_TYPE_ASSIGN) {
         AssignmentExpression *aExpr = (AssignmentExpression *)expr;
         IdentExpression *identExpr = (IdentExpression *)aExpr->l;
-        ident = IDENT_EXPR_GET(identExpr);
+
+        if (exprType(identExpr) == EXPR_TYPE_IDENTIFIER)
+            ident = IDENT_EXPR_GET(identExpr);
+        else
+            return ERROR;
     } else if (exprType(expr) == EXPR_TYPE_IDENTIFIER) {
         IdentExpression *iExpr = (IdentExpression *)expr;
         ident = IDENT_EXPR_GET(iExpr);
@@ -120,6 +128,15 @@ ObjectDeclItem * objItemGen() {
 
 _Status_t objAddMember(ObjectDeclStatement *obj, pair *member) {
     list *members = obj->members;
+    if (!members) {
+        members = listCreate();
+
+        listSetReleaseMethod(members, __objDeclMemberRelease);
+        listSetMatchMethod(members, __objDeclMemberMatch);
+        listSetDupMethod(members, __objDeclMemberDup);
+
+        obj->members = members;
+    }
 
     return listAppend(members, member);
 }
@@ -189,6 +206,9 @@ ExpressionStatement * exprStmtGen(Expression *expr) {
 }
 
 /* Private Procedures */
+
+/* If a statement which declare new function or variable
+ * should generate a subscope for that statement */
 private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope) {
     StatementTrack st = { .s = stmt, .id = IF_STATEMENT_ID };
 
@@ -196,16 +216,22 @@ private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope) {
     IfStatement *if_stmt = (IfStatement *)stmt;
     Expression *condExpr = if_stmt->conditionExpr;
 
-    if (condExpr->compute(condExpr, scope))
+    Variable *var = exprCompute(condExpr, scope);
+
+    if (varIsTrue(var))
         beComputed = if_stmt->trueStatements;
     else
         beComputed = if_stmt->falseStatements;
 
-    st = statementCompute_untilReturn(beComputed, scope);
+    Scope *subScope = subScopeGenerate(scope);
+    st = statementCompute_untilReturn(beComputed, subScope);
+
+    varRelease(var);
 
     return st;
 }
 
+/* fixme: Variable declaration statment can not deal with initialization via assignment to object */
 private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
     StatementTrack st = STrack_GEN(stmt, DECL_STATEMENT_ID, NULL);
 
@@ -258,16 +284,18 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
          * otherwise error occur. */
         currentPair = current->value;
 
-        // Is assignment ?
+        // Assignment or Identifier
         Expression *expr = PAIR_GET_RIGHT(currentPair);
-        if (exprType(expr) != EXPR_TYPE_ASSIGN) {
+        if (exprType(expr) == EXPR_TYPE_ASSIGN) {
+            /* Compute the assignment and after computation finish
+            * an initial value will be place into scope. */
+            expr->compute(expr, scope);
+        } else if (exprType(expr) == EXPR_TYPE_IDENTIFIER) {
+            continue;
+        } else {
             st.error = STMT_ERROR_ABORT;
             return st;
         }
-
-        /* Compute the assignment and after computation finish
-         * an initial value will be place into scope. */
-        expr->compute(expr, scope);
     }
 
     return st;
@@ -309,7 +337,12 @@ private StatementTrack objStmtCompute(Statement *stmt, Scope *scope) {
         }
     }
 
-    if (oStmt->members) templateAddMembers(new, oStmt->members);
+    /* Move member list from obj decl stmt to obj definition struct */
+    if (oStmt->members) {
+        /* fixme: member type is not same */
+        templateAddMembers(new, oStmt->members);
+        oStmt->members = null;
+    }
 
     /* Store into current scope */
     scopeNewTemplate(scope, pairGen(strdup(TEMPLATE_TYPE(new)), new));
@@ -347,10 +380,7 @@ private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope) {
 }
 
 private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope) {
-    StatementTrack st = STrack_Default();
-
-    ST_SET_REL_STMT(&st, stmt);
-    ST_SET_STMT_TYPE(&st, EXPR_STATEMENT_ID);
+    StatementTrack st = STrack_GEN(stmt, EXPR_STATEMENT_ID, NULL);
 
     Expression *expr = ((ExpressionStatement *)stmt)->expr;
 
@@ -362,15 +392,70 @@ private StatementTrack exprStmtCompute(Statement *stmt, Scope *scope) {
     return st;
 }
 
+private _Status_t __objDeclMemberRelease(void *m) {
+    varRelease((Variable *)m);
+    return OK;
+}
+
+private _Bool __objDeclMemberMatch(const void *m, const void *name) {
+    Variable *var = (Variable *)m;
+
+    return varIdentCmp(var, (char *)name);
+}
+
+private void * __objDeclMemberDup(void *orig) {
+    return varDup(orig);
+}
+
 #ifdef _AST_TREE_TESTING_
 
 #include "test.h"
 #include "expression.h"
 
+void objDeclStmtTest(void);
+void varDeclStmtTest(void);
+void funcDeclStmtTest(void);
+
 void stmtTest(void **state) {
     funcDeclStmtTest();
     exprStmtTest();
     varDeclStmtTest();
+    objDeclStmtTest();
+    ifStmtTest();
+}
+
+void ifStmtTest(void) {
+    Scope *scope = scopeGenerate();
+
+    int a = 1, b = 0;
+    list *true_stmts = listCreate(), *false_stmts = listCreate();
+    IfStatement *iStmt_true = ifStatementGenerate(constExprGen(&a, PRIMITIVE_TYPE_INT),
+                                                  true_stmts, false_stmts);
+    IfStatement *iStmt_false = ifStatementGenerate(constExprGen(&b, PRIMITIVE_TYPE_INT),
+                                                   true_stmts, false_stmts);
+
+    listAppend(true_stmts, exprStmtGen(assignExprGen(identExprGen(strdup("a")),
+                                                     constExprGen(&a, PRIMITIVE_TYPE_INT))));
+    listAppend(false_stmts, exprStmtGen(assignExprGen(identExprGen(strdup("a")),
+                                                      constExprGen(&b, PRIMITIVE_TYPE_INT))));
+
+    VarDeclStatement *varDeclStmt = varDeclStmtGenerate("Int");
+    varDeclAddExpr(varDeclStmt, identExprGen(strdup("a")));
+
+    STATEMENT_COMPUTE(varDeclStmt, scope);
+    STATEMENT_COMPUTE(iStmt_true, scope);
+
+    IdentExpression *ident = identExprGen(strdup("a"));
+
+    Variable *v = exprCompute(ident, scope);
+    assert_non_null(v);
+    assert_int_equal(getPrimitive_int(v->p), 1);
+
+    STATEMENT_COMPUTE(iStmt_false, scope);
+    v = exprCompute(ident, scope);
+
+    assert_non_null(v);
+    assert_int_equal(getPrimitive_int(v->p), 0);
 }
 
 void objDeclStmtTest(void) {
@@ -382,14 +467,31 @@ void objDeclStmtTest(void) {
     int a = 1;
     int b = 2;
 
-    objAddMember(objStmt, pairGen(strdup("a"), varGen(strdup("a"), VAR_PRIMITIVE_INT, &a)));
-    objAddMember(objStmt, pairGen(strdup("b"), varGen(strdup("b"), VAR_PRIMITIVE_INT, &b)));
+    objAddMember(objStmt, varGen(strdup("a"), VAR_PRIMITIVE_INT,
+                                 primitiveGen(&a, PRIMITIVE_TYPE_INT)));
 
-    Statement *base = (Statement *)objStmt;
+    objAddMember(objStmt, varGen(strdup("b"), VAR_PRIMITIVE_INT,
+                                 primitiveGen(&b, PRIMITIVE_TYPE_INT)));
 
-    base->compute(base, scope);
+    STATEMENT_COMPUTE(objStmt, scope);
 
-    // Declare an variable with object type.
+    // Declure an variable with object type.
+    VarDeclStatement *vStmt = varDeclStmtGenerate(strdup("AA"));
+
+    varDeclAddExpr(vStmt, identExprGen(strdup("a")));
+    STATEMENT_COMPUTE(vStmt, scope);
+
+    // Get object variable via identifier expression
+    IdentExpression *iExpr = identExprGen(strdup("a"));
+    Variable *v = exprCompute(iExpr, scope);
+    assert_non_null(v);
+    assert_string_equal(v->o->identifier, "a");
+
+    // Then try to get member of objects
+    MemberSelectExpression *mExpr = memberSelectGen(identExprGen(strdup("a")), strdup("a"));
+    v = exprCompute(mExpr, scope);
+    assert_non_null(v);
+    assert_int_equal(getPrimitive_int(v->p), 1);
 }
 
 void varDeclStmtTest(void) {
