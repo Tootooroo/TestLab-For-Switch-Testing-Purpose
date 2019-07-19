@@ -43,12 +43,10 @@ ConstantExpression * constExprGen(void *value, primitiveType type) {
 
     switch (type) {
     case PRIMITIVE_TYPE_INT:
-        expr->constant_var = varGen(NULL, VAR_PRIMITIVE_INT,
-                                    primitiveGen(value, PRIMITIVE_TYPE_INT));
+        expr->constant_var = varGen(NULL, VAR_PRIMITIVE_INT, value);
         break;
     case PRIMITIVE_TYPE_STR:
-        expr->constant_var = varGen(NULL, VAR_PRIMITIVE_STR,
-                                    primitiveGen(value, PRIMITIVE_TYPE_STR));
+        expr->constant_var = varGen(NULL, VAR_PRIMITIVE_STR, value);
         break;
     case PRIMITIVE_TYPE_OPS:
         break;
@@ -59,8 +57,7 @@ ConstantExpression * constExprGen(void *value, primitiveType type) {
 }
 
 _Status_t constExprSetInt(ConstantExpression *expr, int num) {
-    Primitive *int_pri = primitiveGen(&num, PRIMITIVE_TYPE_INT);
-    Variable *var = varGen(NULL, VAR_PRIMITIVE_INT, int_pri);
+    Variable *var = varGen(NULL, VAR_PRIMITIVE_INT, &num);
 
     expr->constant_var = var;
 
@@ -802,8 +799,8 @@ void funcCallTest(void) {
     scopeNewFunc(s_arg, pairGen(strdup("f_arg"), f_def_arg));
 
     int a_int = 1;
-    Variable *var_ = varGen(strdup("a_int"), VAR_PRIMITIVE_INT,
-                            primitiveGen(&a_int, PRIMITIVE_TYPE_INT));
+    Variable *var_ = varGen(strdup("a_int"), VAR_PRIMITIVE_INT, &a_int);
+
     scopeNewPrimitive(f_def_arg->outer, pairGen(strdup("a_int"), var_));
 
     // Function call expression

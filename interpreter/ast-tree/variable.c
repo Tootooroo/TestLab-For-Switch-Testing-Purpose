@@ -161,11 +161,11 @@ Variable * varGen(char *ident, VarType type, void *value) {
     var->type = type;
 
     if (type == VAR_PRIMITIVE_INT) {
-        var->p = (Primitive *)value;
+        var->p = primitiveGen(value, PRIMITIVE_TYPE_INT);
         var->ops = &primitiveOps_integer;
         var->iOps = &primitiveInnerOps;
     } else if (type == VAR_PRIMITIVE_STR) {
-        var->p = (Primitive *)value;
+        var->p = primitiveGen(value, PRIMITIVE_TYPE_STR);
         var->ops = &primitiveOps_string;
         var->iOps = &primitiveInnerOps;
     } else if (type == VAR_OBJECT) {
@@ -285,6 +285,16 @@ _Bool varIsTrue(Variable *var) {
     }
 }
 
+VarType varTypeStr2Int(char *typeStr) {
+    int current = VAR_PRIMITIVE_INT;
+
+    while (current < VAR_OBJECT) {
+        _Bool isMatch = strCompare(varPriTypesTable[current], typeStr);
+        if (isMatch) return current;
+    }
+    return VAR_EMPTY;
+}
+
 /* Private procedures */
 
 /* Operators */
@@ -298,10 +308,9 @@ _Bool varIsTrue(Variable *var) {
 
 /* Variable * (*)(Variable *, Variable *, VarType) */
 #define VAR_OPS_BINARY_INT_COMPUTE(V1, V2, OP) ({\
-    Primitive *l_pri = l->p, *r_pri = r->p, *ret_pri;\
+    Primitive *l_pri = V1->p, *r_pri = V2->p;\
     int ret_int = l_pri->val_i OP r_pri->val_i;\
-    ret_pri = primitiveGen(&ret_int, PRIMITIVE_TYPE_INT);  \
-    varGen(NULL, VAR_PRIMITIVE_INT, ret_pri);\
+    varGen(NULL, VAR_PRIMITIVE_INT, &ret_int);\
 })
 
 private Variable * varPlusOp(Variable *l, Variable *r) {
@@ -432,7 +441,7 @@ private _Bool varSupportCheck(Variable *v, VarOp op) {
     return opOnTypes[type][op];
 }
 
-private VarType  varTypeIs(Variable *v) {
+private VarType varTypeIs(Variable *v) {
     return v->type;
 }
 

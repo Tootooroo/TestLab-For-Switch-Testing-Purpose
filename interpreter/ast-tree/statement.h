@@ -175,15 +175,18 @@ typedef struct ObjectDeclStatement {
 } ObjectDeclStatement;
 
 typedef struct ObjectDeclBody {
+    /* pair<Ident :: char *,  variable :: Variable>*/
     list *newMembers;
     list *overWrites;
 } ObjectDeclBody;
 
+typedef enum { OBJECT_OVER_WRITE, OBJECT_MEMBER } OBJ_ITEM_TYPE;
+
 typedef struct ObjectDeclItem {
     /* 0: Overwrite
      * 1: member */
-    int type;
-    /*  */
+    OBJ_ITEM_TYPE type;
+    /* pair<Ident::char *, variable :: Variable> */
     pair *item;
 } ObjectDeclItem;
 

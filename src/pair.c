@@ -81,8 +81,9 @@ void pairTest(void **state) {
 
     char *str1 = "Hello", *str2 = "World";
 
-    pair *pair2 = pairGen(strdup(str1), strdup(str2),
+    pair *pair2 = pairGen_M(strdup(str1), strdup(str2),
                           tpairDup, tpairRelease, tpairCmp);
+
 
     PAIR_SET_LEFT(pair1, strdup(PAIR_GET_LEFT(pair2)));
     PAIR_SET_RIGHT(pair1, strdup(PAIR_GET_RIGHT(pair2)));

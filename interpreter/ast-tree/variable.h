@@ -8,7 +8,7 @@
 #include "scope.h"
 
 typedef enum {
-    VAR_EMPTY = 4,
+    VAR_EMPTY = -1,
     VAR_PRIMITIVE_INT = 0,
     VAR_PRIMITIVE_STR,
     VAR_PRIMITIVE_OPS,
@@ -114,6 +114,7 @@ _Bool varIdentCmp(Variable *, char *);
 _Bool varTypeCmp(Variable *, Variable *);
 _Bool varIsType(Variable *, char *);
 _Bool varIsTrue(Variable *);
+VarType varTypeStr2Int(char *);
 
 
 #ifdef _AST_TREE_TESTING_

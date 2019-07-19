@@ -54,14 +54,17 @@
 %type   <str>           OBJECT_INHERITENCE
 
 %type   <integer>       DECL_QUALIFIER
-%type   <str>       TYPE
+%type   <str>           TYPE
 
 /* Expression */
 %type   <expression>    EXPRESSION
+%type   <expression>    IDENT_EXPRESSION
+%type   <expression>    ARITHMETIC_EXPRESSION
 %type   <expression>    PLUS_EXPRESSION
 %type   <expression>    MINUS_EXPRESSION
 %type   <expression>    MUL_EXPRESSION
 %type   <expression>    DIV_EXPRESSION
+%type   <expression>    ORDER_EXPRESSION
 %type   <expression>    LESS_THAN_EXPRESSION
 %type   <expression>    GREATER_THAN_EXPRESSION
 %type   <expression>    EQUAL_EXPRESSION
@@ -79,7 +82,7 @@
 %type   <objDeclBody>   OBJECT_DEF
 %type   <objDeclItem>   OBJECT_DEF_ITEM
 %type   <list_>         IMPORT_LIST
-%type   <list_>         ARGUMENT_LIST PARAMETER_LIST
+%type   <list_>         ARGUMENTS PARAMETERS
 %type   <expression>    MEMBER_SELECTION_ENTITY
 %type   <str>       PARAMETER
 
@@ -150,14 +153,7 @@ IF_STATEMENT_WITH_ELSE :
 /* type : Statement */
 OBJECT_DECL_STATEMENT :
     OBJECT IDENTIFIER OBJECT_INHERITENCE OPEN_CURVE_BRACKET OBJECT_DEF CLOSE_CURVE_BRACKET SEMICOLON {
-        $$ = objDeclStmtDefault();
-        $$->objectType = $IDENTIFIER;
-        if ($OBJECT_INHERITENCE) {
-            /* Deal with inheritence */
-            $$->parent = $OBJECT_INHERITENCE;
-            $$->overWrites = $OBJECT_DEF.overWrites;
-        }
-        $$->members = $OBJECT_DEF.newMembers;
+        $$ = objDeclStmtGen($IDENTIFIER, $OBJECT_DEF.newMembers, $OBJECT_INHERITENCE, $OBJECT_DEF.overWrites);
     };
 
 /* type : char * */
@@ -182,25 +178,25 @@ OBJECT_DEF :
     /* Define a new member for the a new object */
     | OBJECT_DEF_ITEM {
         $$ = objBodyGen();
-        if ($OBJECT_DEF_ITEM->type == 0) {
+        if ($OBJECT_DEF_ITEM->type == OBJECT_OVER_WRITE) {
             $$->overwrites = listCreate();
-            listAppend($$->overWrites, (void *)$OBJECT_DEF_ITEM->item);
+            listJoin($$->overWrites, (void *)$OBJECT_DEF_ITEM->item);
         } else {
             $$->newMembers = listCreate();
-            listAppend($$->newMembers, (void *)$OBJECT_DEF_ITEM->item);
+            listJoin($$->newMembers, (void *)$OBJECT_DEF_ITEM->item);
         }
     };
 /* type : ObjectDeclItem */
 OBJECT_DEF_ITEM :
     IDENTIFIER[MEMBER] BELONG IDENTIFIER[PARENT] ASSIGNMENT EXPRESSION SEMICOLON {
         $$ = objItemGen();
-        $$->type = 0;
+        $$->type = OBJECT_OVER_WRITE;
         $$->item = pairGenerate((void *)$MEMBER, (void *)$PARENT);
     }
     | TYPE IDENTIFIER SEMICOLON {
         $$ = objItemGen();
-        $$->type = 1;
-        $$->item = pairGenerate((void *)$IDENTIFIER, $TYPE);
+        $$->type = OBJECT_MEMBER;
+        $$->item = pairGen((void *)$IDENTIFIER, varGen(strdup($IDENTIFIER), varTypeStr2Int($TYPE), NULL));
     };
 
 /* type : Statement */
@@ -244,60 +240,46 @@ VAR_DECL_LIST :
 
 /* type : Expression */
 VAR_DECL :
-    STR_LITERAL {
-        $$ = (Expression *)constExprDefault();
-        CONSTANT_SET_STR((ConstantExpression *)$$, $STR_LITERAL);
+    IDENTIFIER {
+        $$ = identExprGen($IDENTIFIER);
     }
-    | NUM {
-        $$ = (Expression *)constExprDefault();
-        /* fixme: should transfer $NUM from char * into int */
-        CONSTANT_SET_INT((ConstantExpression *)$$, $NUM);
-    }
-    | ASSIGNMENT_EXPRESSION {
-        $$ = (Expression *)$ASSIGNMENT_EXPRESSION;
+    | IDENTIFIER ASSIGNMENT EXPRESSION {
+        $$ = assignExprGen(identExprGen($IDENTIFIER), $EXPRESSION);
     };
 
 /* type : Statement */
 FUNC_DECL_STATEMENT :
-    TYPE IDENTIFIER OPEN_PAREN PARAMETER_LIST CLOSE_PAREN BIG_BLOCK {
+    TYPE IDENTIFIER OPEN_PAREN PARAMETERS CLOSE_PAREN BIG_BLOCK {
         $$ = funcDeclStmtDefault();
 
-        Func *f = funcGenerate();
-        FUNC_SET_IDENT(f, $IDENTIFIER);
-        FUNC_SET_RETURN_TYPE(f, $TYPE);
+        Func *f = funcGen($IDENTIFIER, $TYPE, PARAMETERS, NULL);
         FUNC_SET_STATMENT_LIST(f, $BIG_BLOCK);
-        FUNC_SET_PARAMETER_LIST(f, $PARAMETER_LIST);
 
         $$->f = f;
     }
     | TYPE IDENTIFIER OPEN_PAREN CLOSE_PAREN BIG_BLOCK {
         $$ = funcDeclStmtDefault();
 
-        Func *f = funcGenerate();
-        FUNC_SET_IDENT(f, $IDENTIFIER);
-        FUNC_SET_RETURN_TYPE(f, $TYPE);
+        Func *f = funcGen($IDENTIFIER, $TYPE, NULL, NULL);
         FUNC_SET_STATEMENT_LIST(f, $BIG_BLOCK);
-        FUNC_SET_STATEMENT_LIST(f, null);
 
         $$->f = f;
     };
 
-/* type : list<ident, type> */
-PARAMETER_LIST :
-    PARAMETER_LIST COMMA PARAMETER {
-
+/* type : Parameters */
+PARAMETERS :
+    PARAMETERS COMMA PARAMETER {
+        paramsAdd($$, $PARAMETER);
     }
     | PARAMETER {
-
+        $$ = paramsGen;
+        paramsAdd($$, $PARAMETER);
     };
 
-/* type : pair<ident, type> */
+/* type : Parameter */
 PARAMETER :
     TYPE IDENTIFIER {
-
-    }
-    | TYPE {
-
+        $$ = paramGen($IDENTIFIER, $TYPE);
     };
 
 /* type : Statement */
@@ -307,26 +289,47 @@ EXPRESSION_STATEMENT :
     };
 
 TYPE :
-    INT DECL_QUALIFIER
-    | STR DECL_QUALIFIER
-    | MACHINE_OPERATIONS ARRAY_QUALIFIER
-    | IDENTIFIER ARRAY_QUALIFIER;
+    INT DECL_QUALIFIER {
+        $$ = strdup("Int");
+    }
+    | STR DECL_QUALIFIER {
+        $$ = strdup("String");
+    }
+    | MACHINE_OPERATIONS DECL_QUALIFIER {
+        $$ = strdup("Ops");
+    }
+    | IDENTIFIER DECL_QUALIFIER {
+        $$ = strdup($IDENTIFIER);
+    };
 
 DECL_QUALIFIER :
-    ARRAY_QUALIFIER;
+    ARRAY_QUALIFIER {
+        $$ = 0;
+    }
+    | /* empty */ {
+        $$ = 1;
+    };
 ARRAY_QUALIFIER :
-    OPEN_SQUARE_BRACKET CLOSE_SQUARE_BRACKET
+    OPEN_SQUARE_BRACKET CLOSE_SQUARE_BRACKET;
 
 /* type : Expression */
 EXPRESSION :
-    OPEN_PAREN EXPRESSION CLOSE_PAREN
+    OPEN_PAREN EXPRESSION[SUB] CLOSE_PAREN {
+        $$ = $SUB;
+    }
     | ARITHMETIC_EXPRESSION
     | ORDER_EXPRESSION
     | MEMBER_SELECTION_EXPRESSION
     | FUNCTION_CALL_EXPRESSION
     | ASSIGNMENT_EXPRESSION
     | CONSTANT_EXPRESSION
-    | IDENTIFIER;
+    | IDENT_EXPRESSION;
+
+/* type : Expression */
+IDENT_EXPRESSION :
+    IDENTIFIER {
+        identExprGen($IDENTIFIER);
+    }
 
 /* type : Expression */
 ARITHMETIC_EXPRESSION :
@@ -382,21 +385,27 @@ GREATER_THAN_EXPRESSION :
 
 /* type : Expression */
 EQUAL_EXPRESSION :
-    EXPRESSION EQUAL EXPRESSION {
-
+    EXPRESSION[LEFT] EQUAL EXPRESSION[RIGHT] {
+        $$ = equalExprGen($LEFT, $RIGHT);
     };
 
 /* type : Expression */
 LESS_OR_EQUAL_EXPRESSION :
-    EXPRESSION LESS_OR_EQUAL EXPRESSION;
+    EXPRESSION[LEFT] LESS_OR_EQUAL EXPRESSION[RIGHT] {
+        $$ = lessOrEqualExprGen($LEFT, $RIGHT);
+    };
 
 /* type : Expression */
 GREATER_OR_EQUAL_EXPRESSION :
-    EXPRESSION GREATER_OR_EQUAL EXPRESSION;
+    EXPRESSION[LEFT] GREATER_OR_EQUAL EXPRESSION[RIGHT] {
+        $$ = greaterOrEqualGen($LEFT, $RIGHT);
+    };
 
 /* type : Expression */
 NOT_EQUAL_EXPRESSION :
-    EXPRESSION NOT_EQUAL EXPRESSION;
+    EXPRESSION[LEFT] NOT_EQUAL EXPRESSION[RIGHT] {
+        $$ = notEqualExprGeen($LEFT, $RIGHT);
+    };
 
 /* type : Expression */
 MEMBER_SELECTION_EXPRESSION :
@@ -423,21 +432,21 @@ MEMBER_SELECTION_ENTITY :
 
 /* type : Expression */
 FUNCTION_CALL_EXPRESSION :
-    IDENTIFIER OPEN_PAREN ARGUMENT_LIST CLOSE_PAREN {
-        $$ = funcCallExprGen($IDENTIFIER, $ARGUMENT_LIST);
+    IDENTIFIER OPEN_PAREN ARGUMENTS CLOSE_PAREN {
+        $$ = funcCallExprGen($IDENTIFIER, $ARGUMENTS);
     }
     | IDENTIFIER OPEN_PAREN CLOSE_PAREN {
         $$ = funcCallExprGen($IDENTIFIER, NULL);
     };
 
-/* type : list<Expression> */
-ARGUMENT_LIST :
-    ARGUMENT_LIST COMMA EXPRESSION {
-        listAppend($$, $EXPRESSION);
+/* type : Arguments */
+ARGUMENTS :
+    ARGUMENTS COMMA EXPRESSION {
+        argusAdd($$, arguGen($EXPRESSION));
     }
     | EXPRESSION {
-        $$ = listCreate();
-        listAppend($$, $EXPRESSION);
+        $$ = argusGen();
+        argusAdd($$, arguGen($EXPRESSION));
     };
 
 /* Statement */
@@ -448,7 +457,9 @@ ASSIGNMENT_EXPRESSION :
 
 /* type : list<Statement> */
 BLOCK :
-    BIG_BLOCK
+    BIG_BLOCK {
+        $$ = $BIG_BLOCK;
+    }
     | STATEMENT {
         $$ = listCreate();
         listAppend($$, $STATEMENT);

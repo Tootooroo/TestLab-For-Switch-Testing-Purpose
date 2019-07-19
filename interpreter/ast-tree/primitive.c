@@ -22,7 +22,12 @@ Primitive * primitiveDefault(primitiveType type) {
 Primitive * primitiveGen(void *val, primitiveType type) {
     switch (type) {
     case PRIMITIVE_TYPE_INT :
-        return primitiveGenerate_i(*(int *)val);
+        if (val != NULL)
+            return primitiveGenerate_i(*(int *)val);
+        else {
+            int a = 0;
+            return primitiveGenerate_i(a);
+        }
         break;
     case PRIMITIVE_TYPE_STR :
         return primitiveGenerate_s((char *)val);
@@ -208,7 +213,10 @@ private Primitive * primitiveGenerate_s(char *s) {
     Primitive *p = (Primitive *)zMalloc(sizeof(Primitive));
 
     p->type = PRIMITIVE_TYPE_STR;
-    p->val_str = s;
+    if (s != NULL)
+        p->val_str = s;
+    else
+        p->val_str = "";
 
     return p;
 }

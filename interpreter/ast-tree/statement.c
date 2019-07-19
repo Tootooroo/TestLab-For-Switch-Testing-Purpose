@@ -40,9 +40,8 @@ StatementTrack statementCompute_untilReturn(list *listOfStmt, Scope *scope) {
     listIter iter = listGetIter(listOfStmt, LITER_FORWARD);
 
     StatementTrack st;
-    Statement *stmt;
     while ((current = listNext(&iter)) != null) {
-        stmt = (Statement *)current->value;
+        Statement *stmt = (Statement *)current->value;
 
         st = STATEMENT_COMPUTE(stmt, scope);
         if (st.id == RETURN_STATEMENT_ID) {
@@ -258,12 +257,10 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
 
             switch (primitiveType) {
                 case PRIMITIVE_TYPE_INT:
-                    v = varGen(strdup(varIdent), VAR_PRIMITIVE_INT,
-                            primitiveDefault(PRIMITIVE_TYPE_INT));
+                    v = varGen(strdup(varIdent), VAR_PRIMITIVE_INT, NULL);
                     break;
                 case PRIMITIVE_TYPE_STR:
-                    v = varGen(strdup(varIdent), VAR_PRIMITIVE_STR,
-                            primitiveDefault(PRIMITIVE_TYPE_STR));
+                    v = varGen(strdup(varIdent), VAR_PRIMITIVE_STR, NULL);
                     break;
             }
 
@@ -468,11 +465,9 @@ void objDeclStmtTest(void) {
     int a = 1;
     int b = 2;
 
-    objAddMember(objStmt, varGen(strdup("a"), VAR_PRIMITIVE_INT,
-                                 primitiveGen(&a, PRIMITIVE_TYPE_INT)));
+    objAddMember(objStmt, varGen(strdup("a"), VAR_PRIMITIVE_INT, &a));
 
-    objAddMember(objStmt, varGen(strdup("b"), VAR_PRIMITIVE_INT,
-                                 primitiveGen(&b, PRIMITIVE_TYPE_INT)));
+    objAddMember(objStmt, varGen(strdup("b"), VAR_PRIMITIVE_INT, &b));
 
     STATEMENT_COMPUTE(objStmt, scope);
 

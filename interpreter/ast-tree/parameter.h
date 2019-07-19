@@ -21,13 +21,13 @@ typedef struct Argument {
 
 typedef struct Parameters {
     int num;
-    /* list<Parameter :: pair<ident, type> */
+    /* list<Parameter> */
     list *parameters;
 } Parameters;
 
 typedef struct Arguments {
     int num;
-    /* list<Argument :: pair<Expression> */
+    /* list<Argument> */
     list *arguments;
 } Arguments;
 
