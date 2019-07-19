@@ -53,14 +53,19 @@ Scope * subScopeGenerate(Scope *s) {
 }
 
 void scopeRelease(Scope *s) {
+    scopeReleaseCurrent(s);
+
+    if (s->outer) scopeRelease(s->outer);
+
+    free(s);
+}
+
+void scopeReleaseCurrent(Scope *s) {
     if (s->template) hashMapRelease(s->template);
     if (s->functions)    hashMapRelease(s->functions);
     if (s->primitives) hashMapRelease(s->primitives);
     if (s->objects)  hashMapRelease(s->objects);
 
-    if (s->outer) scopeRelease(s->outer);
-
-    free(s);
 }
 
 _Status_t scopeNewFunc(Scope *s, pair *c) {

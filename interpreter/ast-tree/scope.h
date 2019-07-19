@@ -38,6 +38,7 @@ typedef struct Scope {
 Scope * scopeGenerate();
 Scope * subScopeGenerate(Scope *);
 void scopeRelease(Scope *);
+void scopeReleaseCurrent(Scope *);
 
 Func * scopeGetFunc(Scope *, char *);
 Variable * scopeGetPrimitive(Scope *, char *);

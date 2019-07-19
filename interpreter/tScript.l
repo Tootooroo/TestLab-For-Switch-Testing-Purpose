@@ -1,8 +1,16 @@
 %option header-file= "interpreter/lexer.h"
-%option outfile= "src/lexer.c"
+%option outfile= "interpreter/lexer.c"
 %option yylineno
 
-%{ %}
+%{
+    #include "list.h"
+    #include "program.h"
+    #include "statement.h"
+    #include "expression.h"
+    #include "object.h"
+
+    #include "parser.h"
+%}
 
 %%
 
@@ -22,23 +30,22 @@ Ops       { return MACHINE_OPERATIONS; }
 if        { return IF; }
 else      { return ELSE; }
 
-+         { return PLUS; }
--         { return MINUS; }
-*         { return MUL; }
-/         { return DIV; }
+\+         { return PLUS; }
+\-         { return MINUS; }
+\*         { return MUL; }
+\/         { return DIV; }
 
-<         { return LESS_THAN; }
->         { return GREATER_THAN; }
+\<         { return LESS_THAN; }
+\>         { return GREATER_THAN; }
 ==        { return EQUAL; }
-<=        { return LESS_OR_EQUAL; }
->=        { return GREATER_OR_EQUAL; }
-!=        { return NOT_EQUAL; }
+\<=        { return LESS_OR_EQUAL; }
+\>=        { return GREATER_OR_EQUAL; }
+\!=        { return NOT_EQUAL; }
 
 =         { return ASSIGNMENT; }
 
 \,        { return COMMA; }
-\:        { return colon;  }
-\;        { return semisolon; }
+\;        { return SEMICOLON; }
 \.        { return DOT; }
 
 \(        { return OPEN_PAREN; }

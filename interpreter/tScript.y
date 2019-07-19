@@ -3,7 +3,6 @@
     int integer;
     list *list_;
     Program *program;
-    Statements *statements;
     Statement *statement;
     Expression *expression;
 
@@ -39,7 +38,7 @@
 
 /* Statements */
 %type   <program>       PROGRAM
-%type   <statements>    STATEMENTS
+%type   <list_>         STATEMENTS
 %type   <statement>     STATEMENT
 %type   <statement>     IF_STATEMENT
 %type   <statement>     OBJECT_DECL_STATEMENT
@@ -77,7 +76,7 @@
 %type   <expression>    CONSTANT_EXPRESSION
 
 /* Misc */
-%type   <VAR_DECL_LIST> VAR_DECL_LIST
+%type   <list_> VAR_DECL_LIST
 %type   <expression>    VAR_DECL
 %type   <objDeclBody>   OBJECT_DEF
 %type   <objDeclItem>   OBJECT_DEF_ITEM
@@ -86,7 +85,14 @@
 %type   <expression>    MEMBER_SELECTION_ENTITY
 %type   <str>       PARAMETER
 
-%code top { }
+%code top {
+    #include "list.h"
+    #include "program.h"
+    #include "statement.h"
+    #include "expression.h"
+    #include "object.h"
+    #include "case.h"
+}
 
 %%
 
@@ -132,7 +138,7 @@ IF_STATEMENT :
 
 /* type : list<Statement> */
 IF_BLOCK :
-    OPEN_CURVE_BRACKET STATEMENTS CLOSE_CURVE_BRACKET { $$ = STATEMENTS; }
+    OPEN_CURVE_BRACKET STATEMENTS CLOSE_CURVE_BRACKET { $$ = $STATEMENTS; }
     | IF_STATEMENT_WITH_ELSE {
         $$ = listCreate();
         listAppend($$, (void *)$IF_STATEMENT_WITH_ELSE);
@@ -153,7 +159,7 @@ IF_STATEMENT_WITH_ELSE :
 /* type : Statement */
 OBJECT_DECL_STATEMENT :
     OBJECT IDENTIFIER OBJECT_INHERITENCE OPEN_CURVE_BRACKET OBJECT_DEF CLOSE_CURVE_BRACKET SEMICOLON {
-        $$ = objDeclStmtGen($IDENTIFIER, $OBJECT_DEF.newMembers, $OBJECT_INHERITENCE, $OBJECT_DEF.overWrites);
+        $$ = objDeclStmtGen($IDENTIFIER, $OBJECT_DEF->newMembers, $OBJECT_INHERITENCE, $OBJECT_DEF->overWrites);
     };
 
 /* type : char * */
@@ -179,7 +185,7 @@ OBJECT_DEF :
     | OBJECT_DEF_ITEM {
         $$ = objBodyGen();
         if ($OBJECT_DEF_ITEM->type == OBJECT_OVER_WRITE) {
-            $$->overwrites = listCreate();
+            $$->overWrites = listCreate();
             listJoin($$->overWrites, (void *)$OBJECT_DEF_ITEM->item);
         } else {
             $$->newMembers = listCreate();
@@ -191,7 +197,7 @@ OBJECT_DEF_ITEM :
     IDENTIFIER[MEMBER] BELONG IDENTIFIER[PARENT] ASSIGNMENT EXPRESSION SEMICOLON {
         $$ = objItemGen();
         $$->type = OBJECT_OVER_WRITE;
-        $$->item = pairGenerate((void *)$MEMBER, (void *)$PARENT);
+        $$->item = pairGen((void *)$MEMBER, (void *)$PARENT);
     }
     | TYPE IDENTIFIER SEMICOLON {
         $$ = objItemGen();
@@ -201,20 +207,13 @@ OBJECT_DEF_ITEM :
 
 /* type : Statement */
 IMPORT_STATEMENT :
-    IMPORT IMPORT_LIST FROM IDENTIFIER {
-        $$ = importStmtDefault();
-        $$->importSymbols = $IMPORT_LIST;
-        $$->from = $IDENTIFIER;
-    };
+    IMPORT IMPORT_LIST FROM IDENTIFIER {};
 
 /* type : list<char *> */
 IMPORT_LIST :
     IMPORT_LIST COMMA IDENTIFIER {
-        listAppend($$, (void *)$IDENTIFIER);
     }
     | IDENTIFIER {
-        $$ = listCreate();
-        listAppend($$, (void *)$IDENTIFIER);
     };
 
 /* type : Statement */
@@ -228,8 +227,9 @@ VAR_DECL_STATEMENT :
     TYPE VAR_DECL_LIST SEMICOLON {
         $$ = varDeclStmtGenerate($VAR_DECL_LIST);
     };
+
 /* type : list<Expression> */
-VAR_DECL_LIST :
+VAR_DECL_LIST:
     VAR_DECL_LIST COMMA VAR_DECL {
         listAppend($$, (void *)$VAR_DECL);
     }
@@ -252,10 +252,10 @@ FUNC_DECL_STATEMENT :
     TYPE IDENTIFIER OPEN_PAREN PARAMETERS CLOSE_PAREN BIG_BLOCK {
         $$ = funcDeclStmtDefault();
 
-        Func *f = funcGen($IDENTIFIER, $TYPE, PARAMETERS, NULL);
-        FUNC_SET_STATMENT_LIST(f, $BIG_BLOCK);
+        Func *f = funcGen($IDENTIFIER, $TYPE, $PARAMETERS, NULL);
+        FUNC_SET_STATEMENT_LIST(f, $BIG_BLOCK);
 
-        $$->f = f;
+        ((FuncDeclStatement *)f)->f = f;
     }
     | TYPE IDENTIFIER OPEN_PAREN CLOSE_PAREN BIG_BLOCK {
         $$ = funcDeclStmtDefault();
@@ -263,7 +263,7 @@ FUNC_DECL_STATEMENT :
         Func *f = funcGen($IDENTIFIER, $TYPE, NULL, NULL);
         FUNC_SET_STATEMENT_LIST(f, $BIG_BLOCK);
 
-        $$->f = f;
+        ((FuncDeclStatement *)f)->f = f;
     };
 
 /* type : Parameters */
@@ -341,25 +341,25 @@ ARITHMETIC_EXPRESSION :
 /* type : Expression */
 PLUS_EXPRESSION :
     EXPRESSION[LEFT] PLUS EXPRESSION[RIGHT] {
-        $$ = plusStmtGen($LEFT, $RIGHT);
+        $$ = plusExprGen($LEFT, $RIGHT);
     };
 
 /* type : Expression */
 MINUS_EXPRESSION :
     EXPRESSION[LEFT] MINUS EXPRESSION[RIGHT] {
-        $$ = minusStmtGen($LEFT, $RIGHT);
+        $$ = minusExprGen($LEFT, $RIGHT);
     };
 
 /* type : Expression */
 MUL_EXPRESSION :
     EXPRESSION[LEFT] MUL EXPRESSION[RIGHT] {
-        $$ = mulStmtGen($LEFT, $RIGHT);
+        $$ = mulExprGen($LEFT, $RIGHT);
     };
 
 /* type : Expression */
 DIV_EXPRESSION :
     EXPRESSION[LEFT] DIV EXPRESSION[RIGHT] {
-        $$ = divStmtGen($LEFT, $RIGHT);
+        $$ = divExprGen($LEFT, $RIGHT);
     };
 
 /* type : Expression */
@@ -404,21 +404,19 @@ GREATER_OR_EQUAL_EXPRESSION :
 /* type : Expression */
 NOT_EQUAL_EXPRESSION :
     EXPRESSION[LEFT] NOT_EQUAL EXPRESSION[RIGHT] {
-        $$ = notEqualExprGeen($LEFT, $RIGHT);
+        $$ = notEqualExprGen($LEFT, $RIGHT);
     };
 
 /* type : Expression */
 MEMBER_SELECTION_EXPRESSION :
     MEMBER_SELECTION_EXPRESSION IDENTIFIER {
-        listAppend($$->subs, identExprGen($IDENTIFIER));
+
     }
     | MEMBER_SELECTION_EXPRESSION MEMBER_SELECTION_ENTITY {
-        listAppend($$->subs, $MEMBER_SELECTION_ENTITY);
+
     }
     | MEMBER_SELECTION_ENTITY {
-        $$ = memberSelectDefault();
-        $$->subs = listCreate();
-        $$->head = $MEMBER_SELECTION_ENTITY;
+
     };
 
 /* type : Expression */
@@ -475,7 +473,7 @@ BIG_BLOCK :
 CONSTANT_EXPRESSION :
     NUM {
         $$ = constExprDefault();
-        constExprSetInt($$, str2Int($NUM));
+        constExprSetInt($$, str2Num($NUM));
     }
     | STR_LITERAL {
         $$ = constExprDefault();
@@ -483,3 +481,7 @@ CONSTANT_EXPRESSION :
     };
 
 %%
+
+void yyerror(char const *s) {
+    fprintf(stderr, "%s\n", s);
+}
