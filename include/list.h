@@ -57,6 +57,7 @@ _Status_t   listSort_step(list *l);
 _Status_t   listSort(list *l);
 list *      listDup(const list *l);
 listNode *  listSearch(const list *, const void *key);
+void     *  listSearch_v(const list *, const void *key);
 listNode *  listPrev(listIter *);
 void     *  listPrev_v(listIter *);
 listNode *  listNext(listIter *);

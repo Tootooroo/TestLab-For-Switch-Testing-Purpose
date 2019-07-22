@@ -163,6 +163,12 @@ listNode * listSearch(const list *l, const void *key) {
     return node;
 }
 
+void * listSearch_v(const list *l, const void *key) {
+    listNode *node = listSearch(l, key);
+
+    return node->value;
+}
+
 /* Invalid iterator(Checkable):
  * (1) Uninitialized iterator.
  * (2) Iterator is out of range. In other word, Iterator is not belong to

@@ -22,7 +22,7 @@ typedef struct Scope {
     hashMap *functions;
     /* Map<ident, Variable> */
     hashMap *primitives;
-    /* Map<ident, Template> */
+    /* Map<ident, Variable> */
     hashMap *objects;
 
     /* Global scope is the Head(Top) of scope chain */

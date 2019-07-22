@@ -63,6 +63,8 @@ typedef struct ModuleTable {
 #define MOD_TBL_RESET_NUM(MT) ((MT)->numOfModules = 0)
 #define MOD_TBL_NUM_PLUS(MT) (++(MT)->numOfModules)
 #define MOD_TBL_NUM_DESC(MT) (--(MT)->numOfModules)
+
+#define MOD_TBL_LIST(MT) ((MT)->modules)
 #define MOD_TBL_SET_MODULES(MT, MODS) ((MT)->modules = (MODS))
 
 /* Prototypes */
@@ -81,10 +83,11 @@ void * modSearchSymbol(Module *m, char *sym);
 
 _Status_t modAddTemplate(Module *m, Template *);
 _Status_t modAddFunction(Module *m, Func *);
-_Status_t modAddPrimitive(Module *, Primitive *);
-_Status_t modAddObject(Module *, Object *);
+_Status_t modAddPrimitive(Module *, Variable *);
+_Status_t modAddObject(Module *, Variable *);
 
 // ModuleTable
+ModuleTable * modTblGen(void);
 void * modTblSearchTemplate(ModuleTable *, char *modName, char *tempName);
 void * modTblSearchFunction(ModuleTable *, char *modName, char *funcName);
 void * modTblSearchPrimitive(ModuleTable *, char *modName, char *priName);
@@ -92,9 +95,24 @@ void * modTblSearchObject(ModuleTable *, char *modName, char *objName);
 
 _Status_t modTblAddTemplate(ModuleTable *, char *modName, Template *);
 _Status_t modTblAddFunction(ModuleTable *, char *modName, Func *);
-_Status_t modTblAddPrimitive(ModuleTable *, char *modName, Primitive *);
-_Status_t modTblAddObject(ModuleTable *, char *modName, Object *);
+_Status_t modTblAddPrimitive(ModuleTable *, char *modName, Variable *);
+_Status_t modTblAddObject(ModuleTable *, char *modName, Variable *);
 
 Module * modTblSearchModule(ModuleTable *, char *modName);
+
+// Entity(Variable, function, Object type) define functions
+_Status_t mod_objectDefine(void);
+/* Type of val :
+ * (1) int * if type == VAR_PRIMITIVE_INT
+ * (2) char * if type == VAR_PRIMITIVE_STR
+ * (3) Object * if type == VAR_OBJECT */
+_Status_t mod_variableDefine(char *ident, VarType type, void *val);
+_Status_t mod_functionDefine(void);
+
+#ifdef _AST_TREE_TESTING_
+
+void moduleTesting(void **state);
+
+#endif /* _AST_TREE_TESTING_ */
 
 #endif /* _AST_TREE_MODULE_H_ */
