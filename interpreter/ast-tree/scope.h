@@ -25,6 +25,9 @@ typedef struct Scope {
     /* Map<ident, Template> */
     hashMap *objects;
 
+    /* Global scope is the Head(Top) of scope chain */
+    _Bool isGlobal;
+
     /* Reference to outer scope */
     struct Scope *outer;
 } Scope;
