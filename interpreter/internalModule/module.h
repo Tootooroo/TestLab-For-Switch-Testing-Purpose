@@ -101,13 +101,13 @@ _Status_t modTblAddObject(ModuleTable *, char *modName, Variable *);
 Module * modTblSearchModule(ModuleTable *, char *modName);
 
 // Entity(Variable, function, Object type) define functions
-_Status_t mod_objectDefine(void);
+Template * mod_objectDefine(void);
 /* Type of val :
  * (1) int * if type == VAR_PRIMITIVE_INT
  * (2) char * if type == VAR_PRIMITIVE_STR
  * (3) Object * if type == VAR_OBJECT */
-_Status_t mod_variableDefine(char *ident, VarType type, void *val);
-_Status_t mod_functionDefine(void);
+Variable * mod_variableDefine(char *ident, VarType type, void *val);
+Func * mod_functionDefine(void);
 
 #ifdef _AST_TREE_TESTING_
 

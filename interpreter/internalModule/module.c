@@ -5,6 +5,11 @@
 #include "wrapper.h"
 #include "hashTypes.h"
 
+/* Private prototypes */
+private Variable * mod_primitiveIntDefine(char *ident, int *val);
+private Variable * mod_primitiveStrDefine(char *ident, char *val);
+private Variable * mod_objectVarDefine(char *ident, Object *obj);
+
 /* Public procedures  */
 
 // Module info
@@ -173,6 +178,39 @@ Module * modTblSearchModule(ModuleTable *tbl, char *modName) {
     list *modules = MOD_TBL_LIST(tbl);
 
     return listSearch_v(modules, modName);
+}
+
+// Entity define functions
+Variable * mod_variableDefine(char *ident, VarType type, void *val) {
+    switch (type) {
+    case VAR_PRIMITIVE_INT:
+        return mod_primitiveIntDefine(ident, val);
+    case VAR_PRIMITIVE_STR:
+        return mod_primitiveStrDefine(ident, val);
+    case VAR_OBJECT:
+        return mod_objectVarDefine(ident, val);
+    default:
+        return ERROR;
+    }
+}
+
+/* Private procedures */
+private Variable * mod_primitiveIntDefine(char *ident, int *val) {
+    Variable *var = varGen(ident, VAR_PRIMITIVE_INT, val);
+
+    return var;
+}
+
+private Variable * mod_primitiveStrDefine(char *ident, char *val) {
+    Variable *var = varGen(ident, VAR_PRIMITIVE_STR, val);
+
+    return var;
+}
+
+private Variable * mod_objectVarDefine(char *ident, Object *obj) {
+    Variable *var = varGen(ident, VAR_OBJECT, obj);
+
+    return var;
 }
 
 #ifdef _AST_TREE_TESTING_
