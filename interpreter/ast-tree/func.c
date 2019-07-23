@@ -1,7 +1,7 @@
 /* case.c */
 
 #include "wrapper.h"
-#include "case.h"
+#include "func.h"
 #include "statement.h"
 #include <string.h>
 

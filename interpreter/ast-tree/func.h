@@ -10,13 +10,18 @@
 
 typedef struct Statement Statement;
 
+typedef enum { FUNC_INTERNAL, FUNC_NON_INTERNAL } FuncType;
 typedef enum { RET_INT, RET_STR, RET_OBJ } RetType;
 
+typedef Variable * (*internalProc)(void *, Scope *);
 typedef struct Func {
     /* Identifier of the case */
     char *identifier;
     /* Statements within the test case */
-    list *statements;
+    union {
+        list *statements;
+        internalProc interRtn;
+    };
     /* Indicate that what type of function will return */
     char *type;
     Parameters *params;
@@ -25,6 +30,9 @@ typedef struct Func {
     /* Scope of function, this scope is determine while
      * functions define. */
     Scope *outer;
+    /* Scope where the function to be called */
+    Scope *current;
+    FuncType fType;
 } Func;
 
 /* Member function implemented as macros */
@@ -46,6 +54,7 @@ typedef struct Func {
 #define FUNC_ENV(F) ((F)->outer)
 
 #define FUNC_PARAMETERS(F) ((F)->params)
+#define FUNC_IS_INTERNAL(F) ((F)->fType == FUNC_INTERNAL)
 
 /* Prototypes */
 Func * funcGenerate();

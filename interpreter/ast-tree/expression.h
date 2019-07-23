@@ -192,6 +192,8 @@ void memberSelectRelease(Expression *, Scope *);
 typedef struct FuncCallExpression {
     Expression base;
     char *funcIdent;
+    /* The first argument is environment argument, a reference
+     * refer to current scope. */
     Arguments *args;
 } FuncCallExpression;
 

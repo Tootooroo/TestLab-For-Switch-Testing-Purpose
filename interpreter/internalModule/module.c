@@ -5,12 +5,36 @@
 #include "wrapper.h"
 #include "hashTypes.h"
 
+#include <string.h>
+
+#include "module_extern.h"
+
+/* Public variables */
+moduleInitRtn moduleInitRtnArray[] = {
+    /* printf */
+    printfModuleInit,
+    NULL
+};
+
+ModuleTable moduleTable;
+
 /* Private prototypes */
 private Variable * mod_primitiveIntDefine(char *ident, int *val);
 private Variable * mod_primitiveStrDefine(char *ident, char *val);
 private Variable * mod_objectVarDefine(char *ident, Object *obj);
 
 /* Public procedures  */
+_Status_t moduleInit(void) {
+    moduleInitRtn currentRtn = moduleInitRtnArray[0];
+    if (currentRtn == NULL) return ERROR;
+
+    memset(&moduleTable, 0, sizeof(ModuleTable));
+
+
+    while (currentRtn) currentRtn();
+
+    return OK;
+}
 
 // Module info
 ModuleInfo * moduleInfoGen(void) {
@@ -180,6 +204,12 @@ Module * modTblSearchModule(ModuleTable *tbl, char *modName) {
     return listSearch_v(modules, modName);
 }
 
+_Status_t modTblAddModule(ModuleTable *tbl, Module *mod) {
+    list *modules = MOD_TBL_LIST(tbl);
+
+    listAppend(modules, mod);
+}
+
 // Entity define functions
 Variable * mod_variableDefine(char *ident, VarType type, void *val) {
     switch (type) {
@@ -190,8 +220,23 @@ Variable * mod_variableDefine(char *ident, VarType type, void *val) {
     case VAR_OBJECT:
         return mod_objectVarDefine(ident, val);
     default:
-        return ERROR;
+        return NULL;
     }
+}
+
+Template * mod_objectDefine(char *typeName, list *members) {
+    Template *temp = templateGen(typeName);
+
+    TEMPLATE_SET_MEMBERS(temp, members);
+
+    return temp;
+}
+
+Func * mod_functionDefine(char *ident, char *type, Parameters *params, list *stmts, Scope *s) {
+    Func *func = funcGen(ident, type, params, s);
+    FUNC_SET_STATEMENTS(func, stmts);
+
+    return func;
 }
 
 /* Private procedures */

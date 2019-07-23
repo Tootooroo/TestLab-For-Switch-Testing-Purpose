@@ -4,7 +4,7 @@
 #include "expression.h"
 #include "wrapper.h"
 #include "string.h"
-#include "case.h"
+#include "func.h"
 #include "parameter.h"
 
 /* private prototypes */
@@ -478,17 +478,13 @@ private Variable * memberSelectExprCompute(Expression *expr, Scope *scope) {
 private Variable * funcCallExprCompute(Expression *expr, Scope *scope) {
     FuncCallExpression *fExpr = (FuncCallExpression *)expr;
 
-    Func *f;
-
-    /* First to check is call to function is defined in internal module
-     * fixme: function call to internal module */
-
     /* Find definition of funtion in current or upper scope; */
-    f = scopeGetFunc(scope, FUNC_CALL_IDENT(fExpr));
+    Func *f = scopeGetFunc(scope, FUNC_CALL_IDENT(fExpr));
     if (isNull(f)) return NULL;
 
     /* Generate a local scope */
     Scope *subScope = subScopeGenerate(f->outer);
+    f->current = scope;
 
     Parameters *parameters = f->params;
     Arguments *arguments = FUNC_CALL_ARGUMENT(fExpr);
@@ -496,8 +492,13 @@ private Variable * funcCallExprCompute(Expression *expr, Scope *scope) {
     /* Deal with arguments */
     argusStore(arguments, parameters, subScope);
 
-    /* Find definition of funtion in current or upper scope; */
-    Variable *ret = f->compute(f, subScope);
+    /* First to check is call to function is defined in internal module */
+    Variable *ret = null;
+    if (FUNC_IS_INTERNAL(f)) ret = f->interRtn(f, subScope);
+    else {
+        /* Computing */
+        ret = f->compute(f, subScope);
+    }
 
     // Return type checking
     if (varIsType(ret, FUNC_RETURN_TYPE(f)) == false) {

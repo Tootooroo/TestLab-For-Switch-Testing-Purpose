@@ -43,6 +43,10 @@ typedef struct ModuleTable {
     list *modules;
 } ModuleTable;
 
+typedef _Status_t (*moduleInitRtn)(void);
+
+ModuleTable moduleTable;
+
 /* Member functions implement as macros */
 #define MODULE_INFO_TEMPLATE(MINFO) ((MINFO)->template)
 #define MODULE_INFO_FUNCTION(MINFO) ((MINFO)->functions)
@@ -68,6 +72,7 @@ typedef struct ModuleTable {
 #define MOD_TBL_SET_MODULES(MT, MODS) ((MT)->modules = (MODS))
 
 /* Prototypes */
+_Status_t moduleInit(void);
 
 // Module info
 ModuleInfo * moduleInfoGen(void);
@@ -99,15 +104,17 @@ _Status_t modTblAddPrimitive(ModuleTable *, char *modName, Variable *);
 _Status_t modTblAddObject(ModuleTable *, char *modName, Variable *);
 
 Module * modTblSearchModule(ModuleTable *, char *modName);
+_Status_t modTblAddModule(ModuleTable *, Module *);
 
 // Entity(Variable, function, Object type) define functions
-Template * mod_objectDefine(void);
+Template * mod_objectDefine(char *typeName, list *members);
 /* Type of val :
  * (1) int * if type == VAR_PRIMITIVE_INT
  * (2) char * if type == VAR_PRIMITIVE_STR
  * (3) Object * if type == VAR_OBJECT */
 Variable * mod_variableDefine(char *ident, VarType type, void *val);
-Func * mod_functionDefine(void);
+Func * mod_functionDefine(char *ident, char *type,
+                          Parameters *, list *stmts, Scope *s);
 
 #ifdef _AST_TREE_TESTING_
 

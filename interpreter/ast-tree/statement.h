@@ -6,7 +6,7 @@
 #include "expression.h"
 #include "list.h"
 #include "scope.h"
-#include "case.h"
+#include "func.h"
 
 #include "variable.h"
 

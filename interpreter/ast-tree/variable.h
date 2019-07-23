@@ -92,6 +92,7 @@ typedef struct VarInnerOps {
     else if (isPrimitive_str( (P) )) (V)->type = VAR_PRIMITIVE_STR;\
     (V)->p = (P);\
 })
+
 #define VAR_SET_OBJECT(V, O) ({ (V)->type = VAR_OBJECT; (V)->o = (O); })
 #define VAR_IS_PRIMITIVE(V) ((V)->type == VAR_PRIMITIVE_INT || \
                              (V)->type == VAR_PRIMITIVE_STR)
@@ -100,6 +101,9 @@ typedef struct VarInnerOps {
 #define VAR_SET_RELEASE_METHOD(V, M) ((V)->release = (M))
 #define VAR_SET_OP(V, OP_SET) ((V)->ops = OP_SET)
 #define VAR_BIN_OP_CALL(V, OP, AR1, AR2) ((V)->ops->OP(AR1, AR2))
+
+#define VAR_GET_PRIMITIVE_INT(V) ((V)->p->val_i)
+#define VAR_GET_PRIMITIVE_STR(V) ((V)->p->val_str)
 
 /* Prototypes */
 Variable varDefault_Empty();
