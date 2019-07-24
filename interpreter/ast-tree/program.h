@@ -4,7 +4,6 @@
 #define _AST_TREE_PROGRAM_H_
 
 #include "list.h"
-#include "case.h"
 #include "scope.h"
 
 typedef struct Program {

@@ -5,9 +5,6 @@
 #include "module.h"
 #include "wrapper.h"
 
-#define ESCAPE_CHR '\\'
-#define FORMAT_SPECIFIER '%'
-
 /* Private prototypes */
 private Variable * print_internal(void *, Scope *);
 

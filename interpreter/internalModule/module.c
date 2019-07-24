@@ -31,7 +31,7 @@ _Status_t moduleInit(void) {
     memset(&moduleTable, 0, sizeof(ModuleTable));
 
 
-    while (currentRtn) currentRtn();
+    while (currentRtn) { currentRtn(); ++currentRtn; }
 
     return OK;
 }

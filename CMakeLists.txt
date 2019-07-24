@@ -23,23 +23,33 @@ add_executable(unitTest ${ROOT}/src/unitTest.c ${SRCS})
 target_compile_definitions(unitTest PUBLIC _TEST_LAB_UNIT_TESTING_)
 
 project(interpreter)
-set(I_SRC_DIR ${ROOT}/interpreter/ast-tree)
+set(I_SRC_DIR ${ROOT}/interpreter)
+set(I_AST_SRC_DIR ${I_SRC_DIR}/ast-tree)
+set(I_MOD_SRC_DIR ${I_SRC_DIR}/internalModule)
 set(I_SRCS
-  ${I_SRC_DIR}/parameter.c
-  ${I_SRC_DIR}/expression.c
-  ${I_SRC_DIR}/primitive.c
-  ${I_SRC_DIR}/variable.c
-  ${I_SRC_DIR}/scope.c
-  ${I_SRC_DIR}/object.c
-  ${I_SRC_DIR}/case.c
-  ${I_SRC_DIR}/statement.c
-  ${I_SRC_DIR}/program.c
-  ${I_SRC_DIR}/../parser.c
-  ${I_SRC_DIR}/../lexer.c)
+  ${I_SRC_DIR}/hashTypes.c
+  ${I_AST_SRC_DIR}/parameter.c
+  ${I_AST_SRC_DIR}/expression.c
+  ${I_AST_SRC_DIR}/primitive.c
+  ${I_AST_SRC_DIR}/variable.c
+  ${I_AST_SRC_DIR}/scope.c
+  ${I_AST_SRC_DIR}/object.c
+  ${I_AST_SRC_DIR}/func.c
+  ${I_AST_SRC_DIR}/statement.c
+  ${I_AST_SRC_DIR}/program.c
+  ${I_AST_SRC_DIR}/../parser.c
+  ${I_AST_SRC_DIR}/../lexer.c
+  ${I_MOD_SRC_DIR}/module.c
+  ${I_AST_SRC_DIR}/../iTest.c)
+
+set(I_MOD_SRCS
+  ${I_MOD_SRC_DIR}/printfmodule.c)
+
+add_executable(interpreter_integration ${SRCS} ${I_SRCS} ${I_MOD_SRCS})
 
 project(interpreterTest)
 link_libraries(cmocka)
-add_executable(interpreterTest ${I_SRC_DIR}/unitTest.c ${I_SRCS} ${SRCS})
+add_executable(interpreterTest ${I_AST_SRC_DIR}/unitTest.c ${I_SRCS} ${SRCS} ${I_MOD_SRCS})
 target_compile_definitions(interpreterTest PUBLIC _AST_TREE_TESTING_)
 
 add_custom_target(interpreter ALL DEPENDS)
@@ -51,4 +61,4 @@ add_custom_command(TARGET interpreter PRE_BUILD
 add_custom_command(TARGET interpreter_H PRE_BUILD
   COMMAND bison -d -o ./interpreter/parser.c ./interpreter/tScript.y)
 
-include_directories(${HEADERS} ${I_SRC_DIR})
+include_directories(${HEADERS} ${I_SRC_DIR} ${I_AST_SRC_DIR} ${I_MOD_SRC_DIR})

@@ -91,7 +91,7 @@
     #include "statement.h"
     #include "expression.h"
     #include "object.h"
-    #include "case.h"
+    #include "func.h"
 }
 
 %%
