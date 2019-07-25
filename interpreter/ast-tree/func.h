@@ -56,6 +56,8 @@ typedef struct Func {
 #define FUNC_PARAMETERS(F) ((F)->params)
 #define FUNC_IS_INTERNAL(F) ((F)->fType == FUNC_INTERNAL)
 
+#define FUNC_SET_TYPE(F, TYPE) ((F)->fType = (TYPE))
+
 /* Prototypes */
 Func * funcGenerate();
 Func * funcGen(char *ident, char *type, Parameters *, Scope *s);

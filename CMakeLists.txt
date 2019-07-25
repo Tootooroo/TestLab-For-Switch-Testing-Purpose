@@ -37,15 +37,14 @@ set(I_SRCS
   ${I_AST_SRC_DIR}/func.c
   ${I_AST_SRC_DIR}/statement.c
   ${I_AST_SRC_DIR}/program.c
-  ${I_AST_SRC_DIR}/../parser.c
-  ${I_AST_SRC_DIR}/../lexer.c
-  ${I_MOD_SRC_DIR}/module.c
-  ${I_AST_SRC_DIR}/../iTest.c)
+  ${I_SRC_DIR}/parser.c
+  ${I_SRC_DIR}/lexer.c
+  ${I_MOD_SRC_DIR}/module.c)
 
 set(I_MOD_SRCS
-  ${I_MOD_SRC_DIR}/printfmodule.c)
+  ${I_MOD_SRC_DIR}/basicModule.c)
 
-add_executable(interpreter_integration ${SRCS} ${I_SRCS} ${I_MOD_SRCS})
+add_executable(interpreter_integration ${SRCS} ${I_SRCS} ${I_MOD_SRCS} ${I_SRC_DIR}/iTest.c)
 
 project(interpreterTest)
 link_libraries(cmocka)

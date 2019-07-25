@@ -16,6 +16,7 @@ hashMapType scopeTypeVar = {
     scopeHashing,
     scopeKeyRelease,
     scopeKeyDup,
+    scopeKeyCmp,
     scopeValRelease,
     scopeValDup
 };

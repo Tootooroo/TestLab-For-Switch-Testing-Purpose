@@ -43,9 +43,10 @@ typedef struct ModuleTable {
     list *modules;
 } ModuleTable;
 
-typedef _Status_t (*moduleInitRtn)(void);
-
+// Table of module references
 ModuleTable moduleTable;
+// Identifier of global module
+#define GLOBAL_MODULE "GLOBAL"
 
 /* Member functions implement as macros */
 #define MODULE_INFO_TEMPLATE(MINFO) ((MINFO)->template)
@@ -76,6 +77,7 @@ _Status_t moduleInit(void);
 
 // Module info
 ModuleInfo * moduleInfoGen(void);
+void moduleInfoRelease(ModuleInfo *);
 
 // Module
 Module * moduleGen(char *name);
@@ -85,6 +87,7 @@ void * modSearchPrimitive(Module *m, char *name);
 void * modSearchObject(Module *m, char *name);
 /* Search symbol from Primitives and Objects */
 void * modSearchSymbol(Module *m, char *sym);
+void moduleRelease(Module *m);
 
 _Status_t modAddTemplate(Module *m, Template *);
 _Status_t modAddFunction(Module *m, Func *);
@@ -93,6 +96,7 @@ _Status_t modAddObject(Module *, Variable *);
 
 // ModuleTable
 ModuleTable * modTblGen(void);
+void modTblRelease(ModuleTable *);
 void * modTblSearchTemplate(ModuleTable *, char *modName, char *tempName);
 void * modTblSearchFunction(ModuleTable *, char *modName, char *funcName);
 void * modTblSearchPrimitive(ModuleTable *, char *modName, char *priName);

@@ -9,10 +9,12 @@
 
 #include "module_extern.h"
 
+typedef _Status_t (*moduleInitRtn)(void);
+
 /* Public variables */
 moduleInitRtn moduleInitRtnArray[] = {
     /* printf */
-    printfModuleInit,
+    basicModuleInit,
     NULL
 };
 
@@ -22,6 +24,8 @@ ModuleTable moduleTable;
 private Variable * mod_primitiveIntDefine(char *ident, int *val);
 private Variable * mod_primitiveStrDefine(char *ident, char *val);
 private Variable * mod_objectVarDefine(char *ident, Object *obj);
+
+private _Bool moduleMatch(const void *l_mod, const void *r_modName);
 
 /* Public procedures  */
 _Status_t moduleInit(void) {
@@ -41,6 +45,8 @@ ModuleInfo * moduleInfoGen(void) {
     return (ModuleInfo *)zMalloc(sizeof(ModuleInfo));
 }
 
+void moduleInfoRelease(ModuleInfo *info) {}
+
 // Module
 Module * moduleGen(char *name) {
     Module *m = (Module *)zMalloc(sizeof(Module));
@@ -48,6 +54,8 @@ Module * moduleGen(char *name) {
 
     return m;
 }
+
+void moduleRelease(Module *m) {}
 
 void * modSearchTemplate(Module *m, char *name) {
     ModuleInfo *info = m->info;
@@ -93,7 +101,8 @@ void * modSearchSymbol(Module *m, char *sym) {
     if (ret) return ret;
 
     ret = hashMapSearch(MODULE_INFO_TEMPLATE(info), sym);
-    if (ret) return ret;
+
+    return ret;
 }
 
 _Status_t modAddTemplate(Module *m, Template *t) {
@@ -150,64 +159,57 @@ ModuleTable * modTblGen(void) {
     return modTbl;
 }
 
-void * modTblSearchTemplate(ModuleTable *tbl, char *modName, char *tempName) {
-    Module *mod = modTblSearchModule(tbl, modName);
+void modTblRelease(ModuleTable *tbl) {}
 
-    return modSearchTemplate(mod, tempName);
+#define SEARCH_MODULE(T, M) ({ if ((M) == NULL) (M) == GLOBAL_MODULE; modTblSearchModule((T), (M)); })
+
+void * modTblSearchTemplate(ModuleTable *tbl, char *modName, char *tempName) {
+    return modSearchTemplate(SEARCH_MODULE(tbl, modName), tempName);
 }
 
 void * modTblSearchFunction(ModuleTable *tbl, char *modName, char *funcName) {
-    Module *mod = modTblSearchModule(tbl, modName);
-
-    return modSearchFunction(mod, funcName);
+    return modSearchFunction(SEARCH_MODULE(tbl, modName), funcName);
 }
 
 void * modTblSearchPrimitive(ModuleTable *tbl, char *modName, char *priName) {
-    Module *mod = modTblSearchModule(tbl, modName);
-
-    return modSearchPrimitive(mod, priName);
+    return modSearchPrimitive(SEARCH_MODULE(tbl, modName), priName);
 }
 
 void * modTblSearchObject(ModuleTable *tbl, char *modName, char *objName) {
-    Module *mod = modTblSearchModule(tbl, modName);
-
-    return modSearchObject(mod, objName);
+    return modSearchObject(SEARCH_MODULE(tbl, modName), objName);
 }
 
 _Status_t modTblAddTemplate(ModuleTable *tbl, char *modName, Template *t) {
-    Module *mod = modTblSearchModule(tbl, modName);
-
-    return modAddTemplate(mod, t);
+    return modAddTemplate(SEARCH_MODULE(tbl, modName), t);
 }
 
 _Status_t modTblAddFunction(ModuleTable *tbl, char *modName, Func *f) {
-    Module *mod = modTblSearchModule(tbl, modName);
-
-    return modAddFunction(mod, f);
+    return modAddFunction(SEARCH_MODULE(tbl, modName), f);
 }
 
 _Status_t modTblAddPrimitive(ModuleTable *tbl, char *modName, Variable *v) {
-    Module *mod = modTblSearchModule(tbl, modName);
-
-    return modAddPrimitive(mod, v);
+    return modAddPrimitive(SEARCH_MODULE(tbl, modName), v);
 }
 
 _Status_t modTblAddObject(ModuleTable *tbl, char *modName, Variable *v) {
-    Module *mod = modTblSearchModule(tbl, modName);
-
-    return modAddObject(mod, v);
+    return modAddObject(SEARCH_MODULE(tbl, modName), v);
 }
 
 Module * modTblSearchModule(ModuleTable *tbl, char *modName) {
-    list *modules = MOD_TBL_LIST(tbl);
-
-    return listSearch_v(modules, modName);
+    return listSearch_v(MOD_TBL_LIST(tbl), modName);
 }
 
 _Status_t modTblAddModule(ModuleTable *tbl, Module *mod) {
-    list *modules = MOD_TBL_LIST(tbl);
+    if (!MOD_TBL_LIST(tbl)) {
+        /* Initialize module list */
+        list *l_ = listCreate();
 
-    listAppend(modules, mod);
+        listSetMatchMethod(l_, moduleMatch);
+        listSetReleaseMethod(l_, moduleRelease);
+
+        tbl->modules = l_;
+    }
+    listAppend(MOD_TBL_LIST(tbl), mod);
 }
 
 // Entity define functions
@@ -258,8 +260,30 @@ private Variable * mod_objectVarDefine(char *ident, Object *obj) {
     return var;
 }
 
+private _Bool moduleMatch(const void *l_mod, const void *r_modName) {
+    Module *mod = (Module *)l_mod;
+    char *modName = (char *)r_modName;
+
+    return strCompare(MODULE_NAME(mod), modName);
+}
+
 #ifdef _AST_TREE_TESTING_
 
-void moduleTesting(void **state) {}
+#include "test.h"
+
+/* Build a module then deploy and call */
+void moduleTesting(void **state) {
+    Func *f = funcGen("fun", NULL, NULL, NULL);
+
+    Module *m = moduleGen(GLOBAL_MODULE);
+
+    modAddFunction(m, f);
+
+    modTblAddModule(&moduleTable, m);
+
+    Func *f_found = modTblSearchFunction(&moduleTable, GLOBAL_MODULE, "fun");
+    assert_non_null(f_found);
+    assert_int_equal(strCompare(FUNC_IDENT(f_found), "fun"), true);
+}
 
 #endif /* _AST_TREE_TESTING_ */

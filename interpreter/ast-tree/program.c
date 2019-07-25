@@ -4,6 +4,8 @@
 #include "wrapper.h"
 #include "statement.h"
 
+#include "module.h"
+
 /* Private prototype */
 private void programCompute(Program *p);
 
@@ -19,6 +21,13 @@ Program * programGenerate(list *stmts) {
 /* Private procedures */
 private void programCompute(Program *p) {
     Scope *s = scopeGenerate();
+
+    /* The scope generate just now is in the top
+     * of scope layer which means it's global scope. */
+    s->isGlobal = true;
+
+    /* Point mTbl to module table */
+    s->mTbl = &moduleTable;
 
     statementCompute_untilReturn(PROGRAM_GET_STMTS(p), s);
 }

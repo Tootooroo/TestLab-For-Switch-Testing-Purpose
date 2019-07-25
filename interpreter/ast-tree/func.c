@@ -18,6 +18,7 @@ Func * funcGenerate() {
     Func *c = (Func *)zMalloc(sizeof(Func));
 
     FUNC_SET_COMPUTE_ROUTINE(c, __funcComputing);
+    FUNC_SET_TYPE(c, FUNC_NON_INTERNAL);
 
     return c;
 }
