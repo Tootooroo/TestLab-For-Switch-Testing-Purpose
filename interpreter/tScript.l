@@ -37,7 +37,7 @@ else      { return ELSE; }
 
 \<         { return LESS_THAN; }
 \>         { return GREATER_THAN; }
-==        { return EQUAL; }
+==         { return EQUAL; }
 \<=        { return LESS_OR_EQUAL; }
 \>=        { return GREATER_OR_EQUAL; }
 \!=        { return NOT_EQUAL; }
@@ -55,9 +55,9 @@ else      { return ELSE; }
 \{        { return OPEN_CURVE_BRACKET; }
 \}        { return CLOSE_CURVE_BRACKET; }
 
-"[^""]*"   { return STR_LITERAL; }
-[0-9]+    { return NUM; }
-([a-zA-Z0-9]|"-")+     { yylval.str = strdup(yytext); return IDENTIFIER; }
+\"([^\"]|(\\\"))*\"     { yylval.str = strdup(yytext); return STR_LITERAL; }
+[0-9]+                { return NUM; }
+([a-zA-Z0-9]|"-")+    { yylval.str = strdup(yytext); return IDENTIFIER; }
 
 %%
 

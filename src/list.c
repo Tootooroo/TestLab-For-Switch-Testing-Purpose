@@ -166,6 +166,8 @@ listNode * listSearch(const list *l, const void *key) {
 void * listSearch_v(const list *l, const void *key) {
     listNode *node = listSearch(l, key);
 
+    if (node == NULL) return NULL;
+
     return node->value;
 }
 

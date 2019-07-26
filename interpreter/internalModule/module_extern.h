@@ -5,6 +5,6 @@
 
 #include "module.h"
 
-extern _Status_t basicModuleInit(void);
+extern _Status_t basicModuleInit();
 
 #endif /* _AST_TREE_MODULE_EXTERN_H_ */

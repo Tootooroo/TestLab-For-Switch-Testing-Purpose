@@ -5,6 +5,7 @@
 #include "wrapper.h"
 #include "string.h"
 #include "pair.h"
+#include "module.h"
 
 /* Private Prototypes */
 private uint64_t scopeHashing(const void *key);
@@ -68,6 +69,25 @@ void scopeReleaseCurrent(Scope *s) {
 
 }
 
+hashMap * scopeGetEntities(Scope *s, int type) {
+    switch (type) {
+    case TEMPLATE_ENTITY:
+        return s->template;
+        break;
+    case FUNCTION_ENTITY:
+        return s->functions;
+        break;
+    case PRIMITIVE_ENTITY:
+        return s->primitives;
+        break;
+    case OBJECT_ENTITY:
+        return s->objects;
+        break;
+    }
+
+    return NULL;
+}
+
 _Status_t scopeNewFunc(Scope *s, pair *c) {
     if (!s->functions) s->functions = hashMapCreate(&scopeTypeVar);
     return hashMapAdd(s->functions, PAIR_GET_LEFT(c), PAIR_GET_RIGHT(c));
@@ -95,74 +115,53 @@ _Status_t scopeNewTemplate(Scope *s, pair *p) {
     return hashMapAdd(s->template, PAIR_GET_LEFT(p), PAIR_GET_RIGHT(p));
 }
 
-Func * scopeGetFunc(Scope *s, char *ident) {
-    Func *f = NULL;
+private void * scopeGet_Recursive(Scope *s, char *ident, int type) {
+    void *v = NULL;
+    hashMap *map = scopeGetEntities(s, type);
 
-    if (!s->functions) goto UPPER_SCOPE;
+    if (map == NULL) goto RECURSIVE_SEARCH;
+    v = hashMapSearch(map, (void *)ident);
 
-    f = hashMapSearch(s->functions, (void *)ident);
-
-UPPER_SCOPE:
-    while (!f) {
-        /* Recursive to search upper scope */
+ RECURSIVE_SEARCH:
+    while (!v) {
         s = s->outer;
         if (isNull(s)) break;
 
-        f = hashMapSearch(s->functions, (void *)ident);
+        if ((map = scopeGetEntities(s, type)) != NULL)
+            v = hashMapSearch(map, (void *)ident);
     }
+
+    return v;
+}
+
+Func * scopeGetFunc(Scope *s, char *ident) {
+    Func *f = scopeGet_Recursive(s, ident, FUNCTION_ENTITY);
+
+    if (!f) f = modTblSearchFunction(&moduleTable, NULL, ident);
 
     return f;
 }
 
 Variable * scopeGetPrimitive(Scope *s, char *ident) {
-    Variable *v = NULL;
+    Variable *v = scopeGet_Recursive(s, ident, PRIMITIVE_ENTITY);
 
-    if (!s->primitives) goto UPPER_SCOPE;
-    v = hashMapSearch(s->primitives, (void *)ident);
-
-UPPER_SCOPE:
-    while (!v) {
-        /* Recursive search to upper scope */
-        s = s->outer;
-        if (isNull(s)) break;
-
-        v = hashMapSearch(s->primitives, (void *)ident);
-    }
+    if (!v) v = modTblSearchPrimitive(&moduleTable, NULL, ident);
 
     return v;
 }
 
 Variable * scopeGetObject(Scope *s, char *ident) {
-    Variable *v = NULL;
+    Variable *v = scopeGet_Recursive(s, ident, OBJECT_ENTITY);
 
-    if (!s->objects) goto UPPER_SCOPE;
-    v = hashMapSearch(s->objects, (void *)ident);
-
-UPPER_SCOPE:
-    while (!v) {
-        /* Recursive search to upper scope */
-        s = s->outer;
-        if (isNull(s)) break;
-
-        v = hashMapSearch(s->objects, (void *)ident);
-    }
+    if (!v) v = modTblSearchObject(&moduleTable, NULL, ident);
 
     return v;
 }
 
 Template * scopeGetTemplate(Scope *s, char *ident) {
-    Template *t = NULL;
+    Template *t = scopeGet_Recursive(s, ident, TEMPLATE_ENTITY);
 
-    if (!s->template) goto UPPER;
-    t = hashMapSearch(s->template, (void *)ident);
-UPPER:
-    while (!t) {
-        /* Recursive search to upper scope */
-        s = s->outer;
-        if (isNull(s)) break;
-
-        t = hashMapSearch(s->template, (void *)ident);
-    }
+    if (!t) t = modTblSearchTemplate(&moduleTable, NULL, ident);
 
     return t;
 }

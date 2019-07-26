@@ -7,6 +7,8 @@
 #include "func.h"
 #include "parameter.h"
 
+#include "program.h"
+
 /* private prototypes */
 private Variable * constExprCompute(Expression *, Scope *);
 private Variable * assignExprCompute(Expression *, Scope *);
@@ -65,8 +67,7 @@ _Status_t constExprSetInt(ConstantExpression *expr, int num) {
 }
 
 _Status_t constExprSetStr(ConstantExpression *expr, char *str) {
-    Primitive *str_pri = primitiveGen(str, PRIMITIVE_TYPE_STR);
-    Variable *var = varGen(NULL, VAR_PRIMITIVE_STR, str_pri);
+    Variable *var = varGen(NULL, VAR_PRIMITIVE_STR, str);
 
     expr->constant_var = var;
 
@@ -482,6 +483,11 @@ private Variable * funcCallExprCompute(Expression *expr, Scope *scope) {
     Func *f = scopeGetFunc(scope, FUNC_CALL_IDENT(fExpr));
     if (isNull(f)) return NULL;
 
+    /* Internal procedure's outer pointer may not be initialized,
+     * due to the global scope doesn't be generate when moduleInit callled */
+    if (!f->outer && FUNC_IS_INTERNAL(f))
+        f->outer = global_scope;
+
     /* Generate a local scope */
     Scope *subScope = subScopeGenerate(f->outer);
     f->current = scope;
@@ -505,7 +511,7 @@ private Variable * funcCallExprCompute(Expression *expr, Scope *scope) {
         return null;
     }
 
-    scopeRelease(subScope);
+    scopeReleaseCurrent(subScope);
 
     return ret;
 }

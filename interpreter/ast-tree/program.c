@@ -6,6 +6,9 @@
 
 #include "module.h"
 
+/* Private variables */
+Scope *global_scope;
+
 /* Private prototype */
 private void programCompute(Program *p);
 
@@ -20,14 +23,14 @@ Program * programGenerate(list *stmts) {
 
 /* Private procedures */
 private void programCompute(Program *p) {
-    Scope *s = scopeGenerate();
+    global_scope = scopeGenerate();
 
     /* The scope generate just now is in the top
      * of scope layer which means it's global scope. */
-    s->isGlobal = true;
+    global_scope->isGlobal = true;
 
     /* Point mTbl to module table */
-    s->mTbl = &moduleTable;
+    global_scope->mTbl = &moduleTable;
 
-    statementCompute_untilReturn(PROGRAM_GET_STMTS(p), s);
+    statementCompute_untilReturn(PROGRAM_GET_STMTS(p), global_scope);
 }

@@ -255,7 +255,7 @@ FUNC_DECL_STATEMENT :
         Func *f = funcGen($IDENTIFIER, $TYPE, $PARAMETERS, NULL);
         FUNC_SET_STATEMENT_LIST(f, $BIG_BLOCK);
 
-        ((FuncDeclStatement *)f)->f = f;
+        ((FuncDeclStatement *)$$)->f = f;
     }
     | TYPE IDENTIFIER OPEN_PAREN CLOSE_PAREN BIG_BLOCK {
         $$ = funcDeclStmtDefault();
@@ -263,7 +263,7 @@ FUNC_DECL_STATEMENT :
         Func *f = funcGen($IDENTIFIER, $TYPE, NULL, NULL);
         FUNC_SET_STATEMENT_LIST(f, $BIG_BLOCK);
 
-        ((FuncDeclStatement *)f)->f = f;
+        ((FuncDeclStatement *)$$)->f = f;
     };
 
 /* type : Parameters */

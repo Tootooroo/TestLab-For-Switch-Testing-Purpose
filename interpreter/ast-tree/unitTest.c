@@ -10,6 +10,8 @@
 #include "module.h"
 
 int main(void) {
+    moduleInit();
+
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(paramTest),
         cmocka_unit_test(exprTest),

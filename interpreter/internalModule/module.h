@@ -73,7 +73,7 @@ ModuleTable moduleTable;
 #define MOD_TBL_SET_MODULES(MT, MODS) ((MT)->modules = (MODS))
 
 /* Prototypes */
-_Status_t moduleInit(void);
+_Status_t moduleInit();
 
 // Module info
 ModuleInfo * moduleInfoGen(void);

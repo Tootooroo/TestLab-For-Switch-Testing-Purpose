@@ -1,1 +1,6 @@
-print(1+1);
+String sayHello() {
+    return "Hello,World!";
+}
+
+print(sayHello());
+print(sayHello());

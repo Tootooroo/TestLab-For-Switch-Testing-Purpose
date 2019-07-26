@@ -11,6 +11,8 @@ typedef struct Program {
     void (*compute)(struct Program *);
 } Program;
 
+Scope *global_scope;
+
 /* Member function implemented as macros */
 #define PROGRAM_SET_STMTS(P, STMTS) ((P)->statements = (STMTS))
 #define PROGRAM_GET_STMTS(P) ((P)->statements)

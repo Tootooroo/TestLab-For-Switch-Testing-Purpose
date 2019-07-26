@@ -29,13 +29,12 @@ private _Bool moduleMatch(const void *l_mod, const void *r_modName);
 
 /* Public procedures  */
 _Status_t moduleInit(void) {
-    moduleInitRtn currentRtn = moduleInitRtnArray[0];
+    moduleInitRtn *currentRtn = moduleInitRtnArray;
     if (currentRtn == NULL) return ERROR;
 
     memset(&moduleTable, 0, sizeof(ModuleTable));
 
-
-    while (currentRtn) { currentRtn(); ++currentRtn; }
+    while (*currentRtn) { (*currentRtn)(); ++currentRtn; }
 
     return OK;
 }
@@ -59,7 +58,11 @@ void moduleRelease(Module *m) {}
 
 void * modSearchTemplate(Module *m, char *name) {
     ModuleInfo *info = m->info;
+
     if (!info) return null;
+
+    hashMap *map = MODULE_INFO_TEMPLATE(info);
+    if (!map) return NULL;
 
     return hashMapSearch(MODULE_INFO_TEMPLATE(info), name);
 }
@@ -68,6 +71,10 @@ void * modSearchFunction(Module *m, char *name) {
     ModuleInfo *info = m->info;
 
     if (!info) return null;
+
+    hashMap *map = MODULE_INFO_FUNCTION(info);
+    if (!map) return NULL;
+
     return hashMapSearch(MODULE_INFO_FUNCTION(info), name);
 }
 
@@ -75,13 +82,20 @@ void * modSearchPrimitive(Module *m, char *name) {
     ModuleInfo *info = m->info;
 
     if (!info) return null;
-    return hashMapSearch(MODULE_INFO_PRIMITIVE(info), name);
+
+    hashMap *map = MODULE_INFO_PRIMITIVE(info);
+    if (map == NULL) return NULL;
+
+    return hashMapSearch(map, name);
 }
 
 void * modSearchObject(Module *m, char *name) {
     ModuleInfo *info = m->info;
 
     if (!info) return null;
+    hashMap *map = MODULE_INFO_OBJECT(info);
+    if (!map) return NULL;
+
     return hashMapSearch(MODULE_INFO_OBJECT(info), name);
 }
 
@@ -161,7 +175,12 @@ ModuleTable * modTblGen(void) {
 
 void modTblRelease(ModuleTable *tbl) {}
 
-#define SEARCH_MODULE(T, M) ({ if ((M) == NULL) (M) == GLOBAL_MODULE; modTblSearchModule((T), (M)); })
+#define SEARCH_MODULE(T, M) ({\
+    void *v;\
+    if ((M) == NULL) v = modTblSearchModule((T), GLOBAL_MODULE);\
+    else v = modTblSearchModule((T), (M));\
+    v;\
+})
 
 void * modTblSearchTemplate(ModuleTable *tbl, char *modName, char *tempName) {
     return modSearchTemplate(SEARCH_MODULE(tbl, modName), tempName);
@@ -273,15 +292,17 @@ private _Bool moduleMatch(const void *l_mod, const void *r_modName) {
 
 /* Build a module then deploy and call */
 void moduleTesting(void **state) {
+    ModuleTable *tbl = modTblGen();
+
     Func *f = funcGen("fun", NULL, NULL, NULL);
 
     Module *m = moduleGen(GLOBAL_MODULE);
 
     modAddFunction(m, f);
 
-    modTblAddModule(&moduleTable, m);
+    modTblAddModule(tbl, m);
 
-    Func *f_found = modTblSearchFunction(&moduleTable, GLOBAL_MODULE, "fun");
+    Func *f_found = modTblSearchFunction(tbl, GLOBAL_MODULE, "fun");
     assert_non_null(f_found);
     assert_int_equal(strCompare(FUNC_IDENT(f_found), "fun"), true);
 }
