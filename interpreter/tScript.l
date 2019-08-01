@@ -8,6 +8,7 @@
     #include "statement.h"
     #include "expression.h"
     #include "object.h"
+    #include "misc.h"
 
     #include "parser.h"
 %}
@@ -55,8 +56,10 @@ else      { return ELSE; }
 \{        { return OPEN_CURVE_BRACKET; }
 \}        { return CLOSE_CURVE_BRACKET; }
 
-\"([^\"]|(\\\"))*\"     { yylval.str = strdup(yytext); return STR_LITERAL; }
+\"([^\"]|(\\\"))*[^\\]\"     { yylval.str = strdup(yytext); return STR_LITERAL; }
+
 [0-9]+                { return NUM; }
+
 ([a-zA-Z0-9]|"-")+    { yylval.str = strdup(yytext); return IDENTIFIER; }
 
 %%

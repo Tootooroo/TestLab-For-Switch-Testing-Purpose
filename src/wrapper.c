@@ -80,7 +80,3 @@ list * strSplit(char *src, char spliter, char end) {
 
     return l;
 }
-
-char * strPreProcessing(char *str) {
-
-}

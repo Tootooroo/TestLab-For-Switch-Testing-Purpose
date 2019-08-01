@@ -1,5 +1,5 @@
 String sayHello() {
-    return "Hello,World!";
+    return "Hello, World!\n";
 }
 
 print(sayHello());
