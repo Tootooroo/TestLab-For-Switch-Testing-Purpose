@@ -39,7 +39,8 @@ set(I_SRCS
   ${I_AST_SRC_DIR}/program.c
   ${I_SRC_DIR}/parser.c
   ${I_SRC_DIR}/lexer.c
-  ${I_MOD_SRC_DIR}/module.c)
+  ${I_MOD_SRC_DIR}/module.c
+  ${I_SRC_DIR}/misc.c)
 
 set(I_MOD_SRCS
   ${I_MOD_SRC_DIR}/basicModule.c)

@@ -11,6 +11,7 @@
 
 #include "module.h"
 #include "wrapper.h"
+#include "misc.h"
 
 #include "program.h"
 
@@ -39,7 +40,7 @@ private Variable * print_internal(void *f_void, Scope *s) {
 
     if (str == NULL) return NULL;
 
-    printf(str);
+    printf(strPreProcessing(str));
 
     return varGen(NULL, VAR_PRIMITIVE_INT, NULL);
 }

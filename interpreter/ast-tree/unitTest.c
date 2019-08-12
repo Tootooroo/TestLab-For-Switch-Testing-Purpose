@@ -8,6 +8,7 @@
 #include "func.h"
 #include "parameter.h"
 #include "module.h"
+#include "misc.h"
 
 int main(void) {
     moduleInit();
@@ -17,7 +18,8 @@ int main(void) {
         cmocka_unit_test(exprTest),
         cmocka_unit_test(primitiveTest),
         cmocka_unit_test(stmtTest),
-        cmocka_unit_test(moduleTesting)
+        cmocka_unit_test(moduleTesting),
+        cmocka_unit_test(miscTest)
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
