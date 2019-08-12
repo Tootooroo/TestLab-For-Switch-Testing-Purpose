@@ -304,13 +304,18 @@ TYPE :
 
 DECL_QUALIFIER :
     ARRAY_QUALIFIER {
-        $$ = 0;
+        $$ = 1;
+    }
+    | MAP_QUALIFIER {
+        $$ = 2
     }
     | /* empty */ {
-        $$ = 1;
+        $$ = 0;
     };
 ARRAY_QUALIFIER :
     OPEN_SQUARE_BRACKET CLOSE_SQUARE_BRACKET;
+MAP_QUALIFIER :
+    OPEN_CURVE_BRACKET CLOSE_CURVE_BRACKET;
 
 /* type : Expression */
 EXPRESSION :
@@ -479,6 +484,8 @@ CONSTANT_EXPRESSION :
         $$ = constExprDefault();
         constExprSetStr($$, $STR_LITERAL);
     };
+
+/* type : Expression */
 
 %%
 
