@@ -50,7 +50,9 @@ typedef struct listIter {
 list *      listCreate(void);
 _Status_t   listRelease(list *l);
 _Status_t   listPush(list *l, void *value);
+void     *  listPop(list *l);
 _Status_t   listAppend(list *l, void *value);
+void     *  listRetrive(list *l);
 _Status_t   listJoin(list *l, list *r);
 _Status_t   listDelNode(list *l, void *key);
 _Status_t   listSort_step(list *l);

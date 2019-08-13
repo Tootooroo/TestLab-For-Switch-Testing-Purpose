@@ -76,6 +76,10 @@ _Status_t listAppend(list *l, void *value) {
     return status;
 }
 
+void * listRetrive(list *l) {
+    return listPop(l);
+}
+
 _Status_t listPush(list *l, void *value) {
     if (isNull(l) || isNull(value))
         return ERROR;
@@ -87,6 +91,26 @@ _Status_t listPush(list *l, void *value) {
     l->node = node;
 
     return OK;
+}
+
+void * listPop(list *l) {
+    if (isNull(l)) return NULL;
+
+    listNode *node, *head;
+
+    node = listGetNode(l);
+    head = listNodeNext(node);
+
+    // Move head to next of current head
+    listSetNode(l, listNodeNext(node));
+
+    node->next = NULL;
+    head->prev = NULL;
+
+    void *value = node->value;
+    free(node);
+
+    return value;
 }
 
 /* fixme: Join while situation that list l is an empty list */
