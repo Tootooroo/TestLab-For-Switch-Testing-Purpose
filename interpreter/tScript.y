@@ -337,7 +337,7 @@ EXPRESSION :
 /* type : Expression */
 INDEX_EXPRESSION :
     IDENTIFIER OPEN_SQUARE_BRACKET EXPRESSION CLOSE_SQUARE_BRACKET {
-        $$ = NULL;
+        $$ = indexExprGen($IDENTIFIER, $EXPRESSION);
     };
 
 /* type : Expression */
