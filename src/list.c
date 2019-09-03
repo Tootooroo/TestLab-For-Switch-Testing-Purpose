@@ -99,13 +99,14 @@ void * listPop(list *l) {
     listNode *node, *head;
 
     node = listGetNode(l);
+    if (node == NULL) return NULL;
+
     head = listNodeNext(node);
+    if (head) head->prev = NULL;
+
 
     // Move head to next of current head
     listSetNode(l, listNodeNext(node));
-
-    node->next = NULL;
-    head->prev = NULL;
 
     void *value = node->value;
     free(node);

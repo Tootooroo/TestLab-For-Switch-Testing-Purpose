@@ -6,6 +6,8 @@
     Statement *statement;
     Expression *expression;
 
+    typeInfo *type_info;
+
     ObjectDeclBody *objDeclBody;
     ObjectDeclItem *objDeclItem;
 }
@@ -53,7 +55,7 @@
 %type   <str>           OBJECT_INHERITENCE
 
 %type   <integer>       DECL_QUALIFIER
-%type   <str>           TYPE
+%type   <type_info>     TYPE
 
 /* Expression */
 %type   <expression>    EXPRESSION
@@ -70,10 +72,11 @@
 %type   <expression>    LESS_OR_EQUAL_EXPRESSION
 %type   <expression>    GREATER_OR_EQUAL_EXPRESSION
 %type   <expression>    NOT_EQUAL_EXPRESSION
-%type   <expression>    MEMBER_SELECTION_EXPRESSION
+%type   <expression>    DOT_EXPRESSION
 %type   <expression>    FUNCTION_CALL_EXPRESSION
 %type   <expression>    ASSIGNMENT_EXPRESSION
 %type   <expression>    CONSTANT_EXPRESSION
+%type   <expression>    INDEX_EXPRESSION
 
 /* Misc */
 %type   <list_> VAR_DECL_LIST
@@ -290,24 +293,24 @@ EXPRESSION_STATEMENT :
 
 TYPE :
     INT DECL_QUALIFIER {
-        $$ = strdup("Int");
+        $$ = buildTypeInfo(strdup("Int"), $DECL_QUALIFIER);
     }
     | STR DECL_QUALIFIER {
-        $$ = strdup("String");
+        $$ = buildTypeInfo(strdup("String"), $DECL_QUALIFIER);
     }
     | MACHINE_OPERATIONS DECL_QUALIFIER {
-        $$ = strdup("Ops");
+        $$ = buildTypeInfo(strdup("Ops"), $DECL_QUALIFIER);
     }
     | IDENTIFIER DECL_QUALIFIER {
-        $$ = strdup($IDENTIFIER);
+        $$ = buildTypeInfo(strdup($IDENTIFIER), $DECL_QUALIFIER);
     };
 
 DECL_QUALIFIER :
     ARRAY_QUALIFIER {
-        $$ = 1;
+        $$ = ARRAY_TYPE;
     }
     | MAP_QUALIFIER {
-        $$ = 2
+        $$ = MAP_TYPE;
     }
     | /* empty */ {
         $$ = 0;
@@ -324,11 +327,18 @@ EXPRESSION :
     }
     | ARITHMETIC_EXPRESSION
     | ORDER_EXPRESSION
-    | MEMBER_SELECTION_EXPRESSION
+    | DOT_EXPRESSION
     | FUNCTION_CALL_EXPRESSION
     | ASSIGNMENT_EXPRESSION
     | CONSTANT_EXPRESSION
-    | IDENT_EXPRESSION;
+    | IDENT_EXPRESSION
+    | INDEX_EXPRESSION;
+
+/* type : Expression */
+INDEX_EXPRESSION :
+    IDENTIFIER OPEN_SQUARE_BRACKET EXPRESSION CLOSE_SQUARE_BRACKET {
+        $$ = NULL;
+    };
 
 /* type : Expression */
 IDENT_EXPRESSION :
@@ -413,11 +423,11 @@ NOT_EQUAL_EXPRESSION :
     };
 
 /* type : Expression */
-MEMBER_SELECTION_EXPRESSION :
-    MEMBER_SELECTION_EXPRESSION IDENTIFIER {
+DOT_EXPRESSION :
+    DOT_EXPRESSION IDENTIFIER {
 
     }
-    | MEMBER_SELECTION_EXPRESSION MEMBER_SELECTION_ENTITY {
+    | DOT_EXPRESSION MEMBER_SELECTION_ENTITY {
 
     }
     | MEMBER_SELECTION_ENTITY {

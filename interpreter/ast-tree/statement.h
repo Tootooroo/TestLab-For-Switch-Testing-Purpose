@@ -107,13 +107,28 @@ ReturnStatement * returnStmtDefault();
 ReturnStatement * returnStmtGen(Expression *expr);
 
 /* Variable declaration statement */
+typedef enum {
+    BASIC_TYPE = 0,
+    ARRAY_TYPE = 1,
+    MAP_TYPE = 2
+} TYPE_QUALIFIER;
+
+typedef struct typeInfo {
+    char *type;
+    TYPE_QUALIFIER q;
+} typeInfo;
+
 typedef struct VarDeclStatement {
     Statement base;
-    char *type;
+    typeInfo *type;
     /* list of pair(identifier, assignmentExpr) */
     list *varDeclExprs;
 } VarDeclStatement;
 
+/* char * (*)(typeInfo *) */
+#define TYPE_INFO_TYPE(T) ((T)->type)
+/* int (*)(typeInfo *) */
+#define TYPE_INFO_QUALIFIER(T) ((T)->q)
 /* char * (*)(VarDeclStatement *) */
 #define VAR_DECL_STMT_TYPE(V_D_STMT) ((V_D_STMT)->type)
 /* char * (*)(VarDeclStatement *, char *) */
@@ -123,9 +138,9 @@ typedef struct VarDeclStatement {
 
 /* Parameters:
  * expr_ - list of expressions in a variable declaration statement */
-VarDeclStatement * varDeclStmtGenerate(char *type);
+VarDeclStatement * varDeclStmtGenerate(typeInfo *type);
 _Status_t varDeclAddExpr(VarDeclStatement *, Expression *);
-
+typeInfo * buildTypeInfo(char *type, int qual);
 
 /* Function declaration statement */
 typedef struct FuncDeclStatement {

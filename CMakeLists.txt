@@ -37,6 +37,7 @@ set(I_SRCS
   ${I_AST_SRC_DIR}/func.c
   ${I_AST_SRC_DIR}/statement.c
   ${I_AST_SRC_DIR}/program.c
+  ${I_AST_SRC_DIR}/array.c
   ${I_SRC_DIR}/parser.c
   ${I_SRC_DIR}/lexer.c
   ${I_MOD_SRC_DIR}/module.c

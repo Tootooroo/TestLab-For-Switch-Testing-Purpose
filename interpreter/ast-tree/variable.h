@@ -7,12 +7,15 @@
 #include "primitive.h"
 #include "scope.h"
 
+typedef struct Array Array;
+
 typedef enum {
     VAR_EMPTY = -1,
     VAR_PRIMITIVE_INT = 0,
     VAR_PRIMITIVE_STR,
     VAR_PRIMITIVE_OPS,
     VAR_OBJECT,
+    VAR_ARRAY,
     VAR_TYPE_NUM
 } VarType;
 
@@ -45,6 +48,7 @@ typedef struct Variable {
     union {
         Primitive *p;
         Object *o;
+        Array *array;
     };
 
     // Operators
@@ -104,6 +108,8 @@ typedef struct VarInnerOps {
 
 #define VAR_GET_PRIMITIVE_INT(V) ((V)->p->val_i)
 #define VAR_GET_PRIMITIVE_STR(V) ((V)->p->val_str)
+
+#define VAR_GET_ARRAY(V) ((V)->array)
 
 /* Prototypes */
 Variable varDefault_Empty();

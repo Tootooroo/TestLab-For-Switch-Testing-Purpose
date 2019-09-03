@@ -6,6 +6,8 @@
 #include "string.h"
 #include "func.h"
 #include "parameter.h"
+#include "array.h"
+#include "variable.h"
 
 #include "program.h"
 
@@ -15,6 +17,7 @@ private Variable * assignExprCompute(Expression *, Scope *);
 private Variable * memberSelectExprCompute(Expression *, Scope *);
 private Variable * funcCallExprCompute(Expression *, Scope *);
 private Variable * identExprCompute(Expression *expr, Scope *scope);
+private Variable * indexExprCompute(Expression *expr, Scope *scope);
 
 // Operators
 private Variable * plusExprCompute(Expression *expr, Scope *scope);
@@ -191,6 +194,17 @@ void identExprRelease(Expression *expr, Scope *s) {
     IdentExpression *iExpr = (IdentExpression *)expr;
 
     free(iExpr->ident);
+}
+
+// Index expression
+IndexExpression * indexExprGen(char *ident, Expression *expr) {
+    IndexExpression *idxExpr = (IndexExpression *)zMalloc(sizeof(IndexExpression));
+
+    idxExpr->base.compute = indexExprCompute;
+    IDX_EXPR_SET_IDENT(idxExpr, ident);
+    IDX_EXPR_SET_IDX(idxExpr, expr);
+
+    return idxExpr;
 }
 
 // Plus expression
@@ -452,6 +466,21 @@ private Variable * identExprCompute(Expression *expr, Scope *scope) {
 
     // Can not find the identifer in the current scope.
     return NULL;
+}
+
+private Variable * indexExprCompute(Expression *expr, Scope *scope) {
+    IndexExpression *idxExpr = (IndexExpression *)expr;
+
+    char *ident = IDX_EXPR_IDENT(idxExpr);
+
+    Variable *ar = scopeGetObject(scope, ident);
+    if (!ar) return NULL;
+
+    Array *ar_ptr = VAR_GET_ARRAY(ar);
+    if (!ar_ptr) return NULL;
+
+    Variable *idx = exprCompute(IDX_EXPR_IDX(idxExpr), scope);
+    return arraySelectViaIdx(ar_ptr, VAR_GET_PRIMITIVE_INT(idx));
 }
 
 #define VAR_EXTRACT_FROM_EXPR(LEFT_EXPR, RIGHT_EXPR, SCOPE) ({ \

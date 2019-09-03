@@ -9,6 +9,7 @@
 #include "parameter.h"
 #include "module.h"
 #include "misc.h"
+#include "array.h"
 
 int main(void) {
     moduleInit();
@@ -19,7 +20,8 @@ int main(void) {
         cmocka_unit_test(primitiveTest),
         cmocka_unit_test(stmtTest),
         cmocka_unit_test(moduleTesting),
-        cmocka_unit_test(miscTest)
+        cmocka_unit_test(miscTest),
+        cmocka_unit_test(arrayTesting)
     };
     return cmocka_run_group_tests(tests, NULL, NULL);
 }

@@ -8,6 +8,7 @@
 #include "pair.h"
 #include "list.h"
 #include "expression.h"
+#include "array.h"
 
 /* Private Prototypes */
 private StatementTrack ifStatement_Compute(Statement *stmt, Scope *scope);
@@ -65,7 +66,7 @@ IfStatement * ifStatementGenerate(Expression *expr, list *true_stmts, list *fals
 }
 
 // Variable declaration statement
-VarDeclStatement * varDeclStmtGenerate(char *type) {
+VarDeclStatement * varDeclStmtGenerate(typeInfo *type) {
     VarDeclStatement *varStmt = (VarDeclStatement *)zMalloc(sizeof(VarDeclStatement));
     varStmt->base = statementGenerate(varDeclStmtCompute);
     varStmt->type = type;
@@ -96,6 +97,15 @@ _Status_t varDeclAddExpr(VarDeclStatement *stmt, Expression *expr) {
 
     pair *p = pairGen(strdup(ident), expr);
     return listAppend(stmt->varDeclExprs, p);
+}
+
+typeInfo * buildTypeInfo(char *type, int qual) {
+    typeInfo *t = (typeInfo *)zMalloc(sizeof(typeInfo));
+
+    t->type = type;
+    t->q = qual;
+
+    return t;
 }
 
 // Object declaration statement */
@@ -238,7 +248,8 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
     int primitiveType = false;
     VarDeclStatement *varDeclStmt = (VarDeclStatement *)stmt;
 
-    primitiveType = isPrimitiveType(VAR_DECL_STMT_TYPE(varDeclStmt));
+    typeInfo *tInfo = VAR_DECL_STMT_TYPE(varDeclStmt);
+    primitiveType = isPrimitiveType(tInfo->type);
 
     list *declPairs = varDeclStmt->varDeclExprs;
     listIter iter = listGetIter(declPairs, LITER_FORWARD);
@@ -246,12 +257,19 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
     listNode *current;
     pair *currentPair;
 
-    // First place identifier into scope.
+    // First, place identifier into scope.
     while ((current = listNext(&iter)) != null) {
         currentPair = current->value;
 
         char *varIdent = PAIR_GET_LEFT(currentPair);
-        if (primitiveType != -1) {
+
+        if (tInfo->q == ARRAY_TYPE) {
+            Variable *array_v = null;
+
+            array_v = varGen(strdup(varIdent), VAR_ARRAY, NULL);
+
+            scopeNewPrimitive(scope, pairGen(strdup(varIdent), array_v));
+        } else if (primitiveType != -1) {
             /* Primitive */
             Variable *v = null;
 
@@ -267,7 +285,7 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
             scopeNewPrimitive(scope, pairGen(strdup(varIdent), v));
         } else {
             /* Object */
-            Template *t = scopeGetTemplate(scope, VAR_DECL_STMT_TYPE(varDeclStmt));
+            Template *t = scopeGetTemplate(scope, tInfo->type);
             Variable *var_o = varGen(strdup(varIdent), VAR_OBJECT, template2Object(t));
 
             scopeNewObject(scope, pairGen(strdup(varIdent), var_o));
@@ -437,7 +455,7 @@ void ifStmtTest(void) {
     listAppend(false_stmts, exprStmtGen(assignExprGen(identExprGen(strdup("a")),
                                                       constExprGen(&b, PRIMITIVE_TYPE_INT))));
 
-    VarDeclStatement *varDeclStmt = varDeclStmtGenerate("Int");
+    VarDeclStatement *varDeclStmt = varDeclStmtGenerate(buildTypeInfo("Int", BASIC_TYPE));
     varDeclAddExpr(varDeclStmt, identExprGen(strdup("a")));
 
     STATEMENT_COMPUTE(varDeclStmt, scope);
@@ -472,7 +490,7 @@ void objDeclStmtTest(void) {
     STATEMENT_COMPUTE(objStmt, scope);
 
     // Declure an variable with object type.
-    VarDeclStatement *vStmt = varDeclStmtGenerate(strdup("AA"));
+    VarDeclStatement *vStmt = varDeclStmtGenerate(buildTypeInfo(strdup("AA"), BASIC_TYPE));
 
     varDeclAddExpr(vStmt, identExprGen(strdup("a")));
     STATEMENT_COMPUTE(vStmt, scope);
@@ -493,7 +511,7 @@ void objDeclStmtTest(void) {
 void varDeclStmtTest(void) {
     Scope *scope = scopeGenerate();
 
-    VarDeclStatement *varStmt = varDeclStmtGenerate(strdup("Int"));
+    VarDeclStatement *varStmt = varDeclStmtGenerate(buildTypeInfo(strdup("Int"), BASIC_TYPE));
 
     int a = 1;
     Expression *assignExpr = assignExprGen(identExprGen(strdup("a")), constExprGen(&a, PRIMITIVE_TYPE_INT));

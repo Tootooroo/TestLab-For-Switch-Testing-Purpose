@@ -269,6 +269,21 @@ void identExprRelease(Expression *expr, Scope *s);
 
 /* Prototypes */
 
+// Index expression
+typedef struct IndexExpression {
+    Expression base;
+    char *ident;
+    Expression *index;
+} IndexExpression;
+
+#define IDX_EXPR_IDENT(IDX_E) ((IDX_E)->ident)
+#define IDX_EXPR_SET_IDENT(IDX_E, IDENT) ((IDX_E)->ident = IDENT)
+
+#define IDX_EXPR_IDX(IDX_E) ((IDX_E)->index)
+#define IDX_EXPR_SET_IDX(IDX_E, IDX) ((IDX_E)->index = IDX)
+
+IndexExpression * indexExprGen(char *ident, Expression *expr);
+
 #ifdef _AST_TREE_TESTING_
 
 void exprTest(void **state);
