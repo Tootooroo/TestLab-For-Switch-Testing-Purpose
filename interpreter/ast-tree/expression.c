@@ -18,6 +18,7 @@ private Variable * memberSelectExprCompute(Expression *, Scope *);
 private Variable * funcCallExprCompute(Expression *, Scope *);
 private Variable * identExprCompute(Expression *expr, Scope *scope);
 private Variable * indexExprCompute(Expression *expr, Scope *scope);
+private Variable * arrayExprCompute(Expression *expr, Scope *scope);
 
 // Operators
 private Variable * plusExprCompute(Expression *expr, Scope *scope);
@@ -205,6 +206,16 @@ IndexExpression * indexExprGen(char *ident, Expression *expr) {
     IDX_EXPR_SET_IDX(idxExpr, expr);
 
     return idxExpr;
+}
+
+// Array expression
+ArrayExpression * arrayExprGen(list *exprs) {
+    ArrayExpression *expr = (ArrayExpression *)zMalloc(sizeof(ArrayExpression));
+
+    expr->base.compute = arrayExprCompute;
+    ARRAY_EXPR_SET_ELEMENTS(expr, exprs);
+
+    return expr;
 }
 
 // Plus expression
@@ -481,6 +492,35 @@ private Variable * indexExprCompute(Expression *expr, Scope *scope) {
 
     Variable *idx = exprCompute(IDX_EXPR_IDX(idxExpr), scope);
     return arraySelectViaIdx(ar_ptr, VAR_GET_PRIMITIVE_INT(idx));
+}
+
+private Variable * arrayExprCompute(Expression *expr, Scope *scope) {
+    ArrayExpression *a_expr = (ArrayExpression *)expr;
+
+    list *l_exprs = ARRAY_EXPR_ELEMENTS(a_expr);
+    Array *array_members = createArray(NULL);
+    listIter iter = listGetIter(l_exprs, LITER_FORWARD);
+
+    Expression *current;
+
+    while ((current = listNext_v(&iter)) != NULL) {
+        Variable *v = exprCompute(current, scope);
+
+        if (ARRAY_TYPE(array_members) == NULL)
+            ARRAY_SET_TYPE(array_members, varType2Str(v));
+        else {
+            // Type checking, Array is homogenuous data structure
+            if (varType2Str(v) != ARRAY_TYPE(array_members)) {
+                listRelease(l_exprs);
+                arrayRelease(array_members);
+                abortWithMsg("Array type error");
+            }
+        }
+
+        arrayAppend(array_members, v);
+    }
+
+    return varGen(NULL, VAR_ARRAY, array_members);
 }
 
 #define VAR_EXTRACT_FROM_EXPR(LEFT_EXPR, RIGHT_EXPR, SCOPE) ({ \

@@ -6,6 +6,7 @@
     Statement *statement;
     Expression *expression;
 
+    pair *Pair;
     typeInfo *type_info;
 
     ObjectDeclBody *objDeclBody;
@@ -28,9 +29,10 @@
 %token STR
 
 %token <str> IDENTIFIER
-%token <integer> NUM
+%token <str> NUM
 %token <str> STR_LITERAL
 
+%left PERCENTAGE
 %left EQUAL LESS_THAN GREATER_THAN LESS_OR_EQUAL GREATER_OR_EQUAL NOT_EQUAL
 %left PLUS MINUS
 %left MUL DIV
@@ -77,13 +79,17 @@
 %type   <expression>    ASSIGNMENT_EXPRESSION
 %type   <expression>    CONSTANT_EXPRESSION
 %type   <expression>    INDEX_EXPRESSION
+%type   <expression>    ARRAY_EXPRESSION
 
 /* Misc */
 %type   <list_> VAR_DECL_LIST
 %type   <expression>    VAR_DECL
 %type   <objDeclBody>   OBJECT_DEF
 %type   <objDeclItem>   OBJECT_DEF_ITEM
+%type   <list_>         EXPRESSION_LIST
+%type   <list_>         ARRAY_ELEMENTS
 %type   <list_>         IMPORT_LIST
+%type   <list_>         IDENTIFIER_LIST
 %type   <list_>         ARGUMENTS PARAMETERS
 %type   <expression>    MEMBER_SELECTION_ENTITY
 %type   <str>       PARAMETER
@@ -95,6 +101,7 @@
     #include "expression.h"
     #include "object.h"
     #include "func.h"
+    #include "pair.h"
 }
 
 %%
@@ -213,11 +220,16 @@ IMPORT_STATEMENT :
     IMPORT IMPORT_LIST FROM IDENTIFIER {};
 
 /* type : list<char *> */
-IMPORT_LIST :
-    IMPORT_LIST COMMA IDENTIFIER {
+IMPORT_LIST : IDENTIFIER_LIST { $$ = $IDENTIFIER_LIST; }
+
+IDENTIFIER_LIST :
+    IDENTIFIER_LIST COMMA IDENTIFIER {
+        listAppend($$, (void *)$IDENTIFIER);
     }
     | IDENTIFIER {
-    };
+        $$ = listCreate();
+        listAppend($$, (void *)$IDENTIFIER);
+    }
 
 /* type : Statement */
 RETURN_STATEMENT :
@@ -228,7 +240,10 @@ RETURN_STATEMENT :
 /* type : Statement */
 VAR_DECL_STATEMENT :
     TYPE VAR_DECL_LIST SEMICOLON {
-        $$ = varDeclStmtGenerate($VAR_DECL_LIST);
+        VarDeclStatement *stmt = varDeclStmtGenerate($TYPE);
+        VAR_DECL_STMT_SET_EXPRS(stmt, $VAR_DECL_LIST);
+
+        $$ = (Statement *)stmt;
     };
 
 /* type : list<Expression> */
@@ -241,13 +256,14 @@ VAR_DECL_LIST:
         listAppend($$, (void *)$VAR_DECL);
     };
 
-/* type : Expression */
+/* type : pair(ident, Expression) */
 VAR_DECL :
     IDENTIFIER {
-        $$ = identExprGen($IDENTIFIER);
+        $$ = pairGen($IDENTIFIER, identExprGen($IDENTIFIER));
     }
     | IDENTIFIER ASSIGNMENT EXPRESSION {
-        $$ = assignExprGen(identExprGen($IDENTIFIER), $EXPRESSION);
+        Expression *expr = assignExprGen(identExprGen($IDENTIFIER), $EXPRESSION);
+        $$ = pairGen($IDENTIFIER, expr);
     };
 
 /* type : Statement */
@@ -320,6 +336,16 @@ ARRAY_QUALIFIER :
 MAP_QUALIFIER :
     OPEN_CURVE_BRACKET CLOSE_CURVE_BRACKET;
 
+/* type : list<expression> */
+EXPRESSION_LIST :
+    EXPRESSION_LIST COMMA EXPRESSION {
+        listAppend($$, $EXPRESSION);
+    }
+    | EXPRESSION {
+        $$ = listCreate();
+        listAppend($$, $EXPRESSION);
+    };
+
 /* type : Expression */
 EXPRESSION :
     OPEN_PAREN EXPRESSION[SUB] CLOSE_PAREN {
@@ -332,7 +358,16 @@ EXPRESSION :
     | ASSIGNMENT_EXPRESSION
     | CONSTANT_EXPRESSION
     | IDENT_EXPRESSION
-    | INDEX_EXPRESSION;
+    | INDEX_EXPRESSION
+    | ARRAY_EXPRESSION;
+
+/* type : Expression */
+ARRAY_EXPRESSION :
+    OPEN_SQUARE_BRACKET ARRAY_ELEMENTS CLOSE_SQUARE_BRACKET {
+        $$ = arrayExprGen($ARRAY_ELEMENTS);
+    };
+/* type : list<expression> */
+ARRAY_ELEMENTS : EXPRESSION_LIST;
 
 /* type : Expression */
 INDEX_EXPRESSION :
@@ -343,7 +378,7 @@ INDEX_EXPRESSION :
 /* type : Expression */
 IDENT_EXPRESSION :
     IDENTIFIER {
-        identExprGen($IDENTIFIER);
+        $$ = identExprGen($IDENTIFIER);
     }
 
 /* type : Expression */

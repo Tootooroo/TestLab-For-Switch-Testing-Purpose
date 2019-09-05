@@ -284,6 +284,18 @@ typedef struct IndexExpression {
 
 IndexExpression * indexExprGen(char *ident, Expression *expr);
 
+// Array expression
+typedef struct ArrayExpression {
+    Expression base;
+    list *elements_expr;
+} ArrayExpression;
+
+/* Member functions implement as macros */
+#define ARRAY_EXPR_ELEMENTS(AE) ((AE)->elements_expr)
+#define ARRAY_EXPR_SET_ELEMENTS(AE, E) ((AE)->elements_expr = (E))
+
+ArrayExpression * arrayExprGen(list *exprs);
+
 #ifdef _AST_TREE_TESTING_
 
 void exprTest(void **state);

@@ -172,6 +172,8 @@ Variable * varGen(char *ident, VarType type, void *value) {
         var->o = (Object *)value;
         OBJ_SET_IDENTIFIER(var->o, strdup(ident));
         var->ops = &objectOps;
+    } else if (type == VAR_ARRAY) {
+        var->array = value;
     }
     return var;
 }
@@ -299,7 +301,11 @@ VarType varTypeStr2Int(char *typeStr) {
 
 /* Operators */
 
-/* Operatos of integer */
+/* Operators of object */
+private Variable * varAssign_Object(Variable *l, Variable *r) {}
+
+
+/* Operators of integer */
 
 /* Variable * (*)(Variable *, Variable *, VarOp, VarType) */
 #define VAR_OPS_INT_PRE_CHECK(l, r, ops, type)\
@@ -444,6 +450,8 @@ private _Bool varSupportCheck(Variable *v, VarOp op) {
 private VarType varTypeIs(Variable *v) {
     return v->type;
 }
+
+char * varType2Str(Variable *v) {}
 
 #ifdef _AST_TREE_TESTING_
 

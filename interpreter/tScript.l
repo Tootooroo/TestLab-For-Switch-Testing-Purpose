@@ -31,6 +31,7 @@ Ops       { return MACHINE_OPERATIONS; }
 if        { return IF; }
 else      { return ELSE; }
 
+\%        { return PERCENTAGE; }
 \+         { return PLUS; }
 \-         { return MINUS; }
 \*         { return MUL; }
@@ -58,7 +59,7 @@ else      { return ELSE; }
 
 \"([^\"]|(\\\"))*[^\\]\"     { yylval.str = strdup(yytext); return STR_LITERAL; }
 
-[0-9]+                { return NUM; }
+[0-9]+                { yylval.str = strdup(yytext); return NUM; }
 
 ([a-zA-Z0-9]|"-")+    { yylval.str = strdup(yytext); return IDENTIFIER; }
 

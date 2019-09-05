@@ -262,33 +262,18 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
         currentPair = current->value;
 
         char *varIdent = PAIR_GET_LEFT(currentPair);
+        Variable *var;
 
-        if (tInfo->q == ARRAY_TYPE) {
-            Variable *array_v = null;
-
-            array_v = varGen(strdup(varIdent), VAR_ARRAY, NULL);
-
-            scopeNewPrimitive(scope, pairGen(strdup(varIdent), array_v));
+        if (tInfo->q == ARRAY_TYPE){
+            var = varGen(strdup(varIdent), VAR_ARRAY, NULL);
+            scopeNewObject(scope, pairGen(strdup(varIdent), var));
         } else if (primitiveType != -1) {
-            /* Primitive */
-            Variable *v = null;
-
-            switch (primitiveType) {
-                case PRIMITIVE_TYPE_INT:
-                    v = varGen(strdup(varIdent), VAR_PRIMITIVE_INT, NULL);
-                    break;
-                case PRIMITIVE_TYPE_STR:
-                    v = varGen(strdup(varIdent), VAR_PRIMITIVE_STR, NULL);
-                    break;
-            }
-
-            scopeNewPrimitive(scope, pairGen(strdup(varIdent), v));
+            var = varGen(strdup(varIdent), primitiveType, NULL);
+            scopeNewPrimitive(scope, pairGen(strdup(varIdent), var));
         } else {
             /* Object */
-            Template *t = scopeGetTemplate(scope, tInfo->type);
-            Variable *var_o = varGen(strdup(varIdent), VAR_OBJECT, template2Object(t));
-
-            scopeNewObject(scope, pairGen(strdup(varIdent), var_o));
+            var = varGen(strdup(varIdent), VAR_OBJECT, NULL);
+            scopeNewObject(scope, pairGen(strdup(varIdent), var));
         }
     }
 

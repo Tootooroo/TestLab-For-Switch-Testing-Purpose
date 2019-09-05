@@ -16,6 +16,7 @@ typedef enum {
     VAR_PRIMITIVE_OPS,
     VAR_OBJECT,
     VAR_ARRAY,
+    VAR_OCCUPY,
     VAR_TYPE_NUM
 } VarType;
 
@@ -82,7 +83,11 @@ typedef struct VarInnerOps {
     Variable * (*pass)(Variable *, Scope *, char *ident);
 } VarInnerOps;
 
+// This variable is used to occupy space in scope.
+extern Variable emptyVar;
+
 /* Member function implement as macros */
+#define VAR_IS_OCCUPY(V) ((V)->type == VAR_OCCUPY)
 #define VAR_IS_LVAL(V) ((V)->identifier != null)
 
 #define VAR_SET_IDENT(V, I) ((V)->identifier = (I))
@@ -125,7 +130,7 @@ _Bool varTypeCmp(Variable *, Variable *);
 _Bool varIsType(Variable *, char *);
 _Bool varIsTrue(Variable *);
 VarType varTypeStr2Int(char *);
-
+char * varType2Str(Variable *);
 
 #ifdef _AST_TREE_TESTING_
 

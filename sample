@@ -1,16 +1,4 @@
-Switch s1 = [Switch, GL5610];
-Switch s2 = [Switch, DUT];
-Switch s3 = [Switch, GL5610];
-
-s1 : sendArp:{from:192..., to:...} >> s2 << sendArp:{from:192..., to:...} : s3;
-
-s1 >>(arp)>> s2
-
-String{} p = s2->listArp();
-
-foreach (a : p) {
-    if (a == {from:192..., to:...})
-        return ok;
-}
-
-return error;
+Int a = 1 + 1;
+a + 1;
+print("Hello\n");
+[1,2,3];
