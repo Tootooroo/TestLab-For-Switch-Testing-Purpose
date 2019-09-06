@@ -449,6 +449,7 @@ LESS_THAN_EXPRESSION :
 GREATER_THAN_EXPRESSION :
     EXPRESSION[LEFT] GREATER_THAN EXPRESSION[RIGHT] {
         $$ = greaterThanExprGen($LEFT, $RIGHT);
+
     };
 
 /* type : Expression */
