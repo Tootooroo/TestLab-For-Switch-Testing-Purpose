@@ -4,5 +4,7 @@ String sayHello() {
 String sayHello1() {
     if (1 > 0)
         return sayHello();
+    else
+        return "Goodbye";
 }
 print(sayHello1());

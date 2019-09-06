@@ -493,9 +493,9 @@ static const yytype_uint16 yyrline[] =
      336,   339,   342,   346,   348,   352,   355,   362,   365,   366,
      367,   368,   369,   370,   371,   372,   373,   374,   378,   384,
      388,   392,   398,   404,   405,   406,   407,   411,   417,   423,
-     429,   435,   436,   437,   438,   439,   440,   444,   450,   459,
-     465,   471,   477,   483,   486,   489,   495,   498,   504,   507,
-     513,   516,   523,   529,   532,   539,   545,   549
+     429,   435,   436,   437,   438,   439,   440,   444,   450,   457,
+     463,   469,   475,   481,   484,   487,   493,   496,   502,   505,
+     511,   514,   521,   527,   530,   537,   543,   547
 };
 #endif
 
@@ -1891,172 +1891,170 @@ yyreduce:
   case 88:
 #line 450 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
-        Expression *expr = greaterThanExprGen((yyvsp[-2].expression), (yyvsp[0].expression));
-        printf("%d\n", expr);
-        printf("%d\n", expr->type);
+        (yyval.expression) = greaterThanExprGen((yyvsp[-2].expression), (yyvsp[0].expression));
 
     }
-#line 1900 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1898 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 89:
-#line 459 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 457 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.expression) = equalExprGen((yyvsp[-2].expression), (yyvsp[0].expression));
     }
-#line 1908 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1906 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 90:
-#line 465 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 463 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.expression) = lessOrEqualExprGen((yyvsp[-2].expression), (yyvsp[0].expression));
     }
-#line 1916 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1914 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 91:
-#line 471 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 469 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.expression) = greaterOrEqualGen((yyvsp[-2].expression), (yyvsp[0].expression));
     }
-#line 1924 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1922 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 92:
-#line 477 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 475 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.expression) = notEqualExprGen((yyvsp[-2].expression), (yyvsp[0].expression));
     }
-#line 1932 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1930 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 93:
-#line 483 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 481 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
 
     }
-#line 1940 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1938 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 94:
-#line 486 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 484 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
 
     }
-#line 1948 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1946 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 95:
-#line 489 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 487 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
 
     }
-#line 1956 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1954 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 96:
-#line 495 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 493 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.expression) = identExprGen((yyvsp[-1].str));
     }
-#line 1964 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1962 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 97:
-#line 498 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 496 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.expression) = (yyvsp[-1].expression);
     }
-#line 1972 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1970 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 98:
-#line 504 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 502 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.expression) = funcCallExprGen((yyvsp[-3].str), (yyvsp[-1].list_));
     }
-#line 1980 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1978 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 99:
-#line 507 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 505 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.expression) = funcCallExprGen((yyvsp[-2].str), NULL);
     }
-#line 1988 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1986 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 100:
-#line 513 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 511 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         argusAdd((yyval.list_), arguGen((yyvsp[0].expression)));
     }
-#line 1996 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 1994 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 101:
-#line 516 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 514 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.list_) = argusGen();
         argusAdd((yyval.list_), arguGen((yyvsp[0].expression)));
     }
-#line 2005 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 2003 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 102:
-#line 523 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 521 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.expression) = assignExprGen((yyvsp[-2].expression), (yyvsp[0].expression));
     }
-#line 2013 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 2011 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 103:
-#line 529 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 527 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.list_) = (yyvsp[0].list_);
     }
-#line 2021 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 2019 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 104:
-#line 532 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 530 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.list_) = listCreate();
         listAppend((yyval.list_), (yyvsp[0].statement));
     }
-#line 2030 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 2028 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 105:
-#line 539 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 537 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.list_) = (yyvsp[-1].list_);
     }
-#line 2038 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 2036 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 106:
-#line 545 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 543 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.expression) = constExprDefault();
         constExprSetInt((yyval.expression), str2Num((yyvsp[0].str)));
     }
-#line 2047 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 2045 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
   case 107:
-#line 549 "./interpreter/tScript.y" /* yacc.c:1646  */
+#line 547 "./interpreter/tScript.y" /* yacc.c:1646  */
     {
         (yyval.expression) = constExprDefault();
         constExprSetStr((yyval.expression), (yyvsp[0].str));
     }
-#line 2056 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 2054 "./interpreter/parser.c" /* yacc.c:1646  */
     break;
 
 
-#line 2060 "./interpreter/parser.c" /* yacc.c:1646  */
+#line 2058 "./interpreter/parser.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2284,7 +2282,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 556 "./interpreter/tScript.y" /* yacc.c:1906  */
+#line 554 "./interpreter/tScript.y" /* yacc.c:1906  */
 
 
 void yyerror(char const *s) {
