@@ -32,6 +32,7 @@
 %token <str> NUM
 %token <str> STR_LITERAL
 
+
 %left PERCENTAGE
 %left EQUAL LESS_THAN GREATER_THAN LESS_OR_EQUAL GREATER_OR_EQUAL NOT_EQUAL
 %left PLUS MINUS
@@ -80,6 +81,7 @@
 %type   <expression>    CONSTANT_EXPRESSION
 %type   <expression>    INDEX_EXPRESSION
 %type   <expression>    ARRAY_EXPRESSION
+%type   <expression>    PERCENT_EXPRESSION
 
 /* Misc */
 %type   <list_> VAR_DECL_LIST
@@ -94,6 +96,10 @@
 %type   <expression>    MEMBER_SELECTION_ENTITY
 %type   <str>       PARAMETER
 
+%printer { fprintf(yyoutput, "%d", $$->type); } EXPRESSION;
+%printer { fprintf(yyoutput, "%s", $$); } IDENTIFIER;
+
+
 %code top {
     #include "list.h"
     #include "program.h"
@@ -102,6 +108,8 @@
     #include "object.h"
     #include "func.h"
     #include "pair.h"
+
+    #define YYDEBUG 1
 }
 
 %%
@@ -168,8 +176,11 @@ IF_STATEMENT_WITH_ELSE :
 
 /* type : Statement */
 OBJECT_DECL_STATEMENT :
-    OBJECT IDENTIFIER OBJECT_INHERITENCE OPEN_CURVE_BRACKET OBJECT_DEF CLOSE_CURVE_BRACKET SEMICOLON {
-        $$ = objDeclStmtGen($IDENTIFIER, $OBJECT_DEF->newMembers, $OBJECT_INHERITENCE, $OBJECT_DEF->overWrites);
+    OBJECT IDENTIFIER OBJECT_INHERITENCE OPEN_CURVE_BRACKET
+    OBJECT_DEF
+    CLOSE_CURVE_BRACKET SEMICOLON {
+        $$ = objDeclStmtGen($IDENTIFIER, $OBJECT_DEF->newMembers,
+                            $OBJECT_INHERITENCE, $OBJECT_DEF->overWrites);
     };
 
 /* type : char * */
@@ -359,7 +370,14 @@ EXPRESSION :
     | CONSTANT_EXPRESSION
     | IDENT_EXPRESSION
     | INDEX_EXPRESSION
-    | ARRAY_EXPRESSION;
+    | ARRAY_EXPRESSION
+    | PERCENT_EXPRESSION;
+
+/* type : Expression */
+PERCENT_EXPRESSION :
+    EXPRESSION PERCENTAGE OPEN_PAREN EXPRESSION_LIST CLOSE_PAREN {
+        $$ = NULL;
+    };
 
 /* type : Expression */
 ARRAY_EXPRESSION :

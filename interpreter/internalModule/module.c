@@ -4,6 +4,7 @@
 #include "func.h"
 #include "wrapper.h"
 #include "hashTypes.h"
+#include "statement.h"
 
 #include <string.h>
 
@@ -253,7 +254,9 @@ Template * mod_objectDefine(char *typeName, list *members) {
     return temp;
 }
 
-Func * mod_functionDefine(char *ident, char *type, Parameters *params, list *stmts, Scope *s) {
+Func * mod_functionDefine(char *ident, typeInfo *type,
+                          Parameters *params,
+                          list *stmts, Scope *s) {
     Func *func = funcGen(ident, type, params, s);
     FUNC_SET_STATEMENTS(func, stmts);
 

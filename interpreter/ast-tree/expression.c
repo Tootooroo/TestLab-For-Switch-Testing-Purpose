@@ -31,6 +31,7 @@ private Variable * equalExprCompute(Expression *expr, Scope *scope);
 private Variable * lessOrEqualExprCompute(Expression *expr, Scope *scope);
 private Variable * greaterOrEqualCompute(Expression *expr, Scope *scope);
 private Variable * notEqualCompute(Expression *expr, Scope *scope);
+private Variable * percentExprCompute(Expression *expr, Scope *scope);
 
 /* Public procedures */
 
@@ -218,6 +219,17 @@ ArrayExpression * arrayExprGen(list *exprs) {
     return expr;
 }
 
+// Percent expression
+PercentExpression * percentExprGen(Expression *formatStr, list *valExprs) {
+    PercentExpression *pe = (PercentExpression *)zMalloc(sizeof(PercentExpression));
+
+    pe->base.compute = percentExprCompute;
+    PERCENT_EXPR_SET_FORMAT_STR(pe, formatStr);
+    PERCENT_EXPR_SET_V_EXPRS(pe, valExprs);
+
+    return pe;
+}
+
 // Plus expression
 PlusExpression * plusExprDefault() {
     PlusExpression *expr = (PlusExpression *)zMalloc(sizeof(PlusExpression));
@@ -339,6 +351,7 @@ GreaterThanExpression * greaterThanExprDefault() {
     GreaterThanExpression *gExpr = (GreaterThanExpression *)zMalloc(sizeof(GreaterThanExpression));
     gExpr->base.compute = greaterThanExprCompute;
     exprSetType(gExpr, EXPR_TYPE_ORDER);
+
     return gExpr;
 }
 
@@ -506,21 +519,57 @@ private Variable * arrayExprCompute(Expression *expr, Scope *scope) {
     while ((current = listNext_v(&iter)) != NULL) {
         Variable *v = exprCompute(current, scope);
 
-        if (ARRAY_TYPE(array_members) == NULL)
-            ARRAY_SET_TYPE(array_members, varType2Str(v));
-        else {
-            // Type checking, Array is homogenuous data structure
-            if (varType2Str(v) != ARRAY_TYPE(array_members)) {
-                listRelease(l_exprs);
-                arrayRelease(array_members);
-                abortWithMsg("Array type error");
-            }
-        }
-
         arrayAppend(array_members, v);
     }
 
     return varGen(NULL, VAR_ARRAY, array_members);
+}
+
+#define PERCENT_TYPE_CHECK(T) (T == VAR_PRIMITIVE_STR || T == VAR_PRIMITIVE_INT)
+private Variable * percentExprCompute(Expression *expr, Scope *scope) {
+    PercentExpression *pExpr = (PercentExpression *)expr;
+
+    Expression *formatString_expr = PERCENT_EXPR_FORMAT_STR(pExpr);
+    list *l_vals = PERCENT_EXPR_V_EXPRS(pExpr);
+
+    Variable *formatString_v = exprCompute(formatString_expr, scope);
+    // Return value of formatString_expr must be string
+    if (VAR_TYPE(formatString_v) != VAR_PRIMITIVE_STR) {
+        varRelease(formatString_v);
+        return NULL;
+    }
+
+    char *format = VAR_GET_PRIMITIVE_STR(formatString_v);
+    listIter iter = listGetIter(l_vals, LITER_FORWARD);
+    list *vals = listCreate();
+
+    Variable *current_val;
+    Expression *current_expr;
+
+    while ((current_expr = listNext_v(&iter)) !=  NULL) {
+        current_val = exprCompute(current_expr, scope);
+        VarType t = VAR_TYPE(current_val);
+        if (!PERCENT_TYPE_CHECK(t)) {
+            listRelease(vals);
+            varRelease(formatString_v);
+            varRelease(current_val);
+            return NULL;
+        }
+        if (t == VAR_PRIMITIVE_STR) {
+            char *str = VAR_GET_PRIMITIVE_STR(current_val);
+            listAppend(vals, pairGen("%", str));
+        } else if (t == VAR_PRIMITIVE_INT) {
+            int i = VAR_GET_PRIMITIVE_INT(current_val);
+            listAppend(vals, pairGen("%", num2Str(i)) );
+        }
+    }
+    Variable *v = varGen(NULL, VAR_PRIMITIVE_STR, strReplace(format, vals));
+
+    listRelease(vals);
+    varRelease(formatString_v);
+    varRelease(current_val);
+
+    return v;
 }
 
 #define VAR_EXTRACT_FROM_EXPR(LEFT_EXPR, RIGHT_EXPR, SCOPE) ({ \
@@ -576,7 +625,8 @@ private Variable * funcCallExprCompute(Expression *expr, Scope *scope) {
     }
 
     // Return type checking
-    if (varIsType(ret, FUNC_RETURN_TYPE(f)) == false) {
+    typeInfo *t = FUNC_RETURN_TYPE(f);
+    if (varIsType(ret, t->type) == false) {
         return null;
     }
 

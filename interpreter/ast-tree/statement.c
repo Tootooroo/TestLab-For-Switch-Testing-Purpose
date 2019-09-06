@@ -371,6 +371,7 @@ private StatementTrack funcDeclStmtCompute(Statement *stmt, Scope *scope) {
     FuncDeclStatement *fStmt = (FuncDeclStatement *)stmt;
 
     Func *f = fStmt->f;
+    f->outer = scope;
 
     scopeNewFunc(scope, pairGen(strdup(f->identifier), f));
 

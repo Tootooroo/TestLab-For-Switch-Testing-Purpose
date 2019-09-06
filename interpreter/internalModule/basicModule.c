@@ -12,6 +12,7 @@
 #include "module.h"
 #include "wrapper.h"
 #include "misc.h"
+#include "statement.h"
 
 #include "program.h"
 
@@ -46,7 +47,8 @@ private Variable * print_internal(void *f_void, Scope *s) {
 }
 
 private void printInit(void) {
-    Func *f = mod_functionDefine("print", "Int", NULL, NULL, NULL);
+    Func *f = mod_functionDefine("print", buildTypeInfo("Int", BASIC_TYPE),
+                                 NULL, NULL, NULL);
 
     FUNC_SET_TYPE(f, FUNC_INTERNAL);
 

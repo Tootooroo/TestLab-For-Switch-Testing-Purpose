@@ -117,7 +117,7 @@ Template * mod_objectDefine(char *typeName, list *members);
  * (2) char * if type == VAR_PRIMITIVE_STR
  * (3) Object * if type == VAR_OBJECT */
 Variable * mod_variableDefine(char *ident, VarType type, void *val);
-Func * mod_functionDefine(char *ident, char *type,
+Func * mod_functionDefine(char *ident, typeInfo *type,
                           Parameters *, list *stmts, Scope *s);
 
 #ifdef _AST_TREE_TESTING_

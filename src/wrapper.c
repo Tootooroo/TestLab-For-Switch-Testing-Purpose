@@ -31,6 +31,21 @@ int str2Num(char *str) {
     return num;
 }
 
+char * num2Str(int num) {
+    char *str = (char *)zMalloc(numlen(num));
+
+    sprintf(str, "%d", num);
+    return str;
+}
+
+int numlen(int num) {
+    int i = 0;
+
+    while (num % 10) ++i;
+
+    return i;
+}
+
 _Bool strCompare(char *left, char *right) {
     size_t len_left, len_right;
 
@@ -44,6 +59,7 @@ _Bool strCompare(char *left, char *right) {
 
     return !strncmp(left, right, len_left);
 }
+
 
 /* list<pair<str, rep> > */
 char * strReplace(char *src, list *pair_list) {}

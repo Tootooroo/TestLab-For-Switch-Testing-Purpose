@@ -23,7 +23,7 @@ Func * funcGenerate() {
     return c;
 }
 
-Func * funcGen(char *ident, char *type, Parameters *params, Scope *s) {
+Func * funcGen(char *ident, typeInfo *type, Parameters *params, Scope *s) {
     Func *f_def = funcGenerate();
 
     FUNC_SET_IDENT(f_def, ident);

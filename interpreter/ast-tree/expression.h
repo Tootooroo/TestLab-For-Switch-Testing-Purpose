@@ -296,6 +296,22 @@ typedef struct ArrayExpression {
 
 ArrayExpression * arrayExprGen(list *exprs);
 
+// Percent expression
+typedef struct PercentExpression {
+    Expression base;
+    Expression *formatString;
+    list *valExprs;
+} PercentExpression;
+
+/* Member functions implement as macros */
+#define PERCENT_EXPR_FORMAT_STR(PE) ((PE)->formatString)
+#define PERCENT_EXPR_SET_FORMAT_STR(PE, STR_EXPR) ((PE)->formatString = (STR_EXPR))
+
+#define PERCENT_EXPR_V_EXPRS(PE) ((PE)->valExprs);
+#define PERCENT_EXPR_SET_V_EXPRS(PE, V) ((PE)->valExprs = (V))
+
+PercentExpression * percentExprGen(Expression *formatStr, list *valExprs);
+
 #ifdef _AST_TREE_TESTING_
 
 void exprTest(void **state);

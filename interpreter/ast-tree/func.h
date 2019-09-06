@@ -9,6 +9,7 @@
 #include "parameter.h"
 
 typedef struct Statement Statement;
+typedef struct typeInfo typeInfo;
 
 typedef enum { FUNC_INTERNAL, FUNC_NON_INTERNAL } FuncType;
 typedef enum { RET_INT, RET_STR, RET_OBJ } RetType;
@@ -23,7 +24,7 @@ typedef struct Func {
         internalProc interRtn;
     };
     /* Indicate that what type of function will return */
-    char *type;
+    typeInfo *type;
     Parameters *params;
     /* Note: Every test case will return true or false */
     Variable * (*compute)(struct Func *, Scope *);
@@ -60,7 +61,7 @@ typedef struct Func {
 
 /* Prototypes */
 Func * funcGenerate();
-Func * funcGen(char *ident, char *type, Parameters *, Scope *s);
+Func * funcGen(char *ident, typeInfo *type, Parameters *, Scope *s);
 void funcRelease(Func *);
 
 /* Procedure to add parameter call with the first

@@ -10,7 +10,10 @@
 void * zMalloc(size_t size);
 int str2Num(char *);
 _Bool strCompare(char *, char *);
+char * strReplace(char *src, list *pair_list);
 list * strSplit(char *src, char spliter, char end);
+char * num2Str(int num);
+int numlen(int num);
 
 #endif /* _WRAPPER_H_ */
 

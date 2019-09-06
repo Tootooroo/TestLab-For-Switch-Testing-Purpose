@@ -1,4 +1,8 @@
-Int a = 1 + 1;
-a + 1;
-print("Hello\n");
-[1,2,3];
+String sayHello() {
+    return "Hello, World!\n";
+}
+String sayHello1() {
+    if (1 > 0)
+        return sayHello();
+}
+print(sayHello1());

@@ -359,7 +359,6 @@ private Variable *varEqualOp(Variable *l, Variable *r) {
 }
 
 private Variable * varLessThanOp(Variable *l, Variable *r) {
-
     if (VAR_OPS_INT_PRE_CHECK(l, r, VAR_OP_LESS_THAN, VAR_PRIMITIVE_INT))
         return NULL;
 
@@ -464,9 +463,7 @@ void varTest(void **state) {
     varTest_int();
 }
 
-private void varTest_str(void) {
-
-}
+private void varTest_str(void) {}
 
 private void varTest_int(void) {
     int left_int = 2, right_int = 1;;
