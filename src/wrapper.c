@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "list.h"
+#include "pair.h"
 
 /* Return an initialized memory buffer */
 void * zMalloc(size_t size) {
@@ -41,7 +42,9 @@ char * num2Str(int num) {
 int numlen(int num) {
     int i = 0;
 
-    while (num % 10) ++i;
+    do {
+        ++i;
+    } while (num = num / 10);
 
     return i;
 }
@@ -61,18 +64,55 @@ _Bool strCompare(char *left, char *right) {
 }
 
 
-/* list<pair<str, rep> > */
-char * strReplace(char *src, list *pair_list) {}
+char * charReplace(char *src, char *c, list *pair_string) {
+    int len = strlen(src);
+
+    listIter iter = listGetIter(pair_string, LITER_FORWARD);
+
+    char *string;
+    while ((string = listNext_v(&iter)) != NULL) {
+        len += strlen(string);
+    }
+
+    listRewind(&iter);
+
+    int len_scan = 0;
+    char *replaced_current, *replaced,
+        *scan = src, *head = src, c_char, c_flag = *c;
+
+    replaced_current = replaced = (char *)zMalloc(len);
+
+    while (true) {
+        c_char = *scan++;
+
+        if (c_char == c_flag || c_char == '\0') {
+            strncpy(replaced_current, head, len_scan);
+            head += len_scan + 1;
+            replaced_current += len_scan;
+
+            if (c_char == '\0') {
+                break;
+            }
+
+            char *theStr = (char *)listNext_v(&iter);
+            strncpy(replaced_current, theStr, strlen(theStr));
+            replaced_current += strlen(theStr);
+
+            len_scan = 0;
+            continue;
+        }
+        ++len_scan;
+    }
+
+    return replaced;
+}
 
 /* list<char *> */
 list * strSplit(char *src, char spliter, char end) {
     list *l = listCreate();;
 
-    int length = 0;
-
     char *begin, // The position of first character of a piece
-        *tail,   // The position of the first spliter or null after piece
-        *dest = NULL;
+        *tail;   // The position of the first spliter or null after piece
 
     begin = src, tail = begin + 1;
 
@@ -85,8 +125,8 @@ list * strSplit(char *src, char spliter, char end) {
             ++tail;
         }
         /* Spliting */
-        length = tail - begin;
-        dest = (char *)zMalloc(length);
+        int length = tail - begin;
+        char *dest = (char *)zMalloc(length);
         strncpy(dest, begin, length);
 
         listAppend(l, dest);
@@ -96,3 +136,23 @@ list * strSplit(char *src, char spliter, char end) {
 
     return l;
 }
+
+
+#ifdef _TEST_LAB_UNIT_TESTING_
+
+#include "test.h"
+
+void wrapper_test(void **state) {
+    char *str = "12345%12345%12345%";
+    char *str1 = "%%%";
+
+    list *l = listCreate();
+    listAppend(l, "abc");
+    listAppend(l, "abc");
+    listAppend(l, "abc");
+
+    assert_int_equal(true, strCompare("abcabcabc", charReplace(str1, "%", l)));
+    assert_int_equal(true, strCompare("12345abc12345abc12345abc", charReplace(str, "%", l)));
+}
+
+#endif /* _TEST_LAB_UNIT_TESTING_ */

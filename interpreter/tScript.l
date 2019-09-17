@@ -17,6 +17,7 @@
 
 [\n ]+    { /* empty */ }
 [\t ]+    { /* empty */ }
+--.*      { /* empty */ }
 
 import    { return IMPORT; }
 return    { return RETURN; }

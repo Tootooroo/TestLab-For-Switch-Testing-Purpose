@@ -196,10 +196,11 @@ OBJECT_INHERITENCE:
 OBJECT_DEF :
     /* Use to set value within parent */
     OBJECT_DEF OBJECT_DEF_ITEM {
-        if ($OBJECT_DEF_ITEM->type == 0) {
+        if ($OBJECT_DEF_ITEM->type == OBJECT_OVER_WRITE) {
+            if ($$->overWrites == NULL) $$->overWrites = listCreate();
             listAppend($$->overWrites, (void *)$OBJECT_DEF_ITEM->item);
         } else {
-            listAppend($$->overWrites, (void *)$OBJECT_DEF_ITEM->item);
+            listAppend($$->newMembers, (void *)$OBJECT_DEF_ITEM->item);
         }
     }
     /* Define a new member for the a new object */
@@ -207,10 +208,10 @@ OBJECT_DEF :
         $$ = objBodyGen();
         if ($OBJECT_DEF_ITEM->type == OBJECT_OVER_WRITE) {
             $$->overWrites = listCreate();
-            listJoin($$->overWrites, (void *)$OBJECT_DEF_ITEM->item);
+            listAppend($$->overWrites, (void *)$OBJECT_DEF_ITEM->item);
         } else {
             $$->newMembers = listCreate();
-            listJoin($$->newMembers, (void *)$OBJECT_DEF_ITEM->item);
+            listAppend($$->newMembers, (void *)$OBJECT_DEF_ITEM->item);
         }
     };
 /* type : ObjectDeclItem */
@@ -223,7 +224,9 @@ OBJECT_DEF_ITEM :
     | TYPE IDENTIFIER SEMICOLON {
         $$ = objItemGen();
         $$->type = OBJECT_MEMBER;
-        $$->item = pairGen((void *)$IDENTIFIER, varGen(strdup($IDENTIFIER), varTypeStr2Int($TYPE), NULL));
+
+        Variable *v = varGen(strdup($IDENTIFIER), varTypeStr2Int(TYPE_INFO_TYPE($TYPE)), NULL);
+        $$->item = v;
     };
 
 /* type : Statement */
@@ -376,7 +379,7 @@ EXPRESSION :
 /* type : Expression */
 PERCENT_EXPRESSION :
     EXPRESSION PERCENTAGE OPEN_PAREN EXPRESSION_LIST CLOSE_PAREN {
-        $$ = NULL;
+        $$ = percentExprGen($EXPRESSION, $EXPRESSION_LIST);
     };
 
 /* type : Expression */
@@ -479,13 +482,16 @@ NOT_EQUAL_EXPRESSION :
 /* type : Expression */
 DOT_EXPRESSION :
     DOT_EXPRESSION IDENTIFIER {
-
-    }
-    | DOT_EXPRESSION MEMBER_SELECTION_ENTITY {
-
+        MemberSelectExpression *mExpr = $$;
+        if (MEMBER_SELECT_SUBS(mExpr) == NULL)
+            MEMBER_SELECT_SET_SUBS(mExpr, $IDENTIFIER);
+        else {
+            Expression *m = $$;
+            $$ = memberSelectGen(m, $IDENTIFIER);
+        }
     }
     | MEMBER_SELECTION_ENTITY {
-
+        $$ = memberSelectGen($MEMBER_SELECTION_ENTITY, NULL);
     };
 
 /* type : Expression */

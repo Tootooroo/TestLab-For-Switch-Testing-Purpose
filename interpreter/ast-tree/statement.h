@@ -183,14 +183,14 @@ typedef struct ObjectDeclStatement {
     Statement base;
     char *objectType;
     char *parent;
-    /* list of pair(parent's member, variable) */
+    /* list of Variable */
     list *overWrites;
-    /* list of pair(member name, variable) */
+    /* list of Variable */
     list *members;
 } ObjectDeclStatement;
 
 typedef struct ObjectDeclBody {
-    /* pair<Ident :: char *,  variable :: Variable>*/
+    /* list<Variable> */
     list *newMembers;
     list *overWrites;
 } ObjectDeclBody;
@@ -201,8 +201,8 @@ typedef struct ObjectDeclItem {
     /* 0: Overwrite
      * 1: member */
     OBJ_ITEM_TYPE type;
-    /* pair<Ident::char *, variable :: Variable> */
-    pair *item;
+    /* Variable */
+    Variable *item;
 } ObjectDeclItem;
 
 ObjectDeclStatement * objDeclStmtDefault();

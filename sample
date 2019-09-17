@@ -1,10 +1,34 @@
+-- Statements and Expression testing
+
+-- Function Testing
 String sayHello() {
     return "Hello, World!\n";
 }
+
 String sayHello1() {
     if (1 > 0)
         return sayHello();
     else
         return "Goodbye";
 }
-print(sayHello1());
+
+printf(sayHello1());
+
+-- Arithmetic testing
+Int a = 1;
+print("a = $\n" % (a));
+
+print("(1+1)*2 = $ and 1+1*2=$\n" % ((1+1)*2, 1+1*2));
+print("1 > 0 : $\n1 < 0 : $\n" % (1 > 0, 1 < 0));
+print("1 == 1 : $\n" % (1 == 1));
+print("1 >= 0 : $\n" % (1 >= 0));
+print("1 <= 0 : $\n" % (1 <= 0));
+
+-- Object testing
+Object T1 {
+  Int a;
+};
+
+T1 t;
+t.a = 2;
+printf("t.a = $\n" % (t.a));

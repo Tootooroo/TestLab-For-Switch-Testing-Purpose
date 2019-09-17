@@ -170,7 +170,6 @@ Variable * varGen(char *ident, VarType type, void *value) {
         var->iOps = &primitiveInnerOps;
     } else if (type == VAR_OBJECT) {
         var->o = (Object *)value;
-        OBJ_SET_IDENTIFIER(var->o, strdup(ident));
         var->ops = &objectOps;
     } else if (type == VAR_ARRAY) {
         var->array = value;

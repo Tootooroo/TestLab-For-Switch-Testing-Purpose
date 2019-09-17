@@ -272,7 +272,11 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
             scopeNewPrimitive(scope, pairGen(strdup(varIdent), var));
         } else {
             /* Object */
-            var = varGen(strdup(varIdent), VAR_OBJECT, NULL);
+            Template *t = scopeGetTemplate(scope, TYPE_INFO_TYPE(tInfo));
+            Object *o = template2Object(t);
+            var = varGen(strdup(varIdent), VAR_OBJECT, o);
+
+            OBJ_SET_IDENTIFIER(var->o, strdup(varIdent));
             scopeNewObject(scope, pairGen(strdup(varIdent), var));
         }
     }

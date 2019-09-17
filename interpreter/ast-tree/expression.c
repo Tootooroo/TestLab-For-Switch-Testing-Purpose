@@ -10,6 +10,7 @@
 #include "variable.h"
 
 #include "program.h"
+#include "methods.h"
 
 /* private prototypes */
 private Variable * constExprCompute(Expression *, Scope *);
@@ -557,13 +558,13 @@ private Variable * percentExprCompute(Expression *expr, Scope *scope) {
         }
         if (t == VAR_PRIMITIVE_STR) {
             char *str = VAR_GET_PRIMITIVE_STR(current_val);
-            listAppend(vals, pairGen("%", str));
+            listAppend(vals, str);
         } else if (t == VAR_PRIMITIVE_INT) {
             int i = VAR_GET_PRIMITIVE_INT(current_val);
-            listAppend(vals, pairGen("%", num2Str(i)) );
+            listAppend(vals, num2Str(i));
         }
     }
-    Variable *v = varGen(NULL, VAR_PRIMITIVE_STR, strReplace(format, vals));
+    Variable *v = varGen(NULL, VAR_PRIMITIVE_STR, charReplace(format, "$", vals));
 
     listRelease(vals);
     varRelease(formatString_v);
@@ -572,7 +573,7 @@ private Variable * percentExprCompute(Expression *expr, Scope *scope) {
     return v;
 }
 
-#define VAR_EXTRACT_FROM_EXPR(LEFT_EXPR, RIGHT_EXPR, SCOPE) ({ \
+#define VAR_EXTRACT_FROM_EXPR(LEFT_EXPR, RIGHT_EXPR, SCOPE) ({\
     pair ret;\
     Variable *left_var = exprCompute(LEFT_EXPR, SCOPE);\
     Variable *right_var = exprCompute(RIGHT_EXPR, SCOPE);\

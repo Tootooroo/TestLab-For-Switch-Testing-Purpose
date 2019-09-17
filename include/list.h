@@ -45,6 +45,10 @@ typedef struct listIter {
 #define listSetReleaseMethod(l, m) ((l)->release = m)
 #define listSetMatchMethod(l, m) ((l)->match = m)
 #define listSetDupMethod(l, m) ((l)->dup = m)
+#define listSetMethods(l, r, m, d) \
+    listSetReleaseMethod(l, r);\
+    listSetMatchMethod(l, m);\
+    listSetDupMethod(l, d);
 
 /* list Prototypes */
 list *      listCreate(void);

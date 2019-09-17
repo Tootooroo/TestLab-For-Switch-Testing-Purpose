@@ -112,7 +112,7 @@ typedef struct GreaterThanExpression {
 #define GREATER_THAN_SET_RIGHT(E, R) ((E)->right = (R))
 
 GreaterThanExpression * greaterThanExprDefault();
-GreaterThanExpression * greaterhanExprGen(Expression *left, Expression *right);
+GreaterThanExpression * greaterThanExprGen(Expression *left, Expression *right);
 void greaterThanExprRelease(Expression *, Scope *);
 
 // Equal expression
@@ -182,7 +182,7 @@ typedef struct MemberSelectExpression {
 #define MEMBER_SELECT_SET_HEAD(M, H) ((M)->head = (H))
 
 #define MEMBER_SELECT_SET_SUBS(M, MEM) ((M)->member = (MEM))
-#define MEMBER_SELECT_SUBS(M) ((M)->subs)
+#define MEMBER_SELECT_SUBS(M) ((M)->member)
 
 MemberSelectExpression * memberSelectDefault();
 MemberSelectExpression * memberSelectGen(Expression *objName, char *member);
