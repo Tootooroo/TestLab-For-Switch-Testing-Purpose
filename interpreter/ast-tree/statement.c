@@ -523,7 +523,8 @@ void funcDeclStmtTest(void) {
 
     FuncDeclStatement *fStmt = funcDeclStmtDefault();
 
-    Func *f = funcGen(strdup("f"), "Int", NULL, scopeGenerate());
+    typeInfo *t = buildTypeInfo("Int", BASIC_TYPE);
+    Func *f = funcGen(strdup("f"), t, NULL, scopeGenerate());
     funcAddParam(f, paramGen(strdup("a"), strdup("Int")));
 
     int b = 1;

@@ -898,7 +898,8 @@ void funcCallTest(void) {
     /* Without arguments */
     FuncCallExpression *fExpr = funcCallExprGen(strdup("f"), NULL);
 
-    Func *f_def = funcGen(strdup("f"), strdup("Int"), NULL, NULL);
+    typeInfo *t = buildTypeInfo("Int", BASIC_TYPE);
+    Func *f_def = funcGen(strdup("f"), t, NULL, NULL);
 
     int a = 1, b = 2;
     Statement *stmt = (Statement *)returnStmtGen(plusExprGen(constExprGen(&a, PRIMITIVE_TYPE_INT),
@@ -916,7 +917,7 @@ void funcCallTest(void) {
     Scope *s_arg = scopeGenerate();
 
     // Define function
-    Func *f_def_arg = funcGen(strdup("f_arg"), strdup("Int"), NULL, NULL);
+    Func *f_def_arg = funcGen(strdup("f_arg"), t, NULL, NULL);
     funcAddParam(f_def_arg, paramGen(strdup("a"), strdup("Int")));
 
     int a_ = 1;
