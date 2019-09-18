@@ -272,7 +272,7 @@ void identExprRelease(Expression *expr, Scope *s);
 // Index expression
 typedef struct IndexExpression {
     Expression base;
-    char *ident;
+    Expression *ident;
     Expression *index;
 } IndexExpression;
 
@@ -282,7 +282,7 @@ typedef struct IndexExpression {
 #define IDX_EXPR_IDX(IDX_E) ((IDX_E)->index)
 #define IDX_EXPR_SET_IDX(IDX_E, IDX) ((IDX_E)->index = IDX)
 
-IndexExpression * indexExprGen(char *ident, Expression *expr);
+IndexExpression * indexExprGen(Expression *ident, Expression *expr);
 
 // Array expression
 typedef struct ArrayExpression {

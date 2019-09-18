@@ -74,19 +74,25 @@ typedef struct VarOps {
 
 typedef struct VarInnerOps {
     /* Copy variable itself into a scope
-     * this action is different depend on
+     * this action is depend on
      * variable type, primitive type will
      * copy completly into a scope which
      * means its call by value, and object
      * is copy the Variable part only, wh-
      * ich means its call by reference. */
     Variable * (*pass)(Variable *, Scope *, char *ident);
+    Variable * (*dup)(Variable *);
+    void     * (*valueDup)(Variable *);
 } VarInnerOps;
+
+typedef void (*VarInitRtn)(Variable *v, char *ident, void *value);
 
 // This variable is used to occupy space in scope.
 extern Variable emptyVar;
 
 /* Member function implement as macros */
+#define VAR_INNER_OP(V, OP, args...) ((V)->iOps->OP(args))
+
 #define VAR_IS_OCCUPY(V) ((V)->type == VAR_OCCUPY)
 #define VAR_IS_LVAL(V) ((V)->identifier != null)
 
@@ -123,6 +129,8 @@ Variable * varGen(char *ident, VarType type, void *value);
 void varRelease(Variable *);
 Variable * varDup(Variable *);
 _Status_t varAssign_(Variable *l, Variable *r);
+_Bool varOpsPreCheck(Variable *l, Variable *r, VarOp ops, VarType type);
+void setVarInitRtn(VarType t, VarInitRtn r);
 
 // Misc
 _Bool varIdentCmp(Variable *, char *);
@@ -131,6 +139,7 @@ _Bool varIsType(Variable *, char *);
 _Bool varIsTrue(Variable *);
 VarType varTypeStr2Int(char *);
 char * varType2Str(Variable *);
+VarType varTypeIs(Variable *v);
 
 #ifdef _AST_TREE_TESTING_
 

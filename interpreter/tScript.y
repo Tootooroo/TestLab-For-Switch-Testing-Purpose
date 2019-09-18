@@ -22,6 +22,7 @@
 
 %token IF ELSE
 
+%token ARRAY_MARK MAP_MARK
 %token COMMA COLON SEMICOLON
 %token OPEN_CURVE_BRACKET CLOSE_CURVE_BRACKET
 
@@ -110,6 +111,8 @@
     #include "pair.h"
 
     #define YYDEBUG 1
+
+    static void *ref_$$;
 }
 
 %%
@@ -336,19 +339,15 @@ TYPE :
     };
 
 DECL_QUALIFIER :
-    ARRAY_QUALIFIER {
+    ARRAY_MARK {
         $$ = ARRAY_TYPE;
     }
-    | MAP_QUALIFIER {
+    | MAP_MARK {
         $$ = MAP_TYPE;
     }
     | /* empty */ {
         $$ = 0;
     };
-ARRAY_QUALIFIER :
-    OPEN_SQUARE_BRACKET CLOSE_SQUARE_BRACKET;
-MAP_QUALIFIER :
-    OPEN_CURVE_BRACKET CLOSE_CURVE_BRACKET;
 
 /* type : list<expression> */
 EXPRESSION_LIST :
@@ -384,7 +383,7 @@ PERCENT_EXPRESSION :
 
 /* type : Expression */
 ARRAY_EXPRESSION :
-    OPEN_SQUARE_BRACKET ARRAY_ELEMENTS CLOSE_SQUARE_BRACKET {
+    OPEN_CURVE_BRACKET ARRAY_ELEMENTS CLOSE_CURVE_BRACKET {
         $$ = arrayExprGen($ARRAY_ELEMENTS);
     };
 /* type : list<expression> */
@@ -392,8 +391,8 @@ ARRAY_ELEMENTS : EXPRESSION_LIST;
 
 /* type : Expression */
 INDEX_EXPRESSION :
-    IDENTIFIER OPEN_SQUARE_BRACKET EXPRESSION CLOSE_SQUARE_BRACKET {
-        $$ = indexExprGen($IDENTIFIER, $EXPRESSION);
+    EXPRESSION[left] OPEN_SQUARE_BRACKET EXPRESSION[right] CLOSE_SQUARE_BRACKET {
+        $$ = indexExprGen($left, $right);
     };
 
 /* type : Expression */

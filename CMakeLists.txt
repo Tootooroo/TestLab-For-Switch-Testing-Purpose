@@ -32,6 +32,7 @@ set(I_SRCS
   ${I_AST_SRC_DIR}/expression.c
   ${I_AST_SRC_DIR}/primitive.c
   ${I_AST_SRC_DIR}/variable.c
+  ${I_AST_SRC_DIR}/variable_ops.c
   ${I_AST_SRC_DIR}/scope.c
   ${I_AST_SRC_DIR}/object.c
   ${I_AST_SRC_DIR}/func.c

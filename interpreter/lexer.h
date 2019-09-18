@@ -315,7 +315,7 @@ extern int yylex (void);
 #undef YY_DECL
 #endif
 
-#line 67 "./interpreter/tScript.l"
+#line 70 "./interpreter/tScript.l"
 
 
 #line 322 "interpreter/lexer.h"

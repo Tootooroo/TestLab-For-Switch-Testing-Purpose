@@ -31,4 +31,5 @@ Object T1 {
 
 T1 t;
 t.a = 2;
-printf("t.a = $\n" % (t.a));
+print("t.a = $\n" % (t.a));
+id[1][2];

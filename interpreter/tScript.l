@@ -32,6 +32,9 @@ Ops       { return MACHINE_OPERATIONS; }
 if        { return IF; }
 else      { return ELSE; }
 
+\@        { return ARRAY_MARK; }
+\#        { return MAP_MARK; }
+
 \%        { return PERCENTAGE; }
 \+         { return PLUS; }
 \-         { return MINUS; }

@@ -200,7 +200,7 @@ void identExprRelease(Expression *expr, Scope *s) {
 }
 
 // Index expression
-IndexExpression * indexExprGen(char *ident, Expression *expr) {
+IndexExpression * indexExprGen(Expression *ident, Expression *expr) {
     IndexExpression *idxExpr = (IndexExpression *)zMalloc(sizeof(IndexExpression));
 
     idxExpr->base.compute = indexExprCompute;
@@ -496,10 +496,15 @@ private Variable * identExprCompute(Expression *expr, Scope *scope) {
 private Variable * indexExprCompute(Expression *expr, Scope *scope) {
     IndexExpression *idxExpr = (IndexExpression *)expr;
 
-    char *ident = IDX_EXPR_IDENT(idxExpr);
+    Expression *ident = IDX_EXPR_IDENT(idxExpr);
 
-    Variable *ar = scopeGetObject(scope, ident);
+    Variable *ar = exprCompute(ident, scope);
     if (!ar) return NULL;
+
+    // The value return from
+    // the expression is not an array.
+    if (VAR_TYPE(ar) != VAR_ARRAY)
+        return NULL;
 
     Array *ar_ptr = VAR_GET_ARRAY(ar);
     if (!ar_ptr) return NULL;

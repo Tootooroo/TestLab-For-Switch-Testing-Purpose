@@ -53,33 +53,35 @@ extern int yydebug;
     MACHINE_OPERATIONS = 263,
     IF = 264,
     ELSE = 265,
-    COMMA = 266,
-    COLON = 267,
-    SEMICOLON = 268,
-    OPEN_CURVE_BRACKET = 269,
-    CLOSE_CURVE_BRACKET = 270,
-    INT = 271,
-    STR = 272,
-    IDENTIFIER = 273,
-    NUM = 274,
-    STR_LITERAL = 275,
-    PERCENTAGE = 276,
-    EQUAL = 277,
-    LESS_THAN = 278,
-    GREATER_THAN = 279,
-    LESS_OR_EQUAL = 280,
-    GREATER_OR_EQUAL = 281,
-    NOT_EQUAL = 282,
-    PLUS = 283,
-    MINUS = 284,
-    MUL = 285,
-    DIV = 286,
-    ASSIGNMENT = 287,
-    OPEN_PAREN = 288,
-    CLOSE_PAREN = 289,
-    DOT = 290,
-    OPEN_SQUARE_BRACKET = 291,
-    CLOSE_SQUARE_BRACKET = 292
+    ARRAY_MARK = 266,
+    MAP_MARK = 267,
+    COMMA = 268,
+    COLON = 269,
+    SEMICOLON = 270,
+    OPEN_CURVE_BRACKET = 271,
+    CLOSE_CURVE_BRACKET = 272,
+    INT = 273,
+    STR = 274,
+    IDENTIFIER = 275,
+    NUM = 276,
+    STR_LITERAL = 277,
+    PERCENTAGE = 278,
+    EQUAL = 279,
+    LESS_THAN = 280,
+    GREATER_THAN = 281,
+    LESS_OR_EQUAL = 282,
+    GREATER_OR_EQUAL = 283,
+    NOT_EQUAL = 284,
+    PLUS = 285,
+    MINUS = 286,
+    MUL = 287,
+    DIV = 288,
+    ASSIGNMENT = 289,
+    OPEN_PAREN = 290,
+    CLOSE_PAREN = 291,
+    DOT = 292,
+    OPEN_SQUARE_BRACKET = 293,
+    CLOSE_SQUARE_BRACKET = 294
   };
 #endif
 
@@ -103,7 +105,7 @@ union YYSTYPE
     ObjectDeclBody *objDeclBody;
     ObjectDeclItem *objDeclItem;
 
-#line 107 "./interpreter/parser.h" /* yacc.c:1909  */
+#line 109 "./interpreter/parser.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
