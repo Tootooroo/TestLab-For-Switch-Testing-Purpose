@@ -296,6 +296,11 @@ VarType varTypeStr2Int(char *typeStr) {
     return VAR_EMPTY;
 }
 
+_Bool varOpsPreCheck(Variable *l, Variable *r, VarOp ops, VarType type) {
+    return varOpDefSpaceCheck_Binary(l, r, ops) == false ||
+        varTypeIs(l) != type;
+}
+
 /* Private procedures */
 
 /* Operators */
@@ -305,12 +310,6 @@ private Variable * varAssign_Object(Variable *l, Variable *r) {}
 
 
 /* Operators of integer */
-
-/* Variable * (*)(Variable *, Variable *, VarOp, VarType) */
-#define VAR_OPS_INT_PRE_CHECK(l, r, ops, type)\
-    varOpDefSpaceCheck_Binary(l, r, ops) == false ||\
-    varTypeIs(l) != type
-
 /* Variable * (*)(Variable *, Variable *, VarType) */
 #define VAR_OPS_BINARY_INT_COMPUTE(V1, V2, OP) ({\
     Primitive *l_pri = V1->p, *r_pri = V2->p;\
