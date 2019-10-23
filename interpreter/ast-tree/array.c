@@ -8,6 +8,13 @@
 /* Private Prototypes */
 private Variable * arrayPlus(Variable *, Variable *);
 private Variable * arrayAssign(Variable *, Variable *);
+private list * elemListCreate(void);
+
+// list members
+_Status_t listMemberDestruct(void *);
+_Bool listMemberMatch(const void *, const void *);
+void * listMemberDup(void *);
+private list * elemListCreate(void);
 
 /* Public Variables */
 VarOps arrayOperations = {
@@ -27,6 +34,29 @@ VarOps arrayOperations = {
 
 /* Private procedures */
 #define ARRAY_ELEMS(A) ((A)->elems)
+
+_Status_t listMemberDestruct(void *m) {
+    Variable *v = (Variable *)m;
+    varRelease(v);
+
+    return OK;
+};
+
+void * listMemberDup(void *m) {
+    Variable *v = (Variable *)m;
+    return (void *)varDup(v);
+}
+
+
+private list * elemListCreate(void) {
+    list *l = listCreate();
+
+    listSetDupMethod(l, listMemberDup);
+    listSetMatchMethod(l, NULL);
+    listSetReleaseMethod(l, listMemberDestruct);
+
+    return l;
+}
 
 /* Public procedures */
 Array * createArray(char *type) {
@@ -58,7 +88,7 @@ void arraySetViaIdex(Array *a, Variable *v, int index) {
 
 void arrayPush(Array *a, Variable *v) {
     if (ARRAY_ELEMS(a) == NULL)
-        ARRAY_ELEMS(a) = listCreate();
+        ARRAY_ELEMS(a) = elemListCreate();
 
     listPush(ARRAY_ELEMS(a), v);
     ARRAY_NUM_OF_ELEMS_PLUS(a);
@@ -76,7 +106,7 @@ Variable * arrayPop(Array *a) {
 
 void arrayAppend(Array *a, Variable *v) {
     if (ARRAY_ELEMS(a) == NULL)
-        ARRAY_ELEMS(a) = listCreate();
+        ARRAY_ELEMS(a) = elemListCreate();
 
     listAppend(ARRAY_ELEMS(a), v);
     ARRAY_NUM_OF_ELEMS_PLUS(a);
@@ -89,6 +119,15 @@ Variable * arrayRetrive(Array *a) {
     if (v) { ARRAY_NUM_OF_ELEMS_DESC(a); return v; }
 
     return NULL;
+}
+
+Array * arrayDup(Array *orig) {
+    Array *dup = createArray(ARRAY_TYPE(orig));
+
+    ARRAY_SET_NUM_OF_ELEMS(dup, ARRAY_NUM_OF_ELEMS(orig));
+    dup->elems = listDup(orig->elems);
+
+    return dup;
 }
 
 private Variable * arrayPlus(Variable *l, Variable *r) {

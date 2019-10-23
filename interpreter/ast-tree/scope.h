@@ -59,6 +59,7 @@ Template * scopeGetTemplate(Scope *, char *);
 
 _Bool scopeIsValidType(char *type, Scope *);
 
+_Status_t scopeNew(Scope *, pair *, int type);
 /* pair<identifier, Func> */
 _Status_t scopeNewFunc(Scope *, pair *);
 /* pair<identifier, Variable> */

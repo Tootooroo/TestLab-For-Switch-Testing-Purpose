@@ -62,10 +62,10 @@ void scopeRelease(Scope *s) {
 }
 
 void scopeReleaseCurrent(Scope *s) {
-    if (s->template) hashMapRelease(s->template);
-    if (s->functions)    hashMapRelease(s->functions);
+    if (s->template)   hashMapRelease(s->template);
+    if (s->functions)  hashMapRelease(s->functions);
     if (s->primitives) hashMapRelease(s->primitives);
-    if (s->objects)  hashMapRelease(s->objects);
+    if (s->objects)    hashMapRelease(s->objects);
 
 }
 

@@ -81,8 +81,12 @@ typedef struct VarInnerOps {
      * is copy the Variable part only, wh-
      * ich means its call by reference. */
     Variable * (*pass)(Variable *, Scope *, char *ident);
+    /* Create a duplication of variable */
     Variable * (*dup)(Variable *);
+    /* Create a duplication of value of variable not variable itself */
     void     * (*valueDup)(Variable *);
+    /* Destruct the value of variable not the variable itself */
+    _Status_t (*valueDestruct)(Variable *);
 } VarInnerOps;
 
 typedef void (*VarInitRtn)(Variable *v, char *ident, void *value);
@@ -115,6 +119,7 @@ extern Variable emptyVar;
 
 #define VAR_SET_RELEASE_METHOD(V, M) ((V)->release = (M))
 #define VAR_SET_OP(V, OP_SET) ((V)->ops = OP_SET)
+// fixme: rename to VAR_OP_CALL
 #define VAR_BIN_OP_CALL(V, OP, AR1, AR2) ((V)->ops->OP(AR1, AR2))
 
 #define VAR_GET_PRIMITIVE_INT(V) ((V)->p->val_i)

@@ -1,5 +1,8 @@
 -- Statements and Expression testing
 
+Int@ id = {1, {1, 2}, 3};
+print("id[0] = $\nid[1] = $\nid[2] = $\n" % (id[0], id[1][1], id[2]));
+
 -- Function Testing
 String sayHello() {
     return "Hello, World!\n";
@@ -32,4 +35,3 @@ Object T1 {
 T1 t;
 t.a = 2;
 print("t.a = $\n" % (t.a));
-id[1][2];

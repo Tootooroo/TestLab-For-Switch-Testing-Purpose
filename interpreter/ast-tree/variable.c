@@ -5,6 +5,7 @@
 #include "pair.h"
 #include "string.h"
 #include "object.h"
+#include "array.h"
 
 #include "variable_ops.h"
 
@@ -82,11 +83,8 @@ Variable * varGen(char *ident, VarType type, void *value) {
 
 void varRelease(Variable *v) {
     if (v->identifier) free(v->identifier);
-    if (VAR_IS_PRIMITIVE(v)) {
-        primitiveRelease(v->p);
-    } else {
-        objectRelease(v->o);
-    }
+
+    VAR_INNER_OP(v, valueDestruct, v);
 
     free(v);
 }
@@ -103,25 +101,15 @@ Variable * varDup(Variable *orig) {
     dup->ops = orig->ops;
     dup->iOps = orig->iOps;
 
-    if (VAR_IS_PRIMITIVE(orig)) {
-        /* Primitive */
-        VAR_SET_PRIMITIVE(dup, primitiveDup(orig->p));
-    } else {
-        /* Object */
-        VAR_SET_OBJECT(dup, objDup(orig->o));
-    }
+    dup->o = VAR_INNER_OP(orig, valueDup, orig);
+
     return dup;
 }
 
 void varReset(Variable *l) {
-    l->iOps = null;
-    l->iOps = null;
-
     if (l->identifier) free(l->identifier);
 
-    l->type == VAR_OBJECT ?
-        objectRelease(l->o) :
-        primitiveRelease(l->p);
+    VAR_INNER_OP(l, valueDestruct, l);
 }
 
 _Status_t varAssign_(Variable *l, Variable *r) {
@@ -147,25 +135,26 @@ _Bool varIdentCmp(Variable *v, char *ident) {
 }
 
 _Bool varTypeCmp(Variable *v1, Variable *v2) {
-    if (VAR_IS_PRIMITIVE(v1)) {
+
+    if (VAR_IS_OBJECT(v1)) {
+        return objTypeCmp(v1->o, v2->o);
+    } else {
         if (v1->type != v2->type)
             return false;
         else
             return true;
-    } else if (VAR_IS_OBJECT(v1)) {
-        return objTypeCmp(v1->o, v2->o);
     }
 
     return false;
 }
 
 _Bool varIsType(Variable *v, char *type) {
-    if (VAR_IS_PRIMITIVE(v)) {
-        return strCompare(varPriTypesTable[varTypeIs(v)], type);
-    } else if (VAR_IS_OBJECT(v)) {
-        return strCompare(v->o->objectType, type);
-    }
 
+    if (VAR_IS_OBJECT(v)) {
+        return strCompare(v->o->objectType, type);
+    } else if (VAR_IS_PRIMITIVE(v)) {
+        return strCompare(varPriTypesTable[varTypeIs(v)], type);
+    }
     return false;
 }
 

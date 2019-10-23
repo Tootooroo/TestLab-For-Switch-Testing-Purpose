@@ -264,7 +264,7 @@ private StatementTrack varDeclStmtCompute(Statement *stmt, Scope *scope) {
         char *varIdent = PAIR_GET_LEFT(currentPair);
         Variable *var;
 
-        if (tInfo->q == ARRAY_TYPE){
+        if (tInfo->q == ARRAY_TYPE) {
             var = varGen(strdup(varIdent), VAR_ARRAY, NULL);
             scopeNewObject(scope, pairGen(strdup(varIdent), var));
         } else if (primitiveType != -1) {

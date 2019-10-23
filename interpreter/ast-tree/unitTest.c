@@ -10,9 +10,11 @@
 #include "module.h"
 #include "misc.h"
 #include "array.h"
+#include "variable_ops.h"
 
 int main(void) {
     moduleInit();
+    variableOpsInit();
 
     const struct CMUnitTest tests[] = {
         cmocka_unit_test(paramTest),

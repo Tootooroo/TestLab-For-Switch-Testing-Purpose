@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include "module.h"
+#include "variable_ops.h"
 
 extern int yylex(void);
 extern FILE *yyin;
@@ -13,6 +14,7 @@ int main(void) {
 
     yyin = fopen("sample", "r");
 
+    variableOpsInit();
     moduleInit();
 
     yyparse();

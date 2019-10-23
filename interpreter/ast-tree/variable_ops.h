@@ -5,8 +5,6 @@
 
 #include "variable.h"
 
-VarOps primitiveOps_integer;
-VarOps primitiveOps_string;
-VarOps objectOps;
+void variableOpsInit(void);
 
 #endif /* _VARIABLE_OPS_H_ */
